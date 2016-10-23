@@ -17,7 +17,7 @@ INSTALLED_APPS = [
   'sjfnw.grants',
   'sjfnw.fund',
   'sjfnw.support',
-  'libs.pytz',
+  'libs.pytz'
 ]
 
 DEBUG = False
@@ -56,7 +56,7 @@ else:
       'USER': 'root',
       'PASSWORD': 'SJFdb',
       'HOST': 'localhost',
-      'NAME': 'sjfdb_multi',
+      'NAME': 'sjfdb_temp',
     }
   }
   DEBUG = True

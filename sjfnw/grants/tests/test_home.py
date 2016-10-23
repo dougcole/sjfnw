@@ -8,6 +8,8 @@ from sjfnw.grants.tests.base import BaseGrantTestCase
 from sjfnw.grants.models import (DraftGrantApplication, GrantApplication,
     Organization, GivingProjectGrant)
 
+from sjfnw.grants.tests.factories import OrganizationFactory, GrantApplicationFactory
+
 logger = logging.getLogger('sjfnw')
 
 class OrgHomeAwards(BaseGrantTestCase):
@@ -19,6 +21,14 @@ class OrgHomeAwards(BaseGrantTestCase):
   def setUp(self):
     super(OrgHomeAwards, self).setUp()
     self.login_as_org('test')
+    print('--- ORG ---')
+    org = OrganizationFactory()
+    for k in org._meta.get_all_field_names():
+      print(k + ': ' + str(getattr(org, k, '-')))
+    print('--- APP ---')
+    app = GrantApplicationFactory(organization=org)
+    for k in app._meta.get_all_field_names():
+      print(k + ': ' + str(getattr(app, k, '-')))
 
   def test_none(self):
     """ org has no awards. verify no award info is shown """
