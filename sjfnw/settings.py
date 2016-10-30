@@ -26,7 +26,7 @@ if os.getenv('SERVER_SOFTWARE', '').startswith('Google App Engine'):
   DATABASES = {
     'default': {
       'ENGINE': 'django.db.backends.mysql',
-      'HOST': '/cloudsql/sjf-northwest:sjf',
+      'HOST': '/cloudsql/sjf-nw:us-central1:sjfnw',
       'NAME': 'sjfdb',
       'USER': 'root',
       'PASSWORD': os.getenv('CLOUDSQL_PASSWORD')
@@ -99,7 +99,7 @@ FILE_UPLOAD_HANDLERS = ('sjfnw.grants.storage.BlobstoreFileUploadHandler',)
 TEST_RUNNER = 'sjfnw.tests.base.ColorTestSuiteRunner'
 
 # Determines whether site is in maintenance mode. See urls.py
-MAINTENANCE = True
+MAINTENANCE = False
 # Date and/or time when site is expected to be out of maintenance mode.
 # See maintenance.html. For display only.
-MAINTENANCE_END_DISPLAY = 'Thursday 11/24 at 12pm'
+MAINTENANCE_END_DISPLAY = ''
