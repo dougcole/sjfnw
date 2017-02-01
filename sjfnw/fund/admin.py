@@ -178,26 +178,26 @@ class ProjectAppInline(admin.TabularInline):
         'application', 'givingprojectgrant')
 
   def formfield_for_foreignkey(self, db_field, request, **kwargs):
-    """ Limit application dropdown choices based on GP fundraising deadline
+    """ Limit application choices to those submitted no more than 1 year before
+        giving project's fundrasing deadline
 
-      Otherwise we may get 'response too large' error
+        For performance and to avoid a 'response too large' error
     """
     formfield = super(ProjectAppInline, self).formfield_for_foreignkey(
         db_field, request, **kwargs)
 
-    if db_field.name == 'application' and not re.search(r'/add/', request.path):
+    if db_field.name == 'application' and request.resolver_match.args:
       apps = GrantApplication.objects.select_related('grant_cycle', 'organization')
       try:
-        gp_id = int(request.path.split('/')[-2])
+        gp_id = int(request.resolver_match.args[0])
       except ValueError:
-        # this shoudn't be possible, but just to be safe
-        # (it shouuld 404 if url doesn't match expected pattern)
-        logger.error('Could not parse GP id. URL: %s', request.path)
+        # shoudn't be possible, but catch it in case
+        logger.error('Could not parse GP id. URL: %s, ResolverMatch args: %s',
+                     request.path, request.resolver_match.args)
       else:
         gp = GivingProject.objects.get(pk=gp_id)
         year = gp.fundraising_deadline - datetime.timedelta(weeks=52)
         apps = apps.filter(submission_time__gte=year)
-        # create choices from queryset
         formfield.choices = [('', '---------')] + [(app.pk, unicode(app)) for app in apps]
 
     return formfield
@@ -252,7 +252,10 @@ class GivingProjectA(BaseModelAdmin):
   ]
   readonly_fields = ['estimated']
   form = modelforms.GivingProjectAdminForm
-  inlines = [GPSurveyI, ProjectResourcesInline, MembershipInline, ProjectAppInline]
+  inlines = [MembershipInline]
+
+  def change_view(self, request, object_id, form_url='', extra_context=None):
+    self.inlines = self.inlines + [GPSurveyI, ProjectResourcesInline, ProjectAppInline]
 
   def gp_year(self, obj):
     year = obj.fundraising_deadline.year
