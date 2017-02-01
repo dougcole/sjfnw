@@ -187,7 +187,6 @@ class DraftGrantApplication(models.Model):
 
   def editable(self):
     deadline = self.grant_cycle.close
-    logger.debug('deadline is ' + str(self.grant_cycle.close))
     now = timezone.now()
     return (self.grant_cycle.open < now and deadline > now or
            (self.extended_deadline and self.extended_deadline > now))
