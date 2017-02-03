@@ -604,15 +604,15 @@ def copy_app(request, organization):
   if request.method == 'POST':
     form = RolloverForm(organization, request.POST)
     if form.is_valid():
-      new_cycle = form.cleaned_data.get('cycle')
+      cycle_id = form.cleaned_data.get('cycle')
       draft = form.cleaned_data.get('draft')
       app = form.cleaned_data.get('application')
 
       # get cycle
       try:
-        cycle = models.GrantCycle.objects.get(pk=int(new_cycle))
+        cycle = models.GrantCycle.objects.get(pk=int(cycle_id))
       except models.GrantCycle.DoesNotExist:
-        logger.warning('copy_app GrantCycle %d not found', new_cycle)
+        logger.warning('copy_app GrantCycle %d not found', cycle_id)
         return render(request, 'grants/copy_app_error.html')
 
       # make sure the combo does not exist already
@@ -638,7 +638,7 @@ def copy_app(request, organization):
               ['timeline_' + str(i) for i in range(15)],
               json.loads(application.timeline)
               )))
-          if hasattr(application, 'overflow') and new_cycle.two_year_grants:
+          if hasattr(application, 'overflow') and cycle.two_year_grants:
             content['two_year_question'] = application.overflow.two_year_question
           content = json.dumps(content)
         except models.GrantApplication.DoesNotExist:
@@ -648,7 +648,6 @@ def copy_app(request, organization):
           application = models.DraftGrantApplication.objects.get(pk=int(draft))
           content = json.loads(application.contents)
           content['cycle_question'] = ''
-          logger.info(content)
           content = json.dumps(content)
         except models.DraftGrantApplication.DoesNotExist:
           logger.warning('copy_app - draft %s not found', draft)
@@ -663,7 +662,7 @@ def copy_app(request, organization):
       new_draft.save()
       logger.info('copy_app -- content and files set')
 
-      return redirect('/apply/' + new_cycle + user_override)
+      return redirect('/apply/' + cycle_id + user_override)
 
     else: # INVALID FORM
       logger.info('Invalid form: %s', form.errors)
@@ -676,8 +675,6 @@ def copy_app(request, organization):
     cycle_count = str(form['cycle']).count('<option value') - 1
     apps_count = (str(form['application']).count('<option value') +
                   str(form['draft']).count('<option value') - 2)
-    logger.info(cycle_count)
-    logger.info(apps_count)
 
   return render(request, 'grants/org_app_copy.html',
                 {'form': form, 'cycle_count': cycle_count, 'apps_count': apps_count})
