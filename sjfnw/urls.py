@@ -4,7 +4,6 @@ from django.contrib import admin
 from django.contrib.staticfiles.urls import staticfiles_urlpatterns
 from django.views.generic.base import RedirectView, TemplateView
 
-from sjfnw.admin import advanced_admin
 from sjfnw.grants.urls import apply_urls, report_urls, grants_urls, root_urls
 
 handler404 = 'sjfnw.views.page_not_found'
@@ -46,13 +45,7 @@ else:
     (r'^admin/grants/organization/login', 'sjfnw.grants.views.login_as_org'),
     (r'^admin/grants/givingprojectgrant/yer-status', 'sjfnw.grants.views.show_yer_statuses'),
 
-    (r'^admin-advanced/', include(advanced_admin.urls)),
-    (r'^admin-advanced$', RedirectView.as_view(url='/admin-advanced/')),
-    (r'^admin-advanced/grants/grantapplication/(?P<app_id>\d+)/revert',
-      'sjfnw.grants.views.revert_app_to_draft'),
-    (r'^admin-advanced/grants/grantapplication/(?P<app_id>\d+)/rollover',
-      'sjfnw.grants.views.admin_rollover'),
-    (r'^admin-advanced/grants/organizations/merge/(?P<id_a>\d+)/(?P<id_b>\d+)',
+    (r'^admin/grants/organizations/merge/(?P<id_a>\d+)/(?P<id_b>\d+)',
       'sjfnw.grants.views.merge_orgs'),
 
     # reporting

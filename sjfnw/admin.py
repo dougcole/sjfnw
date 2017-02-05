@@ -1,20 +1,13 @@
 import logging
 
 from django.contrib import admin, messages
-from django.contrib.admin.sites import AdminSite
 from django.contrib.auth.admin import UserAdmin
-from django.contrib.auth.models import User, Group, Permission
-from django.contrib.contenttypes.models import ContentType
+from django.contrib.auth.models import Group, User
+
+from sjfnw.fund.models import Member
+from sjfnw.grants.models import Organization
 
 logger = logging.getLogger('sjfnw')
-
-# Configure admin site
-# ---------------------
-
-admin.site.index_template = 'admin/index_custom.html'
-admin.site.site_header = 'Social Justice Fund NW Admin Site'
-admin.site.site_title = 'SJF Admin'
-admin.site.index_title = None
 
 # Shared admin classes
 # ---------------------
@@ -22,6 +15,13 @@ admin.site.index_title = None
 class BaseModelAdmin(admin.ModelAdmin):
   """ Base class for setting a universal per-page limit """
   list_per_page = 30
+
+
+class BaseShowInline(admin.TabularInline):
+  """ Base inline for read only items """
+  extra = 0
+  max_num = 0
+  can_delete = False
 
 
 class YearFilter(admin.SimpleListFilter):
@@ -71,15 +71,40 @@ class YearFilter(admin.SimpleListFilter):
       filt['{}{}__year'.format(key, self.field)] = year
       return queryset.filter(**filt)
 
+# Configure admin site
+# ---------------------
 
-# Register
-# ---------
-
-advanced_admin = AdminSite(name='advanced')
+admin.site.index_template = 'admin/index_custom.html'
+admin.site.site_header = 'Social Justice Fund NW Admin Site'
+admin.site.site_title = 'SJF Admin'
+admin.site.index_title = None
 
 admin.site.unregister(Group)
+admin.site.unregister(User)
 
-advanced_admin.register(User, UserAdmin)
-advanced_admin.register(Group)
-advanced_admin.register(Permission)
-advanced_admin.register(ContentType)
+class MemberI(BaseShowInline):
+  model = Member
+  fields = ('first_name', 'last_name')
+  readonly_fields = ('first_name', 'last_name')
+  show_change_link = True
+
+class UserA(UserAdmin):
+  """ Customized ModelAdmin using django's UserAdmin as base"""
+  list_display = ('username', 'is_superuser')
+  search_fields = ('username',)
+  fieldsets = (
+      (None, {
+        'fields': (
+          ('username', 'password'),
+          ('date_joined', 'last_login')
+        )
+      }),
+      ('Permissions', {
+        'fields': ('is_active', 'is_staff', 'is_superuser')
+      })
+  )
+  readonly_fields = ['last_login', 'date_joined']
+
+  inlines = (MemberI,)
+
+admin.site.register(User, UserA)

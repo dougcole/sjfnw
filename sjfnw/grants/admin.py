@@ -8,7 +8,7 @@ from django.utils import timezone
 from django.utils.safestring import mark_safe
 
 from sjfnw import utils
-from sjfnw.admin import BaseModelAdmin, advanced_admin, YearFilter
+from sjfnw.admin import BaseModelAdmin, BaseShowInline, YearFilter
 from sjfnw.grants import models
 from sjfnw.grants.modelforms import DraftAdminForm, LogAdminForm
 
@@ -90,13 +90,6 @@ class MultiYearGrantFilter(admin.SimpleListFilter):
 # -----------------------------------------------------------------------------
 #  INLINES
 # -----------------------------------------------------------------------------
-
-class BaseShowInline(admin.TabularInline):
-  """ Base inline for read only items """
-  extra = 0
-  max_num = 0
-  can_delete = False
-
 
 class LogReadonlyI(admin.TabularInline):
   """ Show existing logs as an inline. Can be deleted but not edited.
@@ -640,13 +633,6 @@ class LogA(BaseModelAdmin):
     perms['unlisted'] = True
     return perms
 
-
-class DraftAdv(BaseModelAdmin):
-  """ Only used in admin-advanced """
-  list_display = ['organization', 'grant_cycle', 'modified', 'overdue',
-                  'extended_deadline']
-  list_filter = ['grant_cycle']
-
 # -----------------------------------------------------------------------------
 #  REGISTER
 # -----------------------------------------------------------------------------
@@ -660,10 +646,3 @@ admin.site.register(models.SponsoredProgramGrant, SponsoredProgramGrantA)
 admin.site.register(models.YearEndReport, YearEndReportA)
 admin.site.register(models.YERDraft, YERDraftA)
 admin.site.register(models.GrantApplicationLog, LogA)
-
-advanced_admin.register(models.GrantCycle, GrantCycleA)
-advanced_admin.register(models.Organization, OrganizationA)
-advanced_admin.register(models.GrantApplication, GrantApplicationA)
-advanced_admin.register(models.DraftGrantApplication, DraftAdv)
-advanced_admin.register(models.GivingProjectGrant, GivingProjectGrantA)
-advanced_admin.register(models.SponsoredProgramGrant, SponsoredProgramGrantA)

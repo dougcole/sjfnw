@@ -9,9 +9,9 @@ from django.utils.safestring import mark_safe
 import unicodecsv
 
 from sjfnw import utils
-from sjfnw.admin import BaseModelAdmin, advanced_admin
+from sjfnw.admin import BaseModelAdmin
 from sjfnw.fund.models import (GivingProject, Member, Membership, Survey,
-    GPSurvey, Resource, ProjectResource, Donor, Step, NewsItem, SurveyResponse)
+    GPSurvey, Resource, ProjectResource, Donor, NewsItem, SurveyResponse)
 from sjfnw.fund import forms, modelforms, utils as fund_utils
 from sjfnw.grants.models import ProjectApp, GrantApplication
 
@@ -272,10 +272,14 @@ class ResourceA(BaseModelAdmin):
   fields = ['title', 'summary', 'link']
 
 
-class MemberAdvanced(BaseModelAdmin):
-  list_display = ['first_name', 'last_name', 'email']
-  search_fields = ['first_name', 'last_name', 'email']
-
+class MemberA(BaseModelAdmin):
+  list_display = ['first_name', 'last_name', 'user']
+  search_fields = ['first_name', 'last_name', 'user']
+  readonly_fields = ('user',)
+  fields = (
+    ('first_name', 'last_name'),
+    'user'
+  )
 
 class MembershipA(BaseModelAdmin):
   actions = ['approve']
@@ -473,19 +477,10 @@ class SurveyResponseA(BaseModelAdmin):
 # -----------------------------------------------------------------------------
 
 admin.site.register(GivingProject, GivingProjectA)
-admin.site.register(Member, MemberAdvanced)
+admin.site.register(Member, MemberA)
 admin.site.register(Membership, MembershipA)
 admin.site.register(NewsItem, NewsA)
 admin.site.register(Donor, DonorA)
 admin.site.register(Resource, ResourceA)
 admin.site.register(Survey, SurveyA)
 admin.site.register(SurveyResponse, SurveyResponseA)
-
-advanced_admin.register(Member, MemberAdvanced)
-advanced_admin.register(Donor, DonorA)
-advanced_admin.register(Membership, MembershipA)
-advanced_admin.register(GivingProject, GivingProjectA)
-advanced_admin.register(NewsItem, NewsA)
-advanced_admin.register(Step, StepAdv)
-advanced_admin.register(ProjectResource)
-advanced_admin.register(Resource, ResourceA)
