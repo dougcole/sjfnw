@@ -91,7 +91,6 @@ class UserA(UserAdmin):
         )
       }),
       ('Details', {
-        'classes': ('collapse',),
         'fields': (
           ('date_joined', 'last_login'),
           ('is_staff', 'is_superuser'),
