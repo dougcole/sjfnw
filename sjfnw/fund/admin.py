@@ -252,6 +252,7 @@ class MemberA(BaseModelAdmin):
   search_fields = ['first_name', 'last_name', 'user']
 
   fields = (('first_name', 'last_name', 'user'),)
+  inlines = (MembershipInline,)
 
 
 class MembershipA(BaseModelAdmin):
