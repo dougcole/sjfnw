@@ -250,15 +250,9 @@ class ResourceA(BaseModelAdmin):
 class MemberA(BaseModelAdmin):
   list_display = ['first_name', 'last_name', 'user']
   search_fields = ['first_name', 'last_name', 'user']
-  fields = (('first_name', 'last_name', 'user_link'),)
-  readonly_fields = ('user_link',)
 
-  def user_link(self, obj):
-    if (obj.user):
-      return utils.admin_change_link('auth_user', obj.user, new_tab=True)
-    return 'none'
-  user_link.allow_tags = True
-  user_link.short_description = 'User'
+  fields = (('first_name', 'last_name', 'user'),)
+
 
 class MembershipA(BaseModelAdmin):
   actions = ['approve']

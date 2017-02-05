@@ -87,6 +87,23 @@ class MultiYearGrantFilter(admin.SimpleListFilter):
       return queryset.filter(second_amount__isnull=False)
     return queryset
 
+class OrgRegisteredFilter(admin.SimpleListFilter):
+  title = 'Registered'
+  parameter_name = 'registered'
+
+  def lookups(self, request, model_admin):
+    return [
+      (1, 'Yes'),
+      (0, 'No')
+    ]
+
+  def queryset(self, request, queryset):
+    if self.value() == '1':
+      return queryset.filter(user__isnull=False)
+    elif self.value() == '0':
+      return queryset.filter(user__isnull=True)
+    return queryset
+
 # -----------------------------------------------------------------------------
 #  INLINES
 # -----------------------------------------------------------------------------
@@ -278,30 +295,34 @@ class GrantCycleA(BaseModelAdmin):
 class OrganizationA(BaseModelAdmin):
   list_display = ['name', 'user']
   search_fields = ['name', 'user__username']
+  list_filter = (OrgRegisteredFilter,)
 
   fieldsets = [
-    ('', {
-      'fields': (('name', 'user'),)
-    }),
-    ('Staff-entered contact info', {
-       'fields': (('staff_contact_person', 'staff_contact_person_title',
-                   'staff_contact_phone', 'staff_contact_email'),)
-    }),
-    ('Contact info from most recent application', {
-      'fields': (
-        ('address', 'city', 'state', 'zip'),
-        ('contact_person', 'contact_person_title', 'telephone_number', 'email_address'),
-        ('fax_number', 'website'))
-    }),
-    ('Organization info from most recent application', {
-      'fields': (('founded', 'status', 'ein', 'mission'),)
-    }),
-    ('Fiscal sponsor info from most recent application', {
-      'classes': ('collapse',),
-      'fields': (('fiscal_org', 'fiscal_person'),
-                ('fiscal_telephone', 'fiscal_address', 'fiscal_email'))
-    })
-  ]
+      ('', {
+        'fields': (('name', 'user'),)
+      }),
+      ('Staff-entered contact info', {
+        'fields': (('staff_contact_person', 'staff_contact_person_title',
+                    'staff_contact_phone', 'staff_contact_email'),)
+      }),
+      ('Contact info from most recent application', {
+        'fields': (
+          ('address', 'city', 'state', 'zip'),
+          ('contact_person', 'contact_person_title', 'telephone_number', 'email_address'),
+          ('fax_number', 'website')
+        )
+      }),
+      ('Organization info from most recent application', {
+        'fields': (('founded', 'status', 'ein', 'mission'),)
+      }),
+      ('Fiscal sponsor info from most recent application', {
+        'classes': ('collapse',),
+        'fields': (
+          ('fiscal_org', 'fiscal_person'),
+          ('fiscal_telephone', 'fiscal_address', 'fiscal_email')
+        )
+      })
+    ]
 
   def change_view(self, request, object_id, form_url='', extra_context=None):
     self.inlines = [GrantApplicationI, SponsoredProgramI, LogReadonlyI, LogI]
@@ -313,11 +334,6 @@ class OrganizationA(BaseModelAdmin):
       'contact_person_title'
     ]
     return super(OrganizationA, self).change_view(request, object_id)
-
-  def get_readonly_fields(self, request, obj=None):
-    if obj and obj.user:
-      self.readonly_fields.append('user')
-    return self.readonly_fields
 
   def get_actions(self, request):
     return {
