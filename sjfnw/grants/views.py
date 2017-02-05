@@ -20,7 +20,7 @@ from google.appengine.ext import blobstore
 
 import unicodecsv
 
-from sjfnw import constants as c
+from sjfnw import constants as c, utils
 from sjfnw.fund.models import Member
 from sjfnw.grants import constants as gc
 from sjfnw.grants import models
@@ -64,51 +64,42 @@ def org_login(request):
 
 def org_register(request):
 
-  if request.method == 'POST':
+  if request.method == 'GET':
+    register = RegisterForm()
+
+  elif request.method == 'POST':
     register = RegisterForm(request.POST)
 
     if register.is_valid():
       username_email = request.POST['email'].lower()
       password = request.POST['password']
-      org = request.POST['organization']
+      org_name = request.POST['organization']
 
-      # create User
-      created = User.objects.create_user(username_email, username_email, password)
-      created.first_name = org
-      created.last_name = '(organization)'
+      try:
+        org = models.Organization.objects.create_with_user(username_email,
+            password=password, name=org_name)
+      except ValueError as err:
+        logger.warning(username_email + ' tried to re-register as org')
+        login_link = utils.create_link(reverse('sjfnw.grants.views.org_login'), 'Login')
+        messages.error(request, '{} {} instead.'.format(err.message, login_link))
 
-      # create or update org
-      try: # if matching org with no email exists
-        org = models.Organization.objects.get(name=org)
-        org.email = username_email
-        logger.info('matching org name found. setting email')
-        org.save()
-        created.is_active = False
-      except models.Organization.DoesNotExist: # if not, create new
-        logger.info('Creating new org')
-        new_org = models.Organization(name=org, email=username_email)
-        new_org.save()
-      created.save()
-
-      # try to log in
-      user = authenticate(username=username_email, password=password)
-      if user:
-        if user.is_active:
-          login(request, user)
-          return redirect(org_home)
-        else:
-          logger.info('Registration needs admin approval, showing message. ' +
-              username_email)
-          messages.warning(request, 'You have registered successfully but your account '
-          'needs administrator approval. Please contact '
-          '<a href="mailto:info@socialjusticefund.org">info@socialjusticefund.org</a>')
       else:
-        messages.error(request, 'There was a problem with your registration. '
-            'Please <a href=""/apply/support#contact">contact a site admin</a> for assistance.')
-        logger.error('Password not working at registration, account:  ' + username_email)
+        user = authenticate(username=username_email, password=password)
+        if user:
+          if user.is_active:
+            login(request, user)
+            return redirect(org_home)
+          else:
+            logger.info('Registration needs admin approval, showing message. ' +
+                username_email)
+            messages.warning(request, 'You have registered successfully but your account '
+            'needs administrator approval. Please contact '
+            '<a href="mailto:info@socialjusticefund.org">info@socialjusticefund.org</a>')
+        else:
+          messages.error(request, 'There was a problem with your registration. '
+              'Please <a href=""/apply/support#contact">contact a site admin</a> for assistance.')
+          logger.error('Password not working at registration, account:  ' + username_email)
 
-  else: # GET
-    register = RegisterForm()
   form = LoginForm()
 
   return render(request, 'grants/org_login_register.html', {
@@ -804,7 +795,7 @@ def _view_permission(user, application):
     return 3
   else:
     try:
-      member = Member.objects.select_related().get(email=user.email)
+      member = Member.objects.select_related().get(user=user)
       for ship in member.membership_set.all():
         if ship.giving_project in application.giving_projects.all():
           return 1

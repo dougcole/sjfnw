@@ -30,9 +30,7 @@ class Login(BaseGrantTestCase):
     self.assert_message(response, 'Your password didn\'t match the one on file. Please try again.')
 
   def test_wrong_pw(self):
-    User.objects.create_user('a@b.com', 'a@b.com', 'abc')
-    org = models.Organization(email='a@b.com', name='ABC')
-    org.save()
+    models.Organization.objects.create_with_user(email='a@b.com', password='abc', name='ABC')
     form_data = {
       'email': 'a@b.com',
       'password': 'wrong!'
@@ -44,9 +42,7 @@ class Login(BaseGrantTestCase):
     self.assert_message(response, 'Your password didn\'t match the one on file. Please try again.')
 
   def test_valid(self):
-    User.objects.create_user('a@b.com', 'a@b.com', 'abc')
-    org = models.Organization(email='a@b.com', name='ABC')
-    org.save()
+    models.Organization.objects.create_with_user(email='a@b.com', password='abc', name='ABC')
     form_data = {
       'email': 'a@b.com',
       'password': 'abc'
@@ -71,14 +67,14 @@ class Register(BaseGrantTestCase):
       'organization': 'Unique, New York'
       }
 
-    self.assertEqual(0, models.Organization.objects.filter(name='Unique, New York').count())
-    self.assertEqual(0, User.objects.filter(email='uniquenewyork@gmail.com').count())
+    self.assert_count(models.Organization.objects.filter(name='Unique, New York'), 0)
+    self.assert_count(User.objects.filter(email='uniquenewyork@gmail.com'), 0)
 
     response = self.client.post(self.url, registration, follow=True)
 
-    self.assertEqual(1, models.Organization.objects.filter(name='Unique, New York').count())
-    self.assertEqual(1, User.objects.filter(email='uniquenewyork@gmail.com').count())
     self.assertTemplateUsed(response, self.template_success)
+    self.assert_count(models.Organization.objects.filter(name='Unique, New York'), 1)
+    self.assert_count(User.objects.filter(email='uniquenewyork@gmail.com'), 1)
 
   def test_repeat_org_name(self):
     """ Verify that registration fails if org with same org name and some email is already in DB.
@@ -132,22 +128,23 @@ class Register(BaseGrantTestCase):
         'organization': 'Brand New'
     }
 
-    self.assertEqual(1, User.objects.filter(email='neworg@gmail.com').count())
-    self.assertEqual(0, models.Organization.objects.filter(name='Brand New').count())
+    self.assert_count(User.objects.filter(email='neworg@gmail.com'), 1)
+    self.assert_count(models.Organization.objects.filter(name='Brand New'), 0)
 
     response = self.client.post(self.url, registration, follow=True)
 
-    self.assertEqual(1, User.objects.filter(email='neworg@gmail.com').count())
-    self.assertEqual(0, models.Organization.objects.filter(name='Brand New').count())
+    self.assert_count(User.objects.filter(email='neworg@gmail.com'), 1)
+    self.assert_count(models.Organization.objects.filter(name='Brand New'), 0)
     self.assertTemplateUsed(response, self.template_error)
     self.assertFormError(response, 'register', None,
         'That email is registered with Project Central. Please register using a different email.')
 
   def test_admin_entered_match(self):
-    """ Org name matches an org that was entered by staff (no login email) """
+    """ Org name matches an org that was entered by staff (has no user) """
 
     org = models.Organization(name='Ye olde Orge')
     org.save()
+    self.assert_count(User.objects.filter(email='bababa@gmail.com'), 0)
 
     registration = {
       'email': 'bababa@gmail.com',
@@ -155,17 +152,14 @@ class Register(BaseGrantTestCase):
       'passwordtwo': 'one',
       'organization': 'Ye olde Orge'
     }
-
     response = self.client.post(self.url, registration, follow=True)
 
-    org = models.Organization.objects.get(name='Ye olde Orge')
-    # org email was updated
-    self.assertEqual(org.email, registration['email'])
-    # user was created, is_active = False
-    self.assertEqual(1, User.objects.filter(email='bababa@gmail.com', is_active=False).count())
-    # stayed on login page
+    org.refresh_from_db()
+    user = User.objects.get(email='bababa@gmail.com')
+    self.assertEqual(user.is_active, False)
+    self.assertEqual(org.user, user)
+
     self.assertTemplateUsed(response, self.template_error)
-    # message telling them to contact admin
     self.assert_message(response, ('You have registered successfully but your '
         'account needs administrator approval. Please contact '
         '<a href="mailto:info@socialjusticefund.org">info@socialjusticefund.org</a>'))

@@ -13,7 +13,35 @@ from sjfnw.grants import constants as gc, utils
 logger = logging.getLogger('sjfnw')
 
 
+class OrganizationManager(models.Manager):
+
+  def create_with_user(self, email=None, password=None, name=None):
+
+    if self.filter(user__username=email):
+      raise ValueError('That email is already registered.')
+
+    name_match = self.filter(name=name, user__isnull=True).first()
+    if name_match:
+      # Organization without User - register but flag inactive
+      name_match.user = User.objects.create_user(
+          email, email, password, first_name=name[:29], last_name='(Organization)'
+      )
+      name_match.user.is_active = False
+      name_match.user.save()
+      name_match.save()
+      return name_match
+
+    user = User.objects.create_user(email, email, password,
+                                    first_name=name[:29], last_name='(Organization)')
+    # TODO remove email
+    org = self.model(user=user, name=name, email=email)
+    org.save()
+    return org
+
+
 class Organization(models.Model):
+  objects = OrganizationManager()
+
   name = models.CharField(max_length=255, unique=True, error_messages={
     'unique': ('An organization with this name is already in the system. '
     'To add a separate org with the same name, add/alter the name to '
@@ -21,6 +49,7 @@ class Organization(models.Model):
   # email corresponds to User.username
   email = models.EmailField(max_length=100, verbose_name='Login',
                             blank=True, unique=True)
+  user = models.OneToOneField(User, null=True)
 
   # staff entered fields
   staff_contact_person = models.CharField(max_length=250, blank=True,
@@ -291,23 +320,23 @@ class GrantApplication(models.Model):
                                   choices=gc.STATE_CHOICES, blank=True)
   fiscal_zip = models.CharField(verbose_name='ZIP', max_length=50, blank=True)
 
-  narrative1 = models.TextField(validators=[WordLimitValidator(gc.NARRATIVE_WORD_LIMITS['narrative1'])],
-                                verbose_name=gc.NARRATIVE_TEXTS['narrative1'])
-  narrative2 = models.TextField(validators=[WordLimitValidator(gc.NARRATIVE_WORD_LIMITS['narrative2'])],
-                                verbose_name=gc.NARRATIVE_TEXTS['narrative2'],
-                                help_text=gc.HELP_TEXTS['leadership'])
-  narrative3 = models.TextField(validators=[WordLimitValidator(gc.NARRATIVE_WORD_LIMITS['narrative3'])],
-                                verbose_name=gc.NARRATIVE_TEXTS['narrative3'])
-  narrative4 = models.TextField(validators=[WordLimitValidator(gc.NARRATIVE_WORD_LIMITS['narrative4'])],
-                                verbose_name=gc.NARRATIVE_TEXTS['narrative4'],
-                                help_text=gc.HELP_TEXTS['goals'])
-  narrative5 = models.TextField(validators=[WordLimitValidator(gc.NARRATIVE_WORD_LIMITS['narrative5'])],
-                                verbose_name=gc.NARRATIVE_TEXTS['narrative5'])
-  narrative6 = models.TextField(validators=[WordLimitValidator(gc.NARRATIVE_WORD_LIMITS['narrative6'])],
-                                verbose_name=gc.NARRATIVE_TEXTS['narrative6'],
-                                help_text=gc.HELP_TEXTS['leadership'])
-  cycle_question = models.TextField(
-      validators=[WordLimitValidator(gc.NARRATIVE_WORD_LIMITS['cycle_question'])], blank=True)
+  narrative1 = models.TextField(verbose_name=gc.NARRATIVE_TEXTS['narrative1'],
+      validators=[WordLimitValidator(gc.NARRATIVE_WORD_LIMITS['narrative1'])])
+  narrative2 = models.TextField(verbose_name=gc.NARRATIVE_TEXTS['narrative2'],
+      help_text=gc.HELP_TEXTS['leadership'],
+      validators=[WordLimitValidator(gc.NARRATIVE_WORD_LIMITS['narrative2'])])
+  narrative3 = models.TextField(verbose_name=gc.NARRATIVE_TEXTS['narrative3'],
+      validators=[WordLimitValidator(gc.NARRATIVE_WORD_LIMITS['narrative3'])])
+  narrative4 = models.TextField(verbose_name=gc.NARRATIVE_TEXTS['narrative4'],
+      validators=[WordLimitValidator(gc.NARRATIVE_WORD_LIMITS['narrative4'])],
+      help_text=gc.HELP_TEXTS['goals'])
+  narrative5 = models.TextField(verbose_name=gc.NARRATIVE_TEXTS['narrative5'],
+      validators=[WordLimitValidator(gc.NARRATIVE_WORD_LIMITS['narrative5'])])
+  narrative6 = models.TextField(verbose_name=gc.NARRATIVE_TEXTS['narrative6'],
+      validators=[WordLimitValidator(gc.NARRATIVE_WORD_LIMITS['narrative6'])],
+      help_text=gc.HELP_TEXTS['leadership'])
+  cycle_question = models.TextField(blank=True,
+      validators=[WordLimitValidator(gc.NARRATIVE_WORD_LIMITS['cycle_question'])])
 
   timeline = models.TextField(verbose_name=gc.NARRATIVE_TEXTS['timeline'])
 

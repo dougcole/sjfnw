@@ -169,8 +169,7 @@ class MergeOrgs(BaseGrantTestCase):
 
   def test_start_triple_org(self):
 
-    third = Organization(name='third')
-    third.save()
+    third = Organization.objects.create_with_user(email='third@third.com', name='third')
 
     post_data = {
       'action': 'merge',
