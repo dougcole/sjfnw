@@ -249,7 +249,7 @@ class ResourceA(BaseModelAdmin):
 
 class MemberA(BaseModelAdmin):
   list_display = ['first_name', 'last_name', 'user']
-  search_fields = ['first_name', 'last_name', 'user']
+  search_fields = ['first_name', 'last_name', 'user__username']
 
   fields = (('first_name', 'last_name', 'user'),)
   inlines = (MembershipInline,)
