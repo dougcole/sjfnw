@@ -1,12 +1,30 @@
 [
   {
     "pk": 1,
+    "model": "auth.user",
+    "fields": {
+      "date_joined": "2013-04-02T23:34:10Z",
+      "first_name": "First",
+      "last_name": "Member",
+      "username": "firstacct@gmail.com",
+      "email": "firstacct@gmail.com",
+      "groups": [],
+      "is_active": true,
+      "is_staff": false,
+      "is_superuser": false,
+      "last_login": "2013-04-02T23:34:10Z",
+      "user_permissions": [],
+      "password": "pbkdf2_sha256$20000$SagEDFnt3vSk$NxTiRp7tN4uVMyGEpcDLmsG5A/8NmP6ukjMqESVFLo0="
+    }
+  },
+  {
+    "pk": 1,
     "model": "fund.member",
     "fields": {
       "current": 1,
       "first_name": "First",
       "last_name": "Member",
-      "email": "firstacct@gmail.com"
+      "user_id": 1
     }
   },
   {

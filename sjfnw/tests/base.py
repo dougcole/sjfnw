@@ -46,14 +46,11 @@ class BaseTestCase(TestCase):
     self.email = self.known_members[name]
 
     if name == "first":
-      user = User.objects.create_user(self.email, self.email, 'pass')
+      if not 'sjfnw/fund/fixtures/test_fund.json' in self.fixtures:
+        raise Exception('Cannot log in as first member without test_fund.json fixture')
       self.login_strict(self.email, 'pass')
-      if 'sjfnw/fund/fixtures/test_fund.json' in self.fixtures:
-        Member.objects.filter(pk=1).update(user=user)
-        self.member_id = 1
-        self.ship_id = 1
-      else:
-        logger.warn('Test is using "first" member without the matching fixture')
+      self.member_id = 1
+      self.ship_id = 1
     elif name == "blank":
       member = Member.objects.create_with_user(email=self.email, password='pass',
                                                first_name=name, last_name='Member')
