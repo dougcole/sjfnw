@@ -15,6 +15,7 @@ class GrantReading(BaseGrantTestCase):
               'sjfnw/fund/fixtures/test_fund.json']
 
   def setUp(self):
+    super(GrantReading, self).setUp()
     papp = ProjectApp(application_id=1, giving_project_id=1)
     papp.save()
     award = GivingProjectGrant(projectapp_id=papp.pk, amount=8900, first_yer_due=timezone.now())

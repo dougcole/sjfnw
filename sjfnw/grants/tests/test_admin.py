@@ -149,6 +149,7 @@ class MergeOrgs(BaseGrantTestCase):
   admin_url = reverse('admin:grants_organization_changelist')
 
   def setUp(self):
+    super(MergeOrgs, self).setUp()
     self.login_as_admin()
 
   def test_action_available(self):
@@ -245,11 +246,8 @@ class MergeOrgs(BaseGrantTestCase):
     sec = 2
     sec_org = Organization.objects.get(pk=sec)
 
-    # create corresponding Users for both
-    user = User(email=sec_org.email, username=sec_org.email)
-    user.save()
-    user = User(email=primary_org.email, username=primary_org.email)
-    user.save()
+    self.assertIsNotNone(primary_org.user)
+    self.assertIsNotNone(sec_org.user)
 
     # get draft & app IDs that were associated with secondary org
     sec_apps = list(sec_org.grantapplication_set.values_list('pk', flat=True))
@@ -267,7 +265,7 @@ class MergeOrgs(BaseGrantTestCase):
 
     # secondary org & user should have been deleted
     self.assert_count(Organization.objects.filter(pk=sec), 0)
-    self.assert_count(User.objects.filter(email=sec_org.email), 0)
+    self.assert_count(User.objects.filter(username=sec_org.user.username), 0)
 
     log = (GrantApplicationLog.objects.filter(organization_id=primary)
                                       .order_by('-date')

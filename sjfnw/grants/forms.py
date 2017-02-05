@@ -31,22 +31,9 @@ class RegisterForm(forms.Form):
     email = cleaned_data.get('email')
 
     if org and email:
-      if Organization.objects.filter(email=email):
-        logger.warning(u'%s tried to re-register with %s', org, email)
-        raise ValidationError('That email is already registered. Log in instead.')
-
-      name_match = Organization.objects.filter(name__iexact=org)
-      if name_match:
-        if name_match[0].email:
-          logger.warning(u'Name match on registration, different emails: %s', org)
-          raise ValidationError('That organization is already registered. Log in instead.')
-        else:
-          logger.warning('Name match, blank email. ' + org)
-
-      if User.objects.filter(username=email):
-        logger.warning(u'User already exists, but not Org: %s', email)
-        raise ValidationError('That email is registered with Project Central.'
-                              ' Please register using a different email.')
+      error_msg = Organization.check_registration(org, email)
+      if error_msg:
+        raise ValidationError(error_msg)
 
       password = cleaned_data.get('password')
       passwordtwo = cleaned_data.get('passwordtwo')
@@ -330,9 +317,9 @@ class LoginAsOrgForm(forms.Form):
 
   def __init__(self, *args, **kwargs):
     super(LoginAsOrgForm, self).__init__(*args, **kwargs)
-    orgs = Organization.objects.order_by('name')
+    orgs = Organization.objects.exclude(user__isNull=true).order_by('name')
     self.fields['organization'] = forms.ChoiceField(
-        choices=[('', '--- Organizations ---')] + [(o.email, unicode(o)) for o in orgs])
+        choices=[('', '--- Organizations ---')] + [(o.get_email(), unicode(o)) for o in orgs])
 
 
 class OrgMergeForm(forms.Form):

@@ -66,7 +66,8 @@ class BaseTestCase(TestCase):
     """ Asserts that a message (django.contrib.messages) with the given text
         is displayed """
     messages = list(response.context['messages'])
-    self.assertEqual(1, len(messages))
+    self.assertEqual(1, len(messages),
+        'Expected 1 message on request, got {}'.format(len(messages)))
     message = str(messages[0])
     if regex:
       self.assertRegexpMatches(message, text)

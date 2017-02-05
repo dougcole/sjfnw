@@ -402,7 +402,7 @@ def set_current(request, ship_id):
 
 @login_required(login_url='/fund/login')
 def not_member(request):
-  org = Organization.objects.filter(email=request.user.username).first()
+  org = Organization.objects.filter(user=request.user).first()
 
   return render(request, 'fund/not_member.html', {
     'contact_url': '/fund/support#contact', 'org': org

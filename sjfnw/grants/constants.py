@@ -1,5 +1,11 @@
 from sjfnw import constants as c
 
+FORM_ERRORS = {
+  'email_registered': 'That email is already registered. Log in instead.',
+  'email_registered_pc': 'That email is registered with Project Central. Please register using a different email.',
+  'org_registered': 'That organization is registered under a different email address. Log in instead, or contact us if you need help accessing your account.'
+}
+
 PHOTO_FILE_TYPES = ('jpeg', 'jpg', 'png', 'gif', 'bmp')
 
 VIEWER_FILE_TYPES = ('doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx', 'pdf')

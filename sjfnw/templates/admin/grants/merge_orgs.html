@@ -71,7 +71,7 @@
   <tr>
     <td>Login email/username</td>
     {% for org in orgs %}
-    <td>{{ org.email }}</td>
+    <td>{% if org.user %}{{ org.user.username }}{% else %}n/a{% endif %}</td>
     {% endfor %}
   </tr>
   <tr>

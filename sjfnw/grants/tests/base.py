@@ -52,17 +52,21 @@ class BaseGrantTestCase(BaseTestCase):
 
   def setUp(self):
     set_cycle_dates()
+    for i, email in enumerate(['neworg@gmail.com', 'testorg@gmail.com']):
+      user = User.objects.create_user(email, email, 'pw')
+      org = models.Organization.objects.get(pk=i+1)
+      org.user = user
+      org.save()
+
 
   # see sjfnw/grants/fixtures/README.md for what objects are associated with each org
   def login_as_org(self, name):
     if name == 'new':
-      User.objects.create_user('neworg@gmail.com', 'neworg@gmail.com', 'noob')
-      self.client.login(username='neworg@gmail.com', password='noob')
       self.org_id = 1
+      self.client.login(username='neworg@gmail.com', password='pw')
     elif name == 'test':
-      User.objects.create_user('testorg@gmail.com', 'testorg@gmail.com', 'noob')
-      self.client.login(username='testorg@gmail.com', password='noob')
       self.org_id = 2
+      self.client.login(username='testorg@gmail.com', password='pw')
     else:
       raise ValueError('Unknown org name {}'.format(name))
 

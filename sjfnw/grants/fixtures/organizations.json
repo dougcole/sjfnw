@@ -4,7 +4,6 @@
     "model": "grants.organization",
     "fields": {
       "name": "Dogtown",
-      "email": "letodd@entropix.com",
       "email_address": "",
       "address": "16163 Merit Court",
       "city": "Hayes",
@@ -26,7 +25,6 @@
     "model": "grants.organization",
     "fields": {
       "name": "Ronelon",
-      "email": "sophiavelazquez@volax.com",
       "email_address": "",
       "address": "65267 Vanderveer Place",
       "city": "Clarence",
@@ -55,7 +53,6 @@
     "model": "grants.organization",
     "fields": {
       "name": "Artworlds",
-      "email": "ochoacombs@vidto.com",
       "email_address": "",
       "address": "56428 Beayer Place",
       "city": "Leeper",
@@ -84,7 +81,6 @@
     "model": "grants.organization",
     "fields": {
       "name": "Zenolux",
-      "email": "meltonhartman@elita.com",
       "email_address": "",
       "address": "58937 Pacific Street",
       "city": "Onton",
@@ -106,7 +102,6 @@
     "model": "grants.organization",
     "fields": {
       "name": "Comtext",
-      "email": "phillipsblevins@zaggles.com",
       "email_address": "",
       "address": "110328 McKinley Avenue",
       "city": "Woodruff",
@@ -135,7 +130,6 @@
     "model": "grants.organization",
     "fields": {
       "name": "Panzent",
-      "email": "dunlapbanks@kineticut.com",
       "email_address": "",
       "address": "6305 Harden Street",
       "city": "Kent",
@@ -157,7 +151,6 @@
     "model": "grants.organization",
     "fields": {
       "name": "Digiprint",
-      "email": "nannielane@goko.com",
       "email_address": "",
       "address": "117869 Ryerson Street",
       "city": "Beason",
@@ -179,7 +172,6 @@
     "model": "grants.organization",
     "fields": {
       "name": "Medmex",
-      "email": "kellyhorne@equicom.com",
       "email_address": "",
       "address": "106927 Caton Avenue",
       "city": "Ola",
@@ -201,7 +193,6 @@
     "model": "grants.organization",
     "fields": {
       "name": "Strozen",
-      "email": "zamorarussell@isopop.com",
       "email_address": "",
       "address": "6910 McClancy Place",
       "city": "Canoochee",
@@ -223,7 +214,6 @@
     "model": "grants.organization",
     "fields": {
       "name": "Mitroc",
-      "email": "tammigutierrez@ontality.com",
       "email_address": "",
       "address": "78823 Narrows Avenue",
       "city": "Bayview",
@@ -245,7 +235,6 @@
     "model": "grants.organization",
     "fields": {
       "name": "Utara",
-      "email": "melissasherman@acium.com",
       "email_address": "",
       "address": "61002 Harbor Court",
       "city": "Gambrills",
@@ -274,7 +263,6 @@
     "model": "grants.organization",
     "fields": {
       "name": "Pushcart",
-      "email": "monicanolan@tri@tribalog.com",
       "email_address": "",
       "address": "2398 Alabama Avenue",
       "city": "Nanafalia",
@@ -296,7 +284,6 @@
     "model": "grants.organization",
     "fields": {
       "name": "Idego",
-      "email": "caseyhood@grupoli.com",
       "email_address": "",
       "address": "30692 Meeker Avenue",
       "city": "Marysville",
@@ -318,7 +305,6 @@
     "model": "grants.organization",
     "fields": {
       "name": "Waab",
-      "email": "maggiewilkins@fishland.com",
       "email_address": "",
       "address": "78828 Stillwell Avenue",
       "city": "Kimmell",
@@ -340,7 +326,6 @@
     "model": "grants.organization",
     "fields": {
       "name": "Prosure",
-      "email": "wisegillespie@handshake.com",
       "email_address": "",
       "address": "86795 Fay Court",
       "city": "Libertytown",

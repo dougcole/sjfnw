@@ -26,7 +26,12 @@ def draft_app_warning(request):
     if ((created_delta > eight_days and eight_days > time_left > timedelta(days=7)) or
         (created_delta < eight_days and timedelta(days=3) > time_left >= timedelta(days=2))):
       subject, from_email = 'Grant cycle closing soon', c.GRANT_EMAIL
-      to_email = draft.organization.email
+      to_email = draft.organization.get_email()
+
+      if not to_email:
+        logger.warn('Unable to send draft reminder; org is not registered %d', draft.organization.pk)
+        continue
+
       html_content = render_to_string('grants/email_draft_warning.html', {
         'org': draft.organization, 'cycle': draft.grant_cycle
       })
@@ -61,7 +66,7 @@ def yer_reminder_email(request):
       app = award.projectapp.application
 
       from_email = c.GRANT_EMAIL
-      to_email = app.organization.email
+      to_email = app.organization.get_email() or app.email_address
       html_content = render_to_string('grants/email_yer_due.html', {
         'award': award, 'app': app, 'gp': award.projectapp.giving_project,
         'base_url': c.APP_BASE_URL

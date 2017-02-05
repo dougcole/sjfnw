@@ -437,7 +437,7 @@ class DraftGrantApplicationA(BaseModelAdmin):
       return '-'
     url = reverse('sjfnw.grants.views.grant_application',
                   kwargs={'cycle_id': obj.grant_cycle_id})
-    url += '?user=' + obj.organization.email
+    url += '?user=' + obj.organization.get_email()
     return (utils.create_link(url, "Edit this draft", new_tab=True) +
             '<br>(logs you in as the organization)')
   edit.allow_tags = True

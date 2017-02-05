@@ -3,6 +3,7 @@
 import logging, re, string
 
 from django.conf import settings
+from django.contrib.auth.models import User
 from django.http import HttpResponse, Http404
 from django.utils import timezone
 

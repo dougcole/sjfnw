@@ -93,7 +93,6 @@
       "fiscal_letter": "",
       "fiscal_email": "",
       "email_address": "as@gmail.com",
-      "email": "neworg@gmail.com",
       "ein": ""
     }
   },
@@ -119,7 +118,6 @@
       "fiscal_letter": "",
       "fiscal_email": "",
       "email_address": "as@fake.com",
-      "email": "testorg@gmail.com",
       "ein": "654"
     }
   },

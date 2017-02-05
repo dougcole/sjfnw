@@ -17,24 +17,26 @@ class OrganizationManager(models.Manager):
 
   def create_with_user(self, email=None, password=None, name=None):
 
-    if self.filter(user__username=email):
-      raise ValueError('That email is already registered.')
+    error_msg = self.model.check_registration(name, email)
+    if error_msg:
+      raise ValueError(error_msg)
 
     name_match = self.filter(name=name, user__isnull=True).first()
     if name_match:
-      # Organization without User - register but flag inactive
+      # Matches existing Organization without User. Register, but flag inactive
+      # pending admin approval
       name_match.user = User.objects.create_user(
-          email, email, password, first_name=name[:29], last_name='(Organization)'
+        email, email, password, first_name=name[:29], last_name='(Organization)'
       )
       name_match.user.is_active = False
       name_match.user.save()
       name_match.save()
       return name_match
 
-    user = User.objects.create_user(email, email, password,
-                                    first_name=name[:29], last_name='(Organization)')
-    # TODO remove email
-    org = self.model(user=user, name=name, email=email)
+    user = User.objects.create_user(
+      email, email, password, first_name=name[:29], last_name='(Organization)'
+    )
+    org = self.model(user=user, name=name)
     org.save()
     return org
 
@@ -46,9 +48,6 @@ class Organization(models.Model):
     'unique': ('An organization with this name is already in the system. '
     'To add a separate org with the same name, add/alter the name to '
     'differentiate the two.')})
-  # email corresponds to User.username
-  email = models.EmailField(max_length=100, verbose_name='Login',
-                            blank=True, unique=True)
   user = models.OneToOneField(User, null=True)
 
   # staff entered fields
@@ -119,6 +118,21 @@ class Organization(models.Model):
       'fiscal_telephone', 'fiscal_email', 'fiscal_address', 'fiscal_city',
       'fiscal_state', 'fiscal_zip', 'fiscal_letter'
     ]
+
+  @classmethod
+  def check_registration(cls, name, email):
+    if cls.objects.filter(user__username=email).exists():
+      return  gc.FORM_ERRORS['email_registered']
+    if User.objects.filter(username=email).exists():
+      return gc.FORM_ERRORS['email_registered_pc']
+    if cls.objects.filter(name__iexact=name, user__isnull=False).exists():
+      return gc.FORM_ERRORS['org_registered']
+
+  def get_email(self):
+    if hasattr(self, 'user') and self.user is not None:
+      return self.user.username
+    else:
+      return None
 
   def get_staff_entered_contact_info(self):
     return ', '.join([val for val in [

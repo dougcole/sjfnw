@@ -239,7 +239,7 @@ def autosave_app(request, cycle_id):
     logger.info('Staff override - %s logging in as %s', request.user.username, username)
 
   try:
-    organization = models.Organization.objects.get(email=username)
+    organization = models.Organization.objects.get(user=request.user)
     logger.info(organization)
   except models.Organization.DoesNotExist:
     return HttpResponse('/apply/nr', status=401)
@@ -320,7 +320,7 @@ def grant_application(request, organization, cycle_id):
       else:
         subject = 'Grant application submitted'
         from_email = c.GRANT_EMAIL
-        to_email = organization.email
+        to_email = organization.get_email()
         html_content = render_to_string('grants/email_submitted.html', {
           'org': organization, 'cycle': cycle
         })
@@ -791,7 +791,7 @@ def _view_permission(user, application):
   """
   if user.is_staff:
     return 2
-  elif user.email == application.organization.email:
+  elif user == getattr(application.organization, 'user', None):
     return 3
   else:
     try:
@@ -1069,16 +1069,14 @@ def merge_orgs(request, id_a, id_b):
       note.save()
 
       logger.info('Post-merge, deleting organization %s and associated User', sec.name)
-      User.objects.filter(email=sec.email).delete()
+      if sec.user:
+        sec.user.delete()
       sec.delete()
 
       messages.success(request, 'Merge successful. Redirected to new organization page')
       return redirect(reverse('admin:grants_organization_change', args=(primary.pk,)))
 
   else: # GET
-    org_a.user = User.objects.filter(username=org_a.email).first()
-    org_b.user = User.objects.filter(username=org_b.email).first()
-
     form = OrgMergeForm(org_a, org_b)
 
   return render(request, 'admin/grants/merge_orgs.html', {
@@ -1343,9 +1341,9 @@ def get_org_results(options):
   # filters
   reg = options.get('registered')
   if reg is True:
-    orgs = orgs.exclude(email='')
+    orgs = orgs.exclude(user__isNull=true)
   elif reg is False:
-    org = orgs.filter(email='')
+    org = orgs.filter(user__isNull=true)
   if options.get('organization_name'):
     orgs = orgs.filter(name__contains=options['organization_name'])
   if options.get('city'):
@@ -1387,7 +1385,10 @@ def get_org_results(options):
 
     # org fields
     for field in fields:
-      row.append(getattr(org, field))
+      if field == 'email':
+        row.append(org.get_email())
+      else:
+        row.append(getattr(org, field))
 
     awards_str = ''
     if get_apps or get_awards:
