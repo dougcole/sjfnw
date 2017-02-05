@@ -1,9 +1,16 @@
 /** GENERAL **/
 
-
 body {
   width: 640px;
-  margin-top: 0; /* reset browser margin */
+  margin-left: 10px;
+}
+
+h1 { /* so it can go next to logo */
+  color: #333;
+  display: inline-block;
+  vertical-align: middle;
+  width: 450px;
+  text-align: center;
 }
 
 div.content_area {
@@ -23,7 +30,7 @@ div.content_area {
 
 /** HEADER **/
 
-#logo {
+.logo {
   display: inline-block;
   vertical-align: middle;
 }
@@ -31,13 +38,6 @@ div.content_area {
 #header {
   margin: 20px 10px;
   height: 82px;
-}
-
-#header-text {
-  display: inline-block;
-  width: 450px;
-  font-size: 2em;
-  font-weight: bold;
 }
 
 /** BLOCKS **/
@@ -62,7 +62,7 @@ div.content_area {
   position: relative;
 }
 
-.top_block: hover {
+.top_block:hover {
   opacity: 0.9;
   position: relative;
 }
@@ -162,6 +162,7 @@ form {
 }
 
 /* contacts list */
+
 .donor {
   line-height: 1.25em;
 }
@@ -317,11 +318,11 @@ input[readonly="True"] {
   width: 33%;
 }
 
-.footer {
+footer .extra {
+  text-align: center;
   font-size: .85em;
-  margin: 3em auto 1em auto;
+  margin: 2em auto 1em auto;
 }
-
 
 /* generic */
 

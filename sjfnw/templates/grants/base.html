@@ -25,11 +25,11 @@
 
 {% block body %}
   <div id="org-wrapper">
-    <div id="nav-menu">
-        <a href="{% url "sjfnw.grants.views.org_home" %}{{ user_override|default:'' }}">
-          <img id="logo" src="/static/images/logo_horiz.png" align="middle" alt="Social Justice Fund NW Logo">home
-        </a>
-    </div>
+    <header>
+      <a href="{% url "sjfnw.grants.views.org_home" %}{{ user_override|default:'' }}">
+        <img class="logo" src="/static/images/logo_horiz.png" align="middle" alt="Social Justice Fund NW Logo">home
+      </a>
+    </header>
 
     <div class="content_area">
       {% if messages %}
@@ -43,10 +43,10 @@
     </div>
 
     <footer>
-      <div class="w-quarter">
+      <div class="fourth">
         <a href="{% url "sjfnw.grants.views.org_support" %}">support</a>
       </div>
-      <div class="w-quarter">
+      <div class="fourth">
         <a href="http://socialjusticefund.org">socialjusticefund.org</a>
       </div>
       <div class="half text-right">

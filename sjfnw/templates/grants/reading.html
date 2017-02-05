@@ -1,48 +1,20 @@
-<!DOCTYPE html>
-<html>
-<head>
-	<meta http-equiv="Content-type" content="text/html;charset=UTF-8">
-	<title>Grant application | Social Justice Fund Grants</title>
-	<link rel="stylesheet" type="text/css" href="/static/css/base.css">
-	<link rel="stylesheet" type="text/css" href="/static/css/grants.css">
-	<script type="text/javascript" src="//ajax.googleapis.com/ajax/libs/jquery/1.8.2/jquery.min.js"></script>
-	<script type="text/javascript"><!-- google analytics -->
-    var _gaq = _gaq || [];
-    _gaq.push(['_setAccount', 'UA-28076150-2']);
+{% extends 'grants/base.html' %}
 
-    //custom variable #1 user type, session level
-    _gaq.push(['_setCustomVar', 1, 'User type', {% if user.username == 'sjfnwads@gmail.com' %}'Aisa'{% elif user.is_staff %}'Staff'{% elif perm == 3 %}'Organization'{% elif perm == 1 %}'Member'{% else %}'Unknown'{% endif %}, 2]);
-
-		{% if request.membership %}
-		//custom variable #2 giving project, page level
-    _gaq.push(['_setCustomVar', 2, 'Giving project', '{{request.membership.giving_project}}', 3]);
-		{% endif %}
-
-    _gaq.push(['_trackPageview']);
-
-    (function() {
-      var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
-      ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
-      var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
-    })();
-  </script>
-  {% block scripts %}{% endblock %}
-</head>
-
-<body>
+{% block title %}Grant application - {{ block.super }}{% endblock title %}
+{% block body %}
 {% block sidebar %}{% endblock %}
 
 {% block main %}
 	<div id="main_content">
     {% autoescape off %}{% load humanize %}
     {% if not file_urls %}{# loaded in its own window #}
-      <div class="title"><h2>{{app.organization}} - {{app.grant_cycle}}</h2>
-      {{app.submission_time|date:"F j, Y"}}</div>
+      <h2 class="text-center">{{app.organization}} - {{app.grant_cycle}}</h2>
+      {{app.submission_time|date:"F j, Y"}}
     {% endif %}
 
 		<h2>Organization and Grant Request Profile</h2>
 
-		<table style="width:100%;">
+		<table>
 			<tr>
 				<td colspan="2">{{form.address.label_tag}}{{app.address}} {{app.city}}, {{app.state}} {{app.zip}}</td>
 			</tr><tr>
@@ -52,7 +24,7 @@
 				<td>{{form.email_address.label_tag}}{{app.email_address}}</td>
 				<td>{{form.website.label_tag}}{{app.website}}</td>
 			</tr><tr>
-				<td><b>{{form.contact_person.help_text}}</b></td>
+				<td><label>{{form.contact_person.help_text}}</label></td>
 				<td>{{app.contact_person}}, {{app.contact_person_title}}</td>
 			</tr><tr>
 				<td>{{form.status.label_tag}}{{app.status}}</td>
@@ -81,7 +53,7 @@
 				<td colspan="2"><p>{{form.grant_request.label_tag}}{{app.grant_request|linebreaks}}</p></td>
 			</tr><tr>
 			{%if app.fiscal_org%}
-				<td colspan="2"><b>Fiscal sponsor information</b></td><!-- Fiscal sponsor info -->
+				<td colspan="2"><label>Fiscal sponsor information</label></td><!-- Fiscal sponsor info -->
 			</tr><tr>
 				<td>{{form.fiscal_org.label_tag}}{{app.fiscal_org|default:"N/A"}}</td>
 				<td>{{form.fiscal_person.label_tag}}{{app.fiscal_person}}</td>
@@ -98,39 +70,41 @@
 		<h2>Narratives</h2>
     <ol class="main">
       <li>
-        <b>{{form.narrative1.label}}</b>
+        <label>{{form.narrative1.label}}</label>
         <p>{{app.narrative1|linebreaks}}</p>
       </li>
       <li>
-        <b>{{form.narrative2.label}}</b>
+        <label>{{form.narrative2.label}}</label>
         <p>{{app.narrative2|linebreaks}}
       </li>
       <li>
-        <b>{{form.narrative3.label}}</b>
+        <label>{{form.narrative3.label}}</label>
         <p>{{app.narrative3|linebreaks}}</p>
       </li>
       <li>
-        <b>{{form.narrative4.label}}</b>
+        <label>{{form.narrative4.label}}</label>
         <p>{{app.narrative4|linebreaks}}</p>
         {{app.timeline_display|linebreaks}}
       </li>
       {% if app.overflow %}
       <li>
-        <b>{{form.two_year_question.label}}</b>
+        <label>{{form.two_year_question.label}}</label>
         <p>{{app.overflow.two_year_question|linebreaks}}</p>
       </li>
       {% endif %}
       <li>
-        <b>{{form.narrative5.label}}</b>
+        <label>{{form.narrative5.label}}</label>
         <p>{{app.narrative5|linebreaks}}</p>
-        <p><b>{{form.collab_ref1_name.help_text}}</b></p>
+        <br>
+        <p><label>{{form.collab_ref1_name.help_text}}</label></p>
         <p>1. {{app.collab_ref1_name}}, {{app.collab_ref1_org}}. {{app.collab_ref1_phone|add:" "}}{{app.collab_ref1_email}}</p>
         <p>2. {{app.collab_ref2_name}}, {{app.collab_ref2_org}}. {{app.collab_ref2_phone|add:" "}}{{app.collab_ref2_email}}</p>
       </li>
       <li>
-        <b>{{form.narrative6.label}}</b>
+        <label>{{form.narrative6.label}}</label>
         <p>{{app.narrative6|linebreaks}}</p>
-        <p><b>Racial justice references</b></p>
+        <br>
+        <p><label>Racial justice references</label></p>
         {% if app.racial_justice_ref1_org %}
           <p>1. {{app.racial_justice_ref1_name}}, {{app.racial_justice_ref1_org}}. {{app.racial_justice_ref1_phone|add:" "}}{{app.racial_justice_ref1_email}}</p>
           {% if app.racial_justice_ref2_name %}
@@ -142,12 +116,12 @@
       </li>
       {% if app.cycle_question %}
       <li>
-        <b>{{form.cycle_question.label}}</b>
+        <label>{{form.cycle_question.label}}</label>
         <p>{{app.cycle_question|linebreaks}}</p>
       </li>
       {% endif %}
 	{% endautoescape %}
 	</div>
-{% endblock %}
+{% endblock main %}
 
-</body>
+{% endblock body %}

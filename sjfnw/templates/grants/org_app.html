@@ -422,7 +422,7 @@ $(document).ready(function() {
     <input id="hidden_submit_app" type="submit" value="Submit EVERYTHING" style="display:none;"/>
   </form>
 
-  <!---hidden iframe for file submissions -->
+  {# hidden iframe for file submissions #}
   <iframe class="upload" id="id_upload_frame" name="upload_frame" onload="fileUploads.iframeUpdated(this);"></iframe>
 
   <h4>File uploads</h4>
@@ -440,7 +440,8 @@ $(document).ready(function() {
       <td style="width:140px;"></td>
       <td></td>
     </tr>
-    <tr>{# budget1 #}
+    {# budget1 #}
+    <tr>
       <td style="padding-left:30px;">
         <span class="has-more-info" id="budget1">{{ form.budget1.label }}</span>
         <div class="more-info" id="budget1-info" style="display:none;">{{ form.budget1.help_text }}</div>
@@ -460,8 +461,8 @@ $(document).ready(function() {
         <span id="budget1_uploaded">{{ file_urls.budget1 }}</span>
       </td>
     </tr>
+    {# budget2 #}
     <tr>
-      <!--- budget2 -->
       <td style="padding-left:30px;">
         <span class="has-more-info" id="budget2">{{ form.budget2.label }}</span>
         <div class="more-info" id="budget2-info" style="display:none;">{{ form.budget2.help_text }}</div>
@@ -479,8 +480,8 @@ $(document).ready(function() {
         <span id="budget2_uploaded">{{ file_urls.budget2 }}</span>
       </td>
     </tr>
+    {# budget3 #}
     <tr>
-      <!--- budget3 -->
       <td style="padding-left:30px;">
         <span class="has-more-info" id="budget3">{{ form.budget3.label }}</span>
         <div class="more-info" id="budget3-info" style="display:none;">{{ form.budget3.help_text }}</div>
@@ -498,8 +499,8 @@ $(document).ready(function() {
         <span id="budget3_uploaded">{{ file_urls.budget3 }}</span>
       </td>
     </tr>
+    {# project budget #}
     <tr>
-      <!--- project budget -->
       <td style="padding-left:30px;">
         <span class="has-more-info" id="project-budget">{{ form.project_budget_file.label }}</span>
         <div class="more-info" id="project-budget-info" style="display:none;">{{ form.project_budget_file.help_text }}</div>

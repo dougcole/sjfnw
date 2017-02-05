@@ -1,21 +1,49 @@
-/*---------------------------------- Base -----------------------------------*/
+/*---------------------------------- Reset -----------------------------------*/
+/* Modified from http://meyerweb.com/eric/tools/css/reset */
 
-html, body {
-  height: 100%
+html, body, div, span, iframe, p, a, img, h1, h2, h3, h4, h5, h6,
+blockquote, q, pre, code, sub, sup, b, u, i, strong, em, ol, ul, li,
+form, fieldset, label, legend, table, tbody, tfoot, thead, tr, th, td,
+footer, header, menu, nav, section, summary {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  font-size: 100%;
+  font-family: inherit;
+  vertical-align: baseline;
+}
+
+/* HTML5 display-role reset for older browsers */
+article, aside, details, figcaption, figure,
+footer, header, hgroup, menu, nav, section {
+  display: block;
 }
 
 body {
+  line-height: 1.25;
   font-family: Verdana, sans-serif;
   font-size: .75em;
 }
 
-img {
-  border: none;
+p {
+  margin: 1em 0;
+}
+
+blockquote, q {
+  quotes: none;
+}
+
+blockquote:before, blockquote:after, q:before, q:after {
+  content: '';
+  content: none;
 }
 
 table {
-  font-size: inherit;
+  border-collapse: collapse;
+  border-spacing: 0;
 }
+
+/*------------------------------- Base styles ------------------------------*/
 
 button, input[type="submit"] {
   font-family: Verdana, sans-serif;
@@ -60,7 +88,7 @@ a:hover, a:focus {
 }
 
 footer {
-  padding: 1em 0;
+  padding: .5em .5em 1em .5em;
 }
 
 /*---------------------------- Generic classes ------------------------------*/
@@ -81,11 +109,11 @@ footer {
 }
 
 .half {
-  display:inline-block;
+  display: inline-block;
   width: 49%;
 }
 
-.w-quarter {
+.fourth {
   display: inline-block;
   width: 24%;
 }
@@ -124,7 +152,7 @@ footer {
   vertical-align: top;
 }
 
-.close {
+.close { /* TODO rename close_button */
   float: right;
   color: inherit;
   border: none;

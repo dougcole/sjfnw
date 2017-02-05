@@ -1,6 +1,6 @@
 {% extends 'base.html' %}
 
-{% block title %}- Project Central{% endblock %}
+{% block title %}Project Central{% endblock %}
 
 {% block style %}
   <link rel="stylesheet" type="text/css" href="/static/css/fundraising.css">
@@ -29,12 +29,11 @@
   </script>
 {% endblock script %}
 
+
 {% block body %}
-  <div class="center" id="header">
-    <div id="logo">
-      <a href="/fund"><img src="/static/images/logo2.png" alt="Project Central logo"></a>
-    </div>
-    {% block header %}{% endblock header %}
+  <div id="header">
+    <a href="/fund"><img class="logo" src="/static/images/logo2.png" alt="Project Central logo"></a>
+    <h1>{% block header %}{{ header|default:"Project Central" }}{% endblock %}</h1>
   </div>
   {% block top %}{% endblock %}
   <div class="content_area">

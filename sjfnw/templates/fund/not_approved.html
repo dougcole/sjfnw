@@ -1,9 +1,9 @@
 {% extends 'fund/_base.html' %}
 
-{% block title %}Pending approval {{block.super}}{% endblock %}
+{% block title %}Pending approval - {{block.super}}{% endblock %}
 
 {% block content %}
-<div class="error_message">Your account hasn't been approved for use with any giving projects yet.  See <a href='fund/projects'>your projects page</a> for more info.</div>
+<h4>Your account hasn't been approved for use with any giving projects yet.</h4>
+<p>See your <a href='{% url 'sjfnw.fund.views.manage_account' %}'>projects page</a> for more info.</p>
 <p>Approval can take several days.  Check with your project facilitators if you have questions.</p>
-
 {% endblock %}

@@ -1,10 +1,10 @@
 {% extends 'fund/_base.html' %}
 
-{% block title %}Manage projects {{block.super}}{% endblock %}
+{% block title %}Your account - {{block.super}}{% endblock %}
 
 {% block content %}
-<a href="/fund">« back to home</a><br>
-<br>
+{% block header %}Your account{% endblock %}
+<a href="/fund">« back to home</a><br><br>
 <b>YOUR PROJECTS</b>
 <div class="indent">
 {% if ships %}
