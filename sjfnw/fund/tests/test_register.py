@@ -65,16 +65,17 @@ class Register(BaseFundTestCase):
 
   def test_post_valid_gp_preapproved(self):
     gp = models.GivingProject.objects.get(title='Pre training')
-    gp.pre_approved += 'newemail@gmail.com'
+    gp.pre_approved = 'newemail@gmail.com'
     gp.save()
 
-    response = self.client.post(self.url, {
+    res = self.client.post(self.url, {
       'first_name': u'New',
       'last_name': u'User',
       'password': u'pwpwpw',
       'passwordtwo': u'pwpwpw',
       'email': u'newemail@gmail.com',
       'giving_project': unicode(gp.pk)
-      }, follow=True)
+    }, follow=True)
 
-    self.assertTemplateUsed(response, 'fund/forms/add_contacts.html')
+    self.assertEqual(res.status_code, 200)
+    self.assertTemplateUsed(res, 'fund/forms/add_contacts.html')

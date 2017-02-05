@@ -29,11 +29,9 @@ class Grants(BaseFundTestCase):
   def test_grants_display(self):
     """ Verify that assigned grants are shown on grants page """
 
-    member = models.Member.objects.get(email='testacct@gmail.com')
-    ship = models.Membership(giving_project_id=16, member=member, approved=True)
+    ship = models.Membership(giving_project_id=16, member_id=self.member_id, approved=True)
     ship.save()
-    member.current = ship.pk
-    member.save()
+    models.Member.objects.filter(pk=self.member_id).update(current = ship.pk)
 
     response = self.client.get(self.url)
 

@@ -3,7 +3,6 @@ import datetime, logging, os, json
 from django.conf import settings
 from django.contrib import auth
 from django.contrib.auth.decorators import login_required
-from django.contrib.auth.models import User
 from django.contrib.humanize.templatetags.humanize import intcomma
 from django.core.urlresolvers import reverse
 from django.forms.formsets import formset_factory
@@ -15,7 +14,7 @@ from django.utils.http import is_safe_url
 from google.appengine.ext import deferred, ereporter
 
 from sjfnw import constants as c, utils
-from sjfnw.fund.decorators import approved_membership
+from sjfnw.fund.decorators import require_member
 from sjfnw.fund import forms, modelforms, models
 from sjfnw.grants.models import Organization, ProjectApp
 
@@ -28,8 +27,7 @@ logger = logging.getLogger('sjfnw')
 #  MAIN VIEWS
 # ----------------------------------------------------------------------------
 
-@login_required(login_url='/fund/login/')
-@approved_membership()
+@require_member(require_membership=True)
 def home(request):
   """ Handles display of the home/personal page
 
@@ -194,8 +192,7 @@ def _compile_membership_progress(donors):
   return progress, incomplete_steps
 
 
-@login_required(login_url='/fund/login/')
-@approved_membership()
+@require_member(require_membership=True)
 def project_page(request):
 
   membership = request.membership
@@ -235,8 +232,7 @@ def project_page(request):
   })
 
 
-@login_required(login_url='/fund/login/')
-@approved_membership()
+@require_member(require_membership=True)
 def grant_list(request):
 
   membership = request.membership
@@ -268,7 +264,9 @@ def fund_login(request):
       password = request.POST['password']
       user = auth.authenticate(username=username, password=password)
       if user:
-        if user.is_active:
+        if not hasattr(user, 'member'):
+          return redirect(reverse('sjfnw.fund.views.not_member'))
+        elif user.is_active:
           auth.login(request, user)
           if not redirect_to or not is_safe_url(url=redirect_to, host=request.get_host()):
             redirect_to = home
@@ -299,9 +297,16 @@ def fund_register(request):
       first_name = request.POST['first_name']
       last_name = request.POST['last_name']
 
-      user, member, error_msg = _create_user(username_email, password,
-                                             first_name, last_name)
+      try:
+        member = models.Member.objects.create_with_user(username_email, password=password,
+            first_name=first_name, last_name=last_name)
+      except ValueError as err:
+        logger.warning(username_email + ' tried to re-register')
+        login_link = utils.create_link('/fund/login/', 'Login')
+        error_msg = '{} {} instead.'.format(err.message, login_link)
+
       if not error_msg:
+        logger.info('Registration - user and member objects created for ' + username_email)
         # if they specified a GP, create Membership
         membership = None
         if request.POST['giving_project']:
@@ -347,13 +352,10 @@ def fund_register(request):
 #  MEMBERSHIP MANAGEMENT
 # ----------------------------------------------------------------------------
 
-@login_required(login_url='/fund/login/')
+@require_member()
 def manage_account(request):
 
-  if request.membership_status == c.NO_MEMBER:
-    return redirect(not_member)
-  else:
-    member = models.Member.objects.get(email=request.user.username)
+  member = request.user.member
 
   ships = member.membership_set.all()
 
@@ -379,10 +381,11 @@ def manage_account(request):
   })
 
 
-@login_required(login_url='/fund/login/')
-@approved_membership()
+@require_member()
 def set_current(request, ship_id):
-  member = request.membership.member
+  """ Triggered when a user clicks on a non-current membership from their
+      manage_account view """
+  member = request.user.member
   try:
     ship = models.Membership.objects.get(pk=ship_id, member=member, approved=True)
   except models.Membership.DoesNotExist:
@@ -397,23 +400,18 @@ def set_current(request, ship_id):
 #  ERROR & HELP PAGES
 # ----------------------------------------------------------------------------
 
-@login_required(login_url='/fund/login/')
+@login_required(login_url='/fund/login')
 def not_member(request):
-  try:
-    org = Organization.objects.get(email=request.user.username)
-  except Organization.DoesNotExist:
-    org = False
+  org = Organization.objects.filter(email=request.user.username).first()
 
   return render(request, 'fund/not_member.html', {
     'contact_url': '/fund/support#contact', 'org': org
   })
 
 
-@login_required(login_url='/fund/login/')
+@require_member()
 def not_approved(request):
-  try:
-    models.Member.objects.get(email=request.user.username)
-  except models.Member.DoesNotExist:
+  if not hasattr(request.user, 'member'):
     return redirect(not_member)
 
   return render(request, 'fund/not_approved.html')
@@ -426,11 +424,7 @@ def blocked(request):
 
 
 def support(request):
-  member = False
-  if request.membership_status > c.NO_MEMBERSHIP:
-    member = request.membership.member
-  elif request.membership_status == c.NO_MEMBERSHIP:
-    member = models.Member.objects.get(email=request.user.username)
+  member = getattr(request.user, 'member', None)
 
   return render(request, 'fund/support.html', {
     'member': member, 'support_email': c.SUPPORT_EMAIL,
@@ -441,8 +435,7 @@ def support(request):
 #  SURVEY
 # ----------------------------------------------------------------------------
 
-@login_required(login_url='/fund/login')
-@approved_membership()
+@require_member(require_membership=True)
 def project_survey(request, gp_survey_id):
 
   try:
@@ -478,8 +471,7 @@ def project_survey(request, gp_survey_id):
 #  CONTACTS
 # ----------------------------------------------------------------------------
 
-@login_required(login_url='/fund/login')
-@approved_membership()
+@require_member(require_membership=True)
 def copy_contacts(request):
 
   # base formset
@@ -542,8 +534,7 @@ def copy_contacts(request):
 
   return render(request, 'fund/forms/copy_contacts.html', {'formset': formset})
 
-@login_required(login_url='/fund/login/')
-@approved_membership()
+@require_member(require_membership=True)
 def add_mult(request):
   """ Add multiple contacts, with or without estimates
 
@@ -639,8 +630,7 @@ def add_mult(request):
     })
 
 
-@login_required(login_url='/fund/login/')
-@approved_membership()
+@require_member(require_membership=True)
 def add_estimates(request):
   membership = request.membership
 
@@ -693,8 +683,7 @@ def add_estimates(request):
     })
 
 
-@login_required(login_url='/fund/login/')
-@approved_membership()
+@require_member(require_membership=True)
 def edit_contact(request, donor_id):
 
   try:
@@ -733,8 +722,7 @@ def edit_contact(request, donor_id):
                  'action': '/fund/' + str(donor_id) + '/edit'})
 
 
-@login_required(login_url='/fund/login/')
-@approved_membership()
+@require_member(require_membership=True)
 def delete_contact(request, donor_id):
 
   try:
@@ -758,8 +746,7 @@ def delete_contact(request, donor_id):
 #  STEPS
 # ----------------------------------------------------------------------------
 
-@login_required(login_url='/fund/login/')
-@approved_membership()
+@require_member(require_membership=True)
 def add_step(request, donor_id):
 
   membership = request.membership
@@ -803,8 +790,7 @@ def add_step(request, donor_id):
   })
 
 
-@login_required(login_url='/fund/login/')
-@approved_membership()
+@require_member(require_membership=True)
 def add_mult_step(request):
   initial_form_data = [] # list of dicts for form initial
   donor_list = [] # list of donors for zipping to formset
@@ -851,8 +837,7 @@ def add_mult_step(request):
   })
 
 
-@login_required(login_url='/fund/login/')
-@approved_membership()
+@require_member(require_membership=True)
 def edit_step(request, donor_id, step_id):
 
   suggested = request.membership.giving_project.get_suggested_steps()
@@ -895,8 +880,7 @@ def edit_step(request, donor_id, step_id):
   })
 
 
-@login_required(login_url='/fund/login/')
-@approved_membership()
+@require_member(require_membership=True)
 def complete_step(request, donor_id, step_id):
 
   membership = request.membership
@@ -1057,38 +1041,10 @@ def _get_block_content(membership, get_steps=True):
 
   return steps, news, gp_apps
 
-def _create_user(email, password, first_name, last_name):
-  user, member, error = None, None, None
-
-  # check if Member already
-  if models.Member.objects.filter(email=email):
-    login_link = utils.create_link('/fund/login/', 'Login')
-    error = 'That email is already registered. {} instead.'.format(login_link)
-    logger.warning(email + ' tried to re-register')
-
-  # check User already but not Member
-  elif User.objects.filter(username=email):
-    error = ('That email is already registered through Social Justice Fund\'s '
-        'online grant application.  Please use a different email address.')
-    logger.warning('User already exists, but not Member: ' + email)
-
-  else:
-    # ok to register - create User and Member
-    user = User.objects.create_user(email, email, password)
-    user.first_name = first_name
-    user.last_name = last_name
-    user.save()
-    member = models.Member(email=email, first_name=first_name,
-                           last_name=last_name)
-    member.save()
-    logger.info('Registration - user and member objects created for ' + email)
-
-  return user, member, error
-
 def _create_membership(member, giving_project, notif=''):
   error = None
 
-  approved = giving_project.is_pre_approved(member.email)
+  approved = giving_project.is_pre_approved(member.user.username)
 
   membership, new = models.Membership.objects.get_or_create(
       member=member, giving_project=giving_project,

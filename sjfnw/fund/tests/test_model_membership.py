@@ -46,8 +46,10 @@ class UpdateStory(BaseFundTestCase):
 
   def setUp(self):
     super(UpdateStory, self).setUp()
-    self.create_test()
+    self.login_as_member('current')
     self.membership = Membership.objects.get(pk=self.ship_id)
+    self.name = self.membership.member.first_name # used in many of these tests
+
     # assert that each test starts without an existing news story
     story_count = self.membership.newsitem_set.count()
     self.assertEqual(story_count, 0)
@@ -68,7 +70,7 @@ class UpdateStory(BaseFundTestCase):
     stories = self.membership.newsitem_set.all()
     self.assertEqual(len(stories), 1)
     story = stories[0]
-    self.assertEqual(story.summary, u'Test talked to 1 person.')
+    self.assertEqual(story.summary, u'{} talked to 1 person.'.format(self.name))
 
   def test_ask(self):
     now = timezone.now()
@@ -82,7 +84,7 @@ class UpdateStory(BaseFundTestCase):
     stories = self.membership.newsitem_set.all()
     self.assertEqual(len(stories), 1)
     story = stories[0]
-    self.assertEqual(story.summary, u'Test asked 1 person.')
+    self.assertEqual(story.summary, u'{} asked 1 person.'.format(self.name))
 
   def test_ask_with_promise(self):
     now = timezone.now()
@@ -97,7 +99,7 @@ class UpdateStory(BaseFundTestCase):
     stories = self.membership.newsitem_set.all()
     self.assertEqual(len(stories), 1)
     story = stories[0]
-    self.assertEqual(story.summary, u'Test asked 1 person and got $50 in promises.')
+    self.assertEqual(story.summary, u'{} asked 1 person and got $50 in promises.'.format(self.name))
 
   def test_talk_with_promise(self):
     now = timezone.now()
@@ -111,7 +113,7 @@ class UpdateStory(BaseFundTestCase):
     stories = self.membership.newsitem_set.all()
     self.assertEqual(len(stories), 1)
     story = stories[0]
-    self.assertEqual(story.summary, u'Test talked to 1 person and got $50 in promises.')
+    self.assertEqual(story.summary, u'{} talked to 1 person and got $50 in promises.'.format(self.name))
 
   def test_multiple_same_donor(self):
     now = timezone.now()
@@ -128,7 +130,7 @@ class UpdateStory(BaseFundTestCase):
     stories = self.membership.newsitem_set.all()
     self.assertEqual(len(stories), 1)
     story = stories[0]
-    self.assertEqual(story.summary, u'Test talked to 1 person.')
+    self.assertEqual(story.summary, u'{} talked to 1 person.'.format(self.name))
 
   def test_combo(self):
     now = timezone.now()
@@ -163,4 +165,4 @@ class UpdateStory(BaseFundTestCase):
     self.assertEqual(len(stories), 1)
     story = stories[0]
     self.assertEqual(story.summary,
-        u'Test talked to 2 people, asked 1 and got $650 in promises.')
+        u'{} talked to 2 people, asked 1 and got $650 in promises.'.format(self.name))

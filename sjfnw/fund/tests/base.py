@@ -1,7 +1,6 @@
 from datetime import timedelta
 import logging
 
-from django.contrib.auth.models import User
 from django.utils import timezone
 
 from sjfnw.fund import models
@@ -13,6 +12,11 @@ logger = logging.getLogger('sjfnw')
 class BaseFundTestCase(BaseTestCase):
 
   fixtures = ['sjfnw/fund/fixtures/test_fund.json']
+
+  def __init__(self, *args, **kwargs):
+    super(BaseFundTestCase, self).__init__(*args, **kwargs)
+    self.known_members['current'] = 'testacct@gmail.com'
+    self.known_members['new'] = 'newacct@gmail.com'
 
   def setUp(self):
     self.create_projects()
@@ -31,64 +35,49 @@ class BaseFundTestCase(BaseTestCase):
 
   def login_as_member(self, name):
     """ Expands on method from BaseTestCase, adding additional members """
-    error_msg = ''
-    try:
-      super(BaseFundTestCase, self).login_as_member(name)
+
+    super(BaseFundTestCase, self).login_as_member(name)
+
+    if hasattr(self, 'member_id'): # member was set up in super call
       return
-    except ValueError, err:
-      error_msg = err.message
 
-    if name == "current":
-      self.create_test()
-      User.objects.create_user('testacct@gmail.com', 'testacct@gmail.com', 'testy')
-      self.client.login(username='testacct@gmail.com', password='testy')
-    elif name == "new":
-      self.create_new()
-      User.objects.create_user('newacct@gmail.com', 'newacct@gmail.com', 'noob')
-      self.client.login(username='newacct@gmail.com', password='noob')
-    else:
-      raise ValueError(error_msg + ', "current", "new"')
+    member = models.Member.objects.create_with_user(email=self.email, password='pass',
+                                                    first_name=name, last_name='Member')
+    self.setup_member(member)
+    self.login_strict(self.email, 'pass')
 
-  def create_test(self):
-    """ Sets up "current" membership - in post GP with one donor """
-
-    member = models.Member(email='testacct@gmail.com', first_name='Test',
-                           last_name='Member')
-    member.save()
+  def setup_member(self, member):
     self.member_id = member.pk
 
-    # create membership in post-training gp
-    post = models.GivingProject.objects.get(title="Post training")
-    ship = models.Membership(giving_project=post, member_id=member.pk, approved=True)
-    ship.save()
-    self.ship_id = ship.pk
-    member.current = ship.pk
-    member.save()
+    post_gp = models.GivingProject.objects.get(title="Post training")
+    post_ship = models.Membership(giving_project=post_gp, member=member, approved=True)
+    post_ship.save()
 
-    # create donor & step
-    donor = models.Donor(membership=ship, firstname='Anna', amount=500,
-                         talked=True, likelihood=50)
-    donor.save()
-    self.donor_id = donor.pk
-    step = models.Step(donor=donor, description='Talk to about project',
-                       created=timezone.now(), date='2013-04-06')
-    step.save()
-    self.step_id = step.pk
+    if member.first_name == 'current':
+      self.ship_id = post_ship.pk
+      member.current = post_ship.pk
+      member.save()
 
-  def create_new(self):
-    """ Creates newbie member with memberships in pre & post """
-    mem = models.Member(first_name='New', last_name='Member',
-                        email='newacct@gmail.com')
-    mem.save()
-    self.member_id = mem.pk
-    post = models.GivingProject.objects.get(title="Post training")
-    ship = models.Membership(giving_project=post, member=mem, approved=True)
-    ship.save()
-    self.post_id = ship.pk
-    pre = models.GivingProject.objects.get(title='Pre training')
-    ship = models.Membership(giving_project=pre, member=mem, approved=True)
-    ship.save()
-    self.pre_id = ship.pk
-    self.ship_id = ship.pk
-    mem.current = ship.pk
-    mem.save()
+      # create donor & step
+      donor = models.Donor(membership=post_ship, firstname='Anna', amount=500,
+                           talked=True, likelihood=50)
+      donor.save()
+      step = models.Step(donor=donor, description='Talk to about project',
+                         created=timezone.now(), date='2013-04-06')
+      step.save()
+      self.donor_id = donor.pk
+      self.step_id = step.pk
+
+    elif member.first_name == 'new':
+      self.post_id = post_ship.pk
+
+      pre_gp = models.GivingProject.objects.get(title='Pre training')
+      pre_ship = models.Membership(giving_project=pre_gp, member=member, approved=True)
+      pre_ship.save()
+      self.pre_id = self.ship_id = pre_ship.pk
+
+      member.current = pre_ship.pk
+      member.save()
+
+    else:
+      raise Exception('setup_member got unexpected name: {}'.format(member.first_name))

@@ -25,7 +25,7 @@ class Support(BaseFundTestCase):
 
   def test_logged_in_no_ship(self):
     self.login_as_admin()
-    member = Member(email='admin@gmail.com')
+    member = Member(user_id=self.user_id)
     member.save()
 
     res = self.client.get(self.url)

@@ -153,7 +153,7 @@ class CompileMembershipProgress(BaseFundTestCase):
 
   def test_basic(self):
     # membership with a few donors, some progress
-    self.create_new()
+    self.login_as_member('new')
     ship_id = self.post_id
 
     # first donor

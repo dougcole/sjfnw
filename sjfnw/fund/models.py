@@ -92,9 +92,25 @@ class GivingProject(models.Model):
     return estimated
 
 
+class MemberManager(models.Manager):
+
+  def create_with_user(self, email=None, password=None, first_name=None, last_name=None):
+    if User.objects.filter(username=email):
+      raise ValueError('That email is already registered.')
+
+    else:
+      user = User.objects.create_user(email, password=password,
+                                      first_name=first_name, last_name=last_name)
+      member = self.model(user=user, first_name=first_name, last_name=last_name)
+      member.save()
+      return member
+
+
 class Member(models.Model):
+  objects = MemberManager()
+
   user = models.OneToOneField(User, null=True)
-  email = models.EmailField(max_length=100, unique=True) # used to find corresponding User
+  email = models.EmailField(max_length=100) # used to find corresponding User
   first_name = models.CharField(max_length=100)
   last_name = models.CharField(max_length=100)
 

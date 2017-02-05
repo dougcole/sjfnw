@@ -1,42 +1,51 @@
-import logging
 from functools import wraps
+import logging
 
+from django.contrib.auth.views import redirect_to_login
+from django.core.urlresolvers import reverse
+from django.http import HttpResponse
 from django.shortcuts import redirect
 from django.utils.decorators import available_attrs
 
-from sjfnw import constants as c
-
 logger = logging.getLogger('sjfnw')
 
-def approved_membership():
-  """ Restrict access to view: only if request.membership_status is c.APPROVED
 
-    If not allowing access to view, redirect to appropriate settings/notice page
+def require_member(require_membership=False):
+  """ Require request.user that is authenticed, active and has associated member
 
-    Should be used with @login_required
-    Relies on data set by MembershipMiddleware
-
-    Returns decorator for wrapping the view
+      If require_membership is True, require that the member is on an approved membership
   """
-
   def decorator(view_func):
 
     @wraps(view_func, assigned=available_attrs(view_func))
     def _wrapped_view(request, *args, **kwargs):
 
-      if request.membership_status == c.APPROVED:
-        return view_func(request, *args, **kwargs)
+      if not request.user.is_authenticated():
+        return redirect_to_login(request.get_full_path(),
+                                 reverse('sjfnw.fund.views.fund_login'))
+      elif not request.user.is_active:
+        logger.warn('Inactive member %s', request.user.username)
+        # TODO error page
+        return HttpResponse('Something is wrong')
 
-      elif request.membership_status == c.NO_APPROVED:
-        logger.info('Membership(s) not approved, redirecting to pending')
-        return redirect('/fund/pending')
+      elif not hasattr(request.user, 'member'):
+        logger.debug('Not a member: %s', request.user.username)
+        return redirect(reverse('sjfnw.fund.views.not_member'))
 
-      elif request.membership_status == c.NO_MEMBERSHIP:
-        logger.info('No memberships, redirecting to projects page')
-        return redirect('/fund/projects')
+      if require_membership:
+        membership = None
+        if request.user.member.current:
+          membership = (request.user.member.membership_set
+                                           .filter(pk=request.user.member.current)
+                                           .first())
+        if not membership:
+          return redirect(reverse('sjfnw.fund.views.manage_account'))
 
-      else:
-        return redirect('/fund/not-member')
+        elif not membership.approved:
+          return redirect(reverse('sjfnw.fund.views.not_approved'))
 
+        request.membership = membership
+
+      return view_func(request, *args, **kwargs)
     return _wrapped_view
   return decorator

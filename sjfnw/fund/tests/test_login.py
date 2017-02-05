@@ -52,14 +52,13 @@ class Login(BaseFundTestCase):
     errors = response.context['form'].errors
     self.assertRegexpMatches(errors['email'][0], 'Enter a valid email')
 
-  # on success, user is redirected to home, so further post-login tests
-  #   are there
   def test_user_only(self):
     User.objects.create_user('login@email.com', 'login@email.com', 'password')
 
     self.form_data['email'] = 'login@email.com'
     self.form_data['password'] = 'password'
 
-    response = self.client.post(self.url, self.form_data, follow=True)
+    res = self.client.post(self.url, self.form_data)
 
-    self.assertTemplateUsed(response, 'fund/not_member.html')
+    self.assertEqual(res.status_code, 302)
+    self.assertEqual(res.url, self.BASE_URL + reverse('sjfnw.fund.views.not_member'))

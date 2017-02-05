@@ -68,16 +68,22 @@ MIDDLEWARE_CLASSES = (
   'django.middleware.common.CommonMiddleware',
   'django.contrib.sessions.middleware.SessionMiddleware',
   'django.contrib.auth.middleware.AuthenticationMiddleware',
-  'django.contrib.messages.middleware.MessageMiddleware',
-  'sjfnw.fund.middleware.MembershipMiddleware',
+  'django.contrib.messages.middleware.MessageMiddleware'
 )
 
-TEMPLATE_CONTEXT_PROCESSORS = (
-  'django.contrib.auth.context_processors.auth',
-  'django.core.context_processors.request', # only used in fund/base.html js
-  'django.contrib.messages.context_processors.messages',
-)
-TEMPLATE_DIRS = (os.path.join(os.path.dirname(__file__), 'templates'),)
+TEMPLATES = [
+  {
+    'BACKEND': 'django.template.backends.django.DjangoTemplates',
+    'APP_DIRS': True,
+    'OPTIONS': {
+      'context_processors':  (
+        'django.contrib.auth.context_processors.auth',
+        'django.template.context_processors.request',
+        'django.contrib.messages.context_processors.messages',
+      )
+    }
+  }
+]
 
 STATIC_URL = '/static/'
 

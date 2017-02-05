@@ -9,6 +9,11 @@ from sjfnw.fund.tests.base import BaseFundTestCase
 
 logger = logging.getLogger('sjfnw')
 
+LOGIN_URL = reverse('sjfnw.fund.views.fund_login')
+MANAGE_ACCOUNT_URL = reverse('sjfnw.fund.views.manage_account')
+HOME_URL = reverse('sjfnw.fund.views.home')
+NOT_MEMBER_URL = reverse('sjfnw.fund.views.not_member')
+
 class SetCurrent(BaseFundTestCase):
 
   def setUp(self):
@@ -22,14 +27,14 @@ class SetCurrent(BaseFundTestCase):
     res = self.client.get(url)
 
     self.assertEqual(res.status_code, 302)
-    self.assertEqual(res.url, self.BASE_URL + '/fund/login/?next=' + url)
+    self.assertEqual(res.url, self.BASE_URL + LOGIN_URL + '?next=' + url)
 
   def test_unknown_id(self):
     url = reverse('sjfnw.fund.views.set_current', kwargs={'ship_id': '888'})
     res = self.client.get(url)
 
     self.assertEqual(res.status_code, 302)
-    self.assertEqual(res.url, self.BASE_URL + reverse('sjfnw.fund.views.manage_account'))
+    self.assertEqual(res.url, self.BASE_URL + MANAGE_ACCOUNT_URL)
 
   def test_valid(self):
     pre_gp = GivingProject.objects.get(title='Pre training')
@@ -44,29 +49,27 @@ class SetCurrent(BaseFundTestCase):
     res = self.client.get(url)
 
     self.assertEqual(res.status_code, 302)
-    self.assertEqual(res.url, self.BASE_URL + reverse('sjfnw.fund.views.home'))
+    self.assertEqual(res.url, self.BASE_URL + HOME_URL)
 
     member = Member.objects.get(pk=self.member_id)
     self.assertEqual(member.current, new_ship.pk)
 
 class ManageAccount(BaseFundTestCase):
 
-  url = reverse('sjfnw.fund.views.manage_account')
-
   def test_load_not_logged_in(self):
-    res = self.client.get(self.url)
+    res = self.client.get(MANAGE_ACCOUNT_URL)
 
     self.assertEqual(res.status_code, 302)
     self.assertEqual(res.url,
-        self.BASE_URL + reverse('sjfnw.fund.views.fund_login') + '/?next=' + self.url)
+        self.BASE_URL + LOGIN_URL + '?next=' + MANAGE_ACCOUNT_URL)
 
   def test_load_not_member(self):
     self.login_as_admin()
 
-    res = self.client.get(self.url)
+    res = self.client.get(MANAGE_ACCOUNT_URL)
 
     self.assertEqual(res.status_code, 302)
-    self.assertEqual(res.url, self.BASE_URL + reverse('sjfnw.fund.views.not_member'))
+    self.assertEqual(res.url, self.BASE_URL + NOT_MEMBER_URL)
 
   def test_load(self):
     self.login_as_member('current')
@@ -82,7 +85,7 @@ class ManageAccount(BaseFundTestCase):
                             fundraising_deadline=yesterday)
     past_gp.save()
 
-    res = self.client.get(self.url)
+    res = self.client.get(MANAGE_ACCOUNT_URL)
 
     self.assertEqual(res.status_code, 200)
     self.assertTemplateUsed(res, 'fund/account_projects.html')
@@ -101,7 +104,7 @@ class ManageAccount(BaseFundTestCase):
     self.assert_count(GivingProject.objects.filter(pk=gp_id), 0)
     membership_count = Membership.objects.filter(member_id=self.member_id).count()
 
-    res = self.client.post(self.url, {'giving_project': str(gp_id)})
+    res = self.client.post(MANAGE_ACCOUNT_URL, {'giving_project': str(gp_id)})
 
     self.assertEqual(res.status_code, 200)
     self.assertTemplateUsed(res, 'fund/account_projects.html')
@@ -115,7 +118,7 @@ class ManageAccount(BaseFundTestCase):
     self.assert_count(
       Membership.objects.filter(member_id=self.member_id, giving_project_id=gp_id), 1)
 
-    res = self.client.post(self.url, {'giving_project': str(gp_id)})
+    res = self.client.post(MANAGE_ACCOUNT_URL, {'giving_project': str(gp_id)})
 
     self.assertEqual(res.status_code, 200)
     self.assertTemplateUsed(res, 'fund/account_projects.html')
@@ -130,7 +133,7 @@ class ManageAccount(BaseFundTestCase):
     self.assert_count(
       Membership.objects.filter(member_id=self.member_id, giving_project_id=gp_id), 0)
 
-    res = self.client.post(self.url, {'giving_project': str(gp_id)})
+    res = self.client.post(MANAGE_ACCOUNT_URL, {'giving_project': str(gp_id)})
 
     self.assertEqual(res.status_code, 200)
     self.assertTemplateUsed(res, 'fund/registered.html')
@@ -145,10 +148,10 @@ class ManageAccount(BaseFundTestCase):
     self.assert_count(
       Membership.objects.filter(member_id=self.member_id, giving_project_id=gp), 0)
 
-    res = self.client.post(self.url, {'giving_project': str(gp.pk)})
+    res = self.client.post(MANAGE_ACCOUNT_URL, {'giving_project': str(gp.pk)})
 
     self.assertEqual(res.status_code, 302)
-    self.assertEqual(res.url, self.BASE_URL + reverse('sjfnw.fund.views.home'))
+    self.assertEqual(res.url, self.BASE_URL + HOME_URL)
     new_membership = Membership.objects.get(member_id=self.member_id, giving_project_id=gp.pk)
     self.assertEqual(new_membership.approved, True)
     member = Member.objects.get(pk=self.member_id)

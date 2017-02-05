@@ -21,18 +21,18 @@ def email_overdue(request):
   bcc = [c.SUPPORT_EMAIL]
 
   for ship in ships:
-    user = ship.member
+    member = ship.member
     if not ship.emailed or (ship.emailed <= limit):
       count, step = ship.overdue_steps(get_next=True)
       if count > 0 and step:
-        logger.info(user.email + ' has overdue step(s), emailing.')
-        to_emails = [user.email]
+        to_email = ship.member.user.username
+        logger.info('%s has overdue step(s), emailing.', to_email)
         html_content = render_to_string('fund/emails/overdue_steps.html', {
           'login_url': c.APP_BASE_URL + '/fund/login', 'ship': ship, 'num': count,
           'step': step, 'base_url': c.APP_BASE_URL
         })
         text_content = strip_tags(html_content)
-        msg = EmailMultiAlternatives(subject, text_content, from_email, to_emails, bcc)
+        msg = EmailMultiAlternatives(subject, text_content, from_email, [to_email], bcc)
         msg.attach_alternative(html_content, 'text/html')
         msg.send()
         ship.emailed = today
@@ -57,7 +57,7 @@ def new_accounts(request):
     need_approval = memberships.filter(approved=False).count()
     if need_approval > 0:
       leaders = memberships.filter(leader=True)
-      to_emails = [leader.member.email for leader in leaders]
+      to_emails = [leader.member.user.username for leader in leaders]
       if to_emails:
         html_content = render_to_string('fund/emails/accounts_need_approval.html', {
           'admin_url': c.APP_BASE_URL + '/admin/fund/membership/',
@@ -101,7 +101,7 @@ def gift_notify(request):
     ship.notifications = gift_str
     ship.save(skip=True)
 
-    to_email = [ship.member.email]
+    to_email = [ship.member.user.username]
     html_content = render_to_string('fund/emails/gift_received.html', {
       'login_url': login_url, 'gift_str': ship.notifications
     })
@@ -109,7 +109,7 @@ def gift_notify(request):
     msg = EmailMultiAlternatives(subject, text_content, from_email, to_email, bcc)
     msg.attach_alternative(html_content, 'text/html')
     msg.send()
-    logger.info('Set gift notification and sent email to %s', ship.member.email)
+    logger.info('Set gift notification and sent email to %s', ship.member.user.username)
 
   donors.update(gift_notified=True)
   return HttpResponse('')

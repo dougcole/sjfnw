@@ -32,8 +32,8 @@ class GiftNotifications(BaseFundTestCase):
     test_donor.received_this = 100
     test_donor.save()
 
-    member = models.Member(email='abcd@gmail.com')
-    member.save()
+    member = models.Member.objects.create_with_user(
+        email='abcd@gmail.com', password='pass', first_name='A', last_name='B')
     membership = models.Membership(member=member, giving_project_id=1)
     membership.save()
     donor = models.Donor(membership=membership, firstname='Greta',
@@ -59,23 +59,22 @@ class GiftNotifications(BaseFundTestCase):
 
     # verify emails sent
     self.assertEqual(len(mail.outbox), 2)
-    test_member = models.Member.objects.get(pk=self.member_id)
     testacct_emailed = False
     abcd_emailed = False
     for email in mail.outbox:
       self.assertIn('gift or pledge received', email.body)
-      if email.to == [member.email]:
+      if email.to == [member.user.username]:
         self.assertFalse(abcd_emailed)
         self.assertIn(unicode(donor), email.body)
         self.assertNotIn(unicode(test_donor), email.body)
         abcd_emailed = True
-      elif email.to == [test_member.email]:
+      elif email.to == [self.email]:
         self.assertFalse(testacct_emailed)
         self.assertIn(unicode(test_donor), email.body)
         self.assertNotIn(unicode(donor), email.body)
         testacct_emailed = True
       else:
-        self.fail('Unexpected gift notification email recipient: ' + email.to)
+        self.fail('Unexpected gift notification email recipient: {}'.format(email.to))
 
     self.assertTrue(abcd_emailed)
     self.assertTrue(testacct_emailed)
@@ -112,7 +111,7 @@ class PendingApproval(BaseFundTestCase):
     post_ship.save()
 
   def test_none(self):
-    """ No unapproved memberships -> No email should go out """
+    """ No email should go out if there are no unapproved memberships """
 
     response = self.client.get(self.url, follow=True)
 
@@ -122,7 +121,8 @@ class PendingApproval(BaseFundTestCase):
   def test_one(self):
 
     pre_gp = models.GivingProject.objects.get(title='Pre training')
-    member = models.Member(email='abcde@fgh.com', first_name='Ab', last_name='Cd')
+    member = models.Member.objects.create_with_user(
+        email='abcde@fgh.com', first_name='Ab', last_name='Cd')
     member.save()
     membership = models.Membership(giving_project=pre_gp, member=member)
     membership.save(skip=True)
@@ -135,7 +135,8 @@ class PendingApproval(BaseFundTestCase):
   def test_repeat(self):
 
     pre_gp = models.GivingProject.objects.get(title='Pre training')
-    member = models.Member(email='abcde@fgh.com', first_name='Ab', last_name='Cd')
+    member = models.Member.objects.create_with_user(
+        email='abcde@fgh.com', first_name='Ab', last_name='Cd')
     member.save()
     membership = models.Membership(giving_project=pre_gp, member=member)
     membership.save(skip=True)
@@ -163,18 +164,21 @@ class PendingApproval(BaseFundTestCase):
     """ 3 unapproved memberships in 2 GPs -> only 2 emails sent """
 
     pre_gp = models.GivingProject.objects.get(title='Pre training')
-    member = models.Member(email='abcde@fgh.com', first_name='Ab', last_name='Cd')
+    member = models.Member.objects.create_with_user(
+        email='abcde@fgh.com', first_name='Ab', last_name='Cd')
     member.save()
     membership = models.Membership(giving_project=pre_gp, member=member)
     membership.save(skip=True)
 
-    member = models.Member(email='second@email.com', first_name='Second', last_name='')
+    member = models.Member.objects.create_with_user(
+        email='second@email.com', first_name='Second', last_name='')
     member.save()
     membership = models.Membership(giving_project=pre_gp, member=member)
     membership.save(skip=True)
 
     post_gp = models.GivingProject.objects.get(title='Post training')
-    member = models.Member(email='tres@numero.com', first_name='Three', last_name='Tre')
+    member = models.Member.objects.create_with_user(
+        email='tres@numero.com', first_name='Three', last_name='Tre')
     member.save()
     membership = models.Membership(giving_project=post_gp, member=member)
     membership.save(skip=True)
@@ -187,18 +191,21 @@ class PendingApproval(BaseFundTestCase):
     """ 1 unapproved membership, 3 leaders -> only 1 email """
 
     pre_gp = models.GivingProject.objects.get(title='Pre training')
-    member = models.Member(email='abcde@fgh.com', first_name='Ab', last_name='Cd')
+    member = models.Member.objects.create_with_user(
+        email='abcde@fgh.com', first_name='Ab', last_name='Cd')
     member.save()
     membership = models.Membership(giving_project=pre_gp, member=member)
     membership.save(skip=True)
 
-    member = models.Member(email='leader@email.com', first_name='Leader', last_name='')
+    member = models.Member.objects.create_with_user(
+        email='leader@email.com', first_name='Leader', last_name='')
     member.save()
     membership = models.Membership(giving_project=pre_gp, member=member,
         approved=True, leader=True)
     membership.save(skip=True)
 
-    member = models.Member(email='tres@numero.com', first_name='Three', last_name='Tre')
+    member = models.Member.objects.create_with_user(
+        email='tres@numero.com', first_name='Three', last_name='Tre')
     member.save()
     membership = models.Membership(giving_project=pre_gp, member=member,
         approved=True, leader=True)
@@ -226,7 +233,8 @@ class OverdueEmails(BaseFundTestCase):
     self.donor2 = donor.pk
 
     # create another member, membership, donor
-    member = models.Member(email='two@gmail.com', first_name='Two')
+    member = models.Member.objects.create_with_user(
+        email='two@gmail.com', first_name='Two', last_name='Dos')
     member.save()
     gp = models.GivingProject.objects.get(title='Post training')
     membership = models.Membership(giving_project=gp, member=member, approved=True)

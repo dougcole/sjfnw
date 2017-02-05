@@ -10,7 +10,7 @@ logger = logging.getLogger('sjfnw')
 
 def notify_approval(membership):
   subject, from_email = 'Membership Approved', c.FUND_EMAIL
-  to_email = membership.member.email
+  to_email = membership.member.user.username
   html_content = render_to_string('fund/emails/account_approved.html', {
     'login_url': c.APP_BASE_URL + '/fund/login',
     'project': membership.giving_project

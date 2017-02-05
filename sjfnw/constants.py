@@ -18,9 +18,3 @@ US_STATES = [
   'NH', 'NJ', 'NM', 'NY', 'NC', 'ND', 'OH', 'OK', 'PA', 'RI', 'SC', 'SD', 'TN',
   'TX', 'UT', 'VT', 'VA', 'WV', 'WI'
 ]
-
-# Membership middleware
-NO_MEMBER = 0
-NO_MEMBERSHIP = 1
-NO_APPROVED = 2
-APPROVED = 3

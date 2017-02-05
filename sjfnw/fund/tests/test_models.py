@@ -13,8 +13,8 @@ class ModelUnicodes(TestCase):
                             fundraising_training=timezone.now(),
                             fundraising_deadline=timezone.now())
     project.save()
-    member = Member(first_name='Al', last_name=u'Fiüsher')
-    member.save()
+    member = Member.objects.create_with_user(first_name='Al', last_name=u'Fiüsher',
+                                             email='zzz@zz.zz', password='n')
     membership = Membership(giving_project=project, member=member)
     self.assertEqual(u'Al Fiüsher', unicode(member))
     self.assertEqual(u'Â Fake Giving Project %d' % timezone.now().year, unicode(project))

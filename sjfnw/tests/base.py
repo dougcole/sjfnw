@@ -18,6 +18,8 @@ BOLD_RED = '\033[01;31m'
 RESET = '\033[00m'
 INDENT = '    '
 
+TEST_PW = 'password_for_tests'
+
 class BaseTestCase(TestCase):
   """ Base test case used by all other tests
 
@@ -25,24 +27,42 @@ class BaseTestCase(TestCase):
 
   BASE_URL = 'http://testserver'
 
+  known_members = {
+    'first': 'firstacct@gmail.com',
+    'blank': 'blankacct@gmail.com'
+  }
+
+  def login_strict(self, email, password):
+    """ Attempt to login using the test client; mark test failed if login fails """
+    success = self.client.login(username=self.email, password=password)
+    if not success:
+      self.fail('login failed with username: {}, password: {}'.format(email, password))
+
   def login_as_member(self, name):
+    if name not in self.known_members:
+      msg = 'Unknown member "{}". Available members: {}'.format(name, self.known_members.keys())
+      raise ValueError(msg)
+
+    self.email = self.known_members[name]
+
     if name == "first":
-      User.objects.create_user('firstacct@gmail.com', 'firstacct@gmail.com', 'one')
-      self.client.login(username='firstacct@gmail.com', password='one')
+      user = User.objects.create_user(self.email, self.email, 'pass')
+      self.login_strict(self.email, 'pass')
       if 'sjfnw/fund/fixtures/test_fund.json' in self.fixtures:
+        Member.objects.filter(pk=1).update(user=user)
         self.member_id = 1
         self.ship_id = 1
+      else:
+        logger.warn('Test is using "first" member without the matching fixture')
     elif name == "blank":
-      User.objects.create_user('blankacct@gmail.com', 'testacct@gmail.com', 'empty')
-      member = Member(email='blankacct@gmail.com', first_name='Blank', last_name='Account')
-      member.save()
+      member = Member.objects.create_with_user(email=self.email, password='pass',
+                                               first_name=name, last_name='Member')
       self.member_id = member.pk
-      self.client.login(username='blankacct@gmail.com', password='empty')
-    else:
-      raise ValueError('Unknown member "{}". Available members: "first", "blank"'.format(name))
+      self.login_strict(self.email, 'pass')
 
   def login_as_admin(self): # just a django superuser
-    User.objects.create_superuser('admin@gmail.com', 'admin@gmail.com', 'admin')
+    user = User.objects.create_superuser('admin@gmail.com', 'admin@gmail.com', 'admin')
+    self.user_id = user.pk
     self.client.login(username='admin@gmail.com', password='admin')
 
   def assert_message(self, response, text, regex=False):
