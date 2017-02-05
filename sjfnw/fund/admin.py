@@ -336,7 +336,7 @@ class DonorA(BaseModelAdmin):
     return field
 
   def export_donors(self, request, queryset):
-    logger.info('Export donors called by %s', request.user.email)
+    logger.info('Export donors called by %s', request.user.username)
 
     response = HttpResponse(content_type='text/csv')
     response['Content-Disposition'] = 'attachment; filename=prospects.csv'
@@ -414,7 +414,7 @@ class SurveyResponseA(BaseModelAdmin):
 
   def export_responses(self, request, queryset):
 
-    logger.info('Export survey responses called by ' + request.user.email)
+    logger.info('Export survey responses called by ' + request.user.username)
     response = HttpResponse(content_type='text/csv')
     response['Content-Disposition'] = ('attachment; filename=survey_responses %s.csv'
         % timezone.now().strftime('%Y-%m-%d'))

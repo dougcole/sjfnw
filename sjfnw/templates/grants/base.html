@@ -51,7 +51,7 @@
       </div>
       <div class="half text-right">
         {% if user.is_authenticated %}
-          {{user.email}} | <a href="/logout">log out</a>
+          {{user.username}} | <a href="/logout">log out</a>
         {% elif not register %}
           <a href="{% url "sjfnw.grants.views.org_login" %}">log in</a>
         {% endif %}

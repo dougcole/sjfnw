@@ -1,7 +1,7 @@
 <footer>
 <div class="fourth">{% if user.member %}<a href="/fund/projects">your projects</a>{% endif %}</div>
 <div class="fourth"><a href="/fund/support">support/FAQ</a></div>
-<div class="half text-right">{% if user.is_authenticated %}{{user.email|truncatechars:"21"}} | <a href="/fund/logout/">logout</a>{% endif %}</div>
+<div class="half text-right">{% if user.is_authenticated %}{{user.username|truncatechars:"21"}} | <a href="/fund/logout/">logout</a>{% endif %}</div>
 <div class="extra">
   <a href="http://socialjusticefund.org" target="_blank">socialjusticefund.org</a>
 </div>
