@@ -1,6 +1,6 @@
 import datetime, logging, json, re
 
-from django.contrib import admin, messages
+from django.contrib import admin
 from django.contrib.admin import SimpleListFilter
 from django.http import HttpResponse
 from django.utils import timezone
@@ -9,7 +9,7 @@ from django.utils.safestring import mark_safe
 import unicodecsv
 
 from sjfnw import utils
-from sjfnw.admin import BaseModelAdmin
+from sjfnw.admin import BaseModelAdmin, YearFilter
 from sjfnw.fund.models import (GivingProject, Member, Membership, Survey,
     GPSurvey, Resource, ProjectResource, Donor, NewsItem, SurveyResponse)
 from sjfnw.fund import forms, modelforms, utils as fund_utils
@@ -58,34 +58,9 @@ class ReceivedBooleanFilter(SimpleListFilter):
           received_this=0, received_next=0, received_afternext=0)
 
 
-class GPYearFilter(SimpleListFilter):
-  """ Filter giving projects by year """
-  title = 'year'
-  parameter_name = 'year'
-
-  def lookups(self, request, model_admin):
-    deadlines = (GivingProject.objects.values_list('fundraising_deadline', flat=True)
-                                      .order_by('-fundraising_deadline'))
-    prev = None
-    years = []
-    for deadline in deadlines:
-      if deadline.year != prev:
-        years.append((deadline.year, deadline.year))
-        prev = deadline.year
-    return years
-
-  def queryset(self, request, queryset):
-    val = self.value()
-    if not val:
-      return queryset
-    try:
-      year = int(val)
-    except ValueError:
-      logger.error('GPYearFilter received invalid value %s', val)
-      messages.error(request,
-          'Error loading filter. Contact techsupport@socialjusticefund.org')
-      return queryset
-    return queryset.filter(fundraising_deadline__year=year)
+class GPYearFilter(YearFilter):
+  filter_model = GivingProject
+  field = 'fundraising_deadline'
 
 
 class DonorLikelyToJoinFilter(SimpleListFilter):
@@ -275,11 +250,15 @@ class ResourceA(BaseModelAdmin):
 class MemberA(BaseModelAdmin):
   list_display = ['first_name', 'last_name', 'user']
   search_fields = ['first_name', 'last_name', 'user']
-  readonly_fields = ('user',)
-  fields = (
-    ('first_name', 'last_name'),
-    'user'
-  )
+  fields = (('first_name', 'last_name', 'user_link'),)
+  readonly_fields = ('user_link',)
+
+  def user_link(self, obj):
+    if (obj.user):
+      return utils.admin_change_link('auth_user', obj.user, new_tab=True)
+    return 'none'
+  user_link.allow_tags = True
+  user_link.short_description = 'User'
 
 class MembershipA(BaseModelAdmin):
   actions = ['approve']

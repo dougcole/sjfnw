@@ -276,12 +276,12 @@ class GrantCycleA(BaseModelAdmin):
 
 
 class OrganizationA(BaseModelAdmin):
-  list_display = ['name', 'email']
-  search_fields = ['name', 'email']
+  list_display = ['name', 'user']
+  search_fields = ['name', 'user__username']
 
   fieldsets = [
     ('', {
-      'fields': (('name', 'email'),)
+      'fields': (('name', 'user'),)
     }),
     ('Staff-entered contact info', {
        'fields': (('staff_contact_person', 'staff_contact_person_title',
@@ -302,7 +302,6 @@ class OrganizationA(BaseModelAdmin):
                 ('fiscal_telephone', 'fiscal_address', 'fiscal_email'))
     })
   ]
-  inlines = []
 
   def change_view(self, request, object_id, form_url='', extra_context=None):
     self.inlines = [GrantApplicationI, SponsoredProgramI, LogReadonlyI, LogI]
@@ -315,22 +314,24 @@ class OrganizationA(BaseModelAdmin):
     ]
     return super(OrganizationA, self).change_view(request, object_id)
 
+  def get_readonly_fields(self, request, obj=None):
+    if obj and obj.user:
+      self.readonly_fields.append('user')
+    return self.readonly_fields
+
   def get_actions(self, request):
-    # don't allow 'delete' as mass action
     return {
       'merge': (OrganizationA.merge, 'merge', 'Merge')
     }
 
   def merge(self, request, queryset):
-    if len(queryset) != 2:
-      messages.warning(request,
-        'Merge can only be done on two organizations. You selected {}.'.format(len(queryset)))
-
-    else:
+    if len(queryset) == 2:
       return redirect(reverse(
         'sjfnw.grants.views.merge_orgs',
         kwargs={'id_a': queryset[0].pk, 'id_b': queryset[1].pk}
       ))
+    messages.warning(request,
+      'Merge can only be done on two organizations. You selected {}.'.format(len(queryset)))
 
 
 class GrantApplicationA(BaseModelAdmin):
