@@ -202,11 +202,6 @@ def org_home(request, org):
     if sub.pk in award_set:
       sub.awards = award_set[sub.pk]
 
-  # staff override
-  user_override = request.GET.get('user')
-  if user_override:
-    user_override = '?user=' + user_override
-
   return render(request, 'grants/org_home.html', {
     'organization': org,
     'submitted': submitted,
@@ -217,7 +212,7 @@ def org_home(request, org):
     'open': current,
     'upcoming': upcoming,
     'applied': applied,
-    'user_override': user_override
+    'user_override': utils.get_user_override(request)
   })
 
 # -----------------------------------------------------------------------------
@@ -230,13 +225,6 @@ def autosave_app(request, cycle_id):
   # don't return actual redirect since this is an ajax request
   if not request.user.is_authenticated():
     return HttpResponse(LOGIN_URL, status=401)
-
-  username = request.user.username
-
-  # check for staff impersonating an org - override username
-  if request.user.is_staff and request.GET.get('user'):
-    username = request.GET.get('user')
-    logger.info('Staff override - %s logging in as %s', request.user.username, username)
 
   try:
     organization = models.Organization.objects.get(user=request.user)
@@ -272,11 +260,6 @@ def autosave_app(request, cycle_id):
 @registered_org()
 def grant_application(request, organization, cycle_id):
   """ Get or submit the whole application form """
-
-  # staff override
-  user_override = request.GET.get('user')
-  if user_override:
-    user_override = '?user=' + user_override
 
   cycle = get_object_or_404(models.GrantCycle, pk=cycle_id)
 
@@ -389,9 +372,14 @@ def grant_application(request, organization, cycle_id):
       file_urls[field] = '<i>no file uploaded</i>'
 
   return render(request, 'grants/org_app.html', {
-      'form': form, 'cycle': cycle, 'file_urls': file_urls,
-      'draft': draft, 'profiled': profiled, 'org': organization,
-      'user_override': user_override, 'flag': draft.recently_edited() and draft.modified_by
+    'form': form,
+    'cycle': cycle,
+    'file_urls': file_urls,
+    'draft': draft,
+    'profiled': profiled,
+    'org': organization,
+    'user_override': utils.get_user_override(request),
+    'flag': draft.recently_edited() and draft.modified_by
   })
 
 def autosave_yer(request, award_id):
@@ -412,11 +400,6 @@ def autosave_yer(request, award_id):
 @login_required(login_url=LOGIN_URL)
 @registered_org()
 def year_end_report(request, organization, award_id):
-
-  # staff override
-  user_override = request.GET.get('user')
-  if user_override:
-    user_override = '?user=' + user_override
 
   # get award, make sure org matches
   award = get_object_or_404(models.GivingProjectGrant, pk=award_id)
@@ -491,8 +474,13 @@ def year_end_report(request, organization, award_id):
   yer_period = '{:%b %d, %Y} - {:%b %d, %Y}'.format(due.replace(year=due.year - 1), due)
 
   return render(request, 'grants/yer_form.html', {
-      'form': form, 'org': organization, 'draft': draft, 'award': award,
-      'file_urls': file_urls, 'user_override': user_override, 'yer_period': yer_period
+    'form': form,
+    'org': organization,
+    'draft': draft,
+    'award': award,
+    'file_urls': file_urls,
+    'user_override': utils.get_user_override(request),
+    'yer_period': yer_period
   })
 
 # -----------------------------------------------------------------------------
@@ -568,18 +556,10 @@ def remove_file(request, draft_type, draft_id, file_field):
 
 def get_upload_url(request):
   """ Get a blobstore url for uploading a file """
-
-  # staff override
-  user_override = request.GET.get('user')
-  if user_override:
-    user_override = '?user=' + user_override
-  else:
-    user_override = ''
-
   draft_id = int(request.GET.get('id'))
   prefix = request.GET.get('type')
-
-  upload_url = blobstore.create_upload_url('/%s/%d/add-file' % (prefix, draft_id) + user_override)
+  path = '/%s/%d/add-file%s' % (prefix, draft_id, utils.get_user_override(request))
+  upload_url = blobstore.create_upload_url(path)
   return HttpResponse(upload_url)
 
 # -----------------------------------------------------------------------------
@@ -589,8 +569,6 @@ def get_upload_url(request):
 @login_required(login_url=LOGIN_URL)
 @registered_org()
 def copy_app(request, organization):
-
-  user_override = '?user=' + request.GET.get('user') if request.GET.get('user') else ''
 
   if request.method == 'POST':
     form = RolloverForm(organization, request.POST)
@@ -653,7 +631,7 @@ def copy_app(request, organization):
       new_draft.save()
       logger.info('copy_app -- content and files set')
 
-      return redirect('/apply/' + cycle_id + user_override)
+      return redirect('/apply/' + cycle_id + utils.get_user_override(request))
 
     else: # INVALID FORM
       logger.info('Invalid form: %s', form.errors)

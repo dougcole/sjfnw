@@ -1,5 +1,6 @@
 # encoding: utf-8
 
+from django.utils import timezone
 from django.test import TestCase
 
 from sjfnw.grants import utils
@@ -19,3 +20,9 @@ class StripPunctuation(TestCase):
 
     result = utils.strip_punctuation_and_non_ascii(u'Watch‐these, • ‘other ▹chars‒get “removed” `too\r ■')
     self.assertEqual(result, u'Watchthese  other charsget removed too\r ')
+
+class LocalDateStr(TestCase):
+
+  def test_timestamp(self):
+    utc_time = timezone.now()
+    print(utc_time)

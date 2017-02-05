@@ -11,9 +11,16 @@ from google.appengine.ext import blobstore
 
 logger = logging.getLogger('sjfnw')
 
-# removing all non-ascii characters, which could be problem for words of only non-ascii characters, but javascript will be consistent, so okay for matching word counts.
+def get_user_override(request):
+  username = request.GET.get('user')
+  if username:
+    logger.info('Staff override - %s logging in as %s', request.user.username, username)
+    return '?user=' + username
+  else:
+    return ''
 
 def strip_punctuation_and_non_ascii(input_str):
+  """ Remove all non-ascii characters. Used for word counts in forms """
   input_str = unicode(input_str) # input may or may not be unicode already
   return ''.join([c for c in input_str if c not in string.punctuation and ord(c)<128])
 
