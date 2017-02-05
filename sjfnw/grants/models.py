@@ -48,7 +48,7 @@ class Organization(models.Model):
     'unique': ('An organization with this name is already in the system. '
     'To add a separate org with the same name, add/alter the name to '
     'differentiate the two.')})
-  user = models.OneToOneField(User, null=True)
+  user = models.OneToOneField(User, null=True, blank=True)
 
   # staff entered fields
   staff_contact_person = models.CharField(max_length=250, blank=True,
