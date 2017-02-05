@@ -46,7 +46,7 @@ class BaseTestCase(TestCase):
     self.email = self.known_members[name]
 
     if name == "first":
-      if not 'sjfnw/fund/fixtures/test_fund.json' in self.fixtures:
+      if 'sjfnw/fund/fixtures/test_fund.json' not in self.fixtures:
         raise Exception('Cannot log in as first member without test_fund.json fixture')
       self.login_strict(self.email, 'pass')
       self.member_id = 1

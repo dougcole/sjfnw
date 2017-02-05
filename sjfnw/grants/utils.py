@@ -22,7 +22,7 @@ def get_user_override(request):
 def strip_punctuation_and_non_ascii(input_str):
   """ Remove all non-ascii characters. Used for word counts in forms """
   input_str = unicode(input_str) # input may or may not be unicode already
-  return ''.join([c for c in input_str if c not in string.punctuation and ord(c)<128])
+  return ''.join([c for c in input_str if c not in string.punctuation and ord(c) < 128])
 
 def local_date_str(timestamp):
   """ Convert UTC timestamp to local date string in mm/dd/yyyy format """

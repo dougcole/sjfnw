@@ -1,13 +1,10 @@
 import datetime
 import logging
 
-from django.core.mail import EmailMultiAlternatives
 from django.http import HttpResponse
-from django.template.loader import render_to_string
 from django.utils import timezone
-from django.utils.html import strip_tags
 
-from sjfnw import constants as c
+from sjfnw import constants as c, utils
 from sjfnw.fund import models
 
 logger = logging.getLogger('sjfnw')
@@ -18,7 +15,6 @@ def email_overdue(request):
   limit = today - datetime.timedelta(days=7)
   subject = 'Fundraising Steps'
   from_email = c.FUND_EMAIL
-  bcc = [c.SUPPORT_EMAIL]
 
   for ship in ships:
     member = ship.member
@@ -27,14 +23,16 @@ def email_overdue(request):
       if count > 0 and step:
         to_email = ship.member.user.username
         logger.info('%s has overdue step(s), emailing.', to_email)
-        html_content = render_to_string('fund/emails/overdue_steps.html', {
-          'login_url': c.APP_BASE_URL + '/fund/login', 'ship': ship, 'num': count,
-          'step': step, 'base_url': c.APP_BASE_URL
-        })
-        text_content = strip_tags(html_content)
-        msg = EmailMultiAlternatives(subject, text_content, from_email, [to_email], bcc)
-        msg.attach_alternative(html_content, 'text/html')
-        msg.send()
+        utils.send_email(
+          subject=subject,
+          to=[to_email],
+          sender=from_email,
+          template='fund/emails/overdue_steps.html',
+          context={
+            'login_url': c.APP_BASE_URL + '/fund/login', 'ship': ship, 'num': count,
+            'step': step, 'base_url': c.APP_BASE_URL
+          }
+        )
         ship.emailed = today
         ship.save(skip=True)
   return HttpResponse('')
@@ -48,7 +46,6 @@ def new_accounts(request):
 
   subject = 'Accounts pending approval'
   from_email = c.FUND_EMAIL
-  bcc = [c.SUPPORT_EMAIL]
 
   active_gps = models.GivingProject.objects.filter(fundraising_deadline__gte=timezone.now().date())
 
@@ -59,16 +56,18 @@ def new_accounts(request):
       leaders = memberships.filter(leader=True)
       to_emails = [leader.member.user.username for leader in leaders]
       if to_emails:
-        html_content = render_to_string('fund/emails/accounts_need_approval.html', {
-          'admin_url': c.APP_BASE_URL + '/admin/fund/membership/',
-          'count': need_approval,
-          'giving_project': unicode(gp),
-          'support_email': c.SUPPORT_EMAIL
-        })
-        text_content = strip_tags(html_content)
-        msg = EmailMultiAlternatives(subject, text_content, from_email, to_emails, bcc)
-        msg.attach_alternative(html_content, 'text/html')
-        msg.send()
+        utils.send_email(
+          subject=subject,
+          to=to_emails,
+          sender=from_email,
+          template='fund/emails/accounts_need_approval.html',
+          context={
+            'admin_url': c.APP_BASE_URL + '/admin/fund/membership/',
+            'count': need_approval,
+            'giving_project': unicode(gp),
+            'support_email': c.SUPPORT_EMAIL
+          }
+        )
         logger.info('%d unapproved memberships in %s. Email sent to %s',
             need_approval, unicode(gp), ', '.join(to_emails))
 
@@ -92,7 +91,6 @@ def gift_notify(request):
   login_url = c.APP_BASE_URL + '/fund/'
   subject = 'Gift or pledge received'
   from_email = c.FUND_EMAIL
-  bcc = [c.SUPPORT_EMAIL]
 
   for ship, donor_list in memberships.iteritems():
     gift_str = ''
@@ -101,14 +99,13 @@ def gift_notify(request):
     ship.notifications = gift_str
     ship.save(skip=True)
 
-    to_email = [ship.member.user.username]
-    html_content = render_to_string('fund/emails/gift_received.html', {
-      'login_url': login_url, 'gift_str': ship.notifications
-    })
-    text_content = strip_tags(html_content)
-    msg = EmailMultiAlternatives(subject, text_content, from_email, to_email, bcc)
-    msg.attach_alternative(html_content, 'text/html')
-    msg.send()
+    utils.send_email(
+      subject=subject,
+      to=[ship.member.user.username],
+      sender=from_email,
+      template='fund/emails/gift_received.html',
+      context={'login_url': login_url, 'gift_str': ship.notifications}
+    )
     logger.info('Set gift notification and sent email to %s', ship.member.user.username)
 
   donors.update(gift_notified=True)

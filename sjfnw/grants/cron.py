@@ -1,13 +1,10 @@
 from datetime import timedelta
 import logging
 
-from django.core.mail import EmailMultiAlternatives
 from django.http import HttpResponse
-from django.template.loader import render_to_string
 from django.utils import timezone
-from django.utils.html import strip_tags
 
-from sjfnw import constants as c
+from sjfnw import constants as c, utils
 from sjfnw.grants.models import DraftGrantApplication, GivingProjectGrant
 
 logger = logging.getLogger('sjfnw')
@@ -25,21 +22,19 @@ def draft_app_warning(request):
     created_delta = draft.grant_cycle.close - draft.created
     if ((created_delta > eight_days and eight_days > time_left > timedelta(days=7)) or
         (created_delta < eight_days and timedelta(days=3) > time_left >= timedelta(days=2))):
-      subject, from_email = 'Grant cycle closing soon', c.GRANT_EMAIL
       to_email = draft.organization.get_email()
 
       if not to_email:
         logger.warn('Unable to send draft reminder; org is not registered %d', draft.organization.pk)
         continue
 
-      html_content = render_to_string('grants/email_draft_warning.html', {
-        'org': draft.organization, 'cycle': draft.grant_cycle
-      })
-      text_content = strip_tags(html_content)
-      msg = EmailMultiAlternatives(subject, text_content, from_email, [to_email],
-                                   [c.SUPPORT_EMAIL])
-      msg.attach_alternative(html_content, 'text/html')
-      msg.send()
+      utils.send_email(
+        subject='Grant cycle closing soon',
+        sender=c.GRANT_EMAIL,
+        to=[to_email],
+        template='grants/email_draft_warning.html',
+        context={'org': draft.organization, 'cycle': draft.grant_cycle}
+      )
       logger.info('Email sent to %s regarding draft application soon to expire', to_email)
   return HttpResponse('')
 
@@ -65,18 +60,19 @@ def yer_reminder_email(request):
     if award.yearendreport_set.count() < award.grant_length():
       app = award.projectapp.application
 
-      from_email = c.GRANT_EMAIL
-      to_email = app.organization.get_email() or app.email_address
-      html_content = render_to_string('grants/email_yer_due.html', {
-        'award': award, 'app': app, 'gp': award.projectapp.giving_project,
-        'base_url': c.APP_BASE_URL
-      })
-      text_content = strip_tags(html_content)
-
-      msg = EmailMultiAlternatives('Year end report', text_content, from_email,
-                                   [to_email], [c.SUPPORT_EMAIL])
-      msg.attach_alternative(html_content, 'text/html')
-      msg.send()
-      logger.info('YER reminder email sent to %s for award %d', to_email, award.pk)
+      to = app.organization.get_email() or app.email_address
+      utils.send_email(
+        subject='Year end report',
+        sender=c.GRANT_EMAIL,
+        to=[to],
+        template='grants/email_yer_due.html',
+        context={
+          'award': award,
+          'app': app,
+          'gp': award.projectapp.giving_project,
+          'base_url': c.APP_BASE_URL
+        }
+      )
+      logger.info('YER reminder email sent to %s for award %d', to, award.pk)
 
   return HttpResponse('success')

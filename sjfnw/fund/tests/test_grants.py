@@ -31,7 +31,7 @@ class Grants(BaseFundTestCase):
 
     ship = models.Membership(giving_project_id=16, member_id=self.member_id, approved=True)
     ship.save()
-    models.Member.objects.filter(pk=self.member_id).update(current = ship.pk)
+    models.Member.objects.filter(pk=self.member_id).update(current=ship.pk)
 
     response = self.client.get(self.url)
 

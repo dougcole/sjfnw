@@ -122,7 +122,7 @@ class Organization(models.Model):
   @classmethod
   def check_registration(cls, name, email):
     if cls.objects.filter(user__username=email).exists():
-      return  gc.FORM_ERRORS['email_registered']
+      return gc.FORM_ERRORS['email_registered']
     if User.objects.filter(username=email).exists():
       return gc.FORM_ERRORS['email_registered_pc']
     if cls.objects.filter(name__iexact=name, user__isnull=False).exists():
@@ -504,7 +504,7 @@ class GrantApplication(models.Model):
             '</tr>')
     row = u'<tr><th class="left">q{}</th><td>{}</td><td>{}</td><td>{}</td></tr>'
     for i in range(0, 15, 3):
-      q = i/3 + 1
+      q = i / 3 + 1
       colA = timeline[i] if len(timeline) > i else ''
       colB = timeline[i + 1] if len(timeline) > i + 1 else ''
       colC = timeline[i + 2] if len(timeline) > i + 2 else ''

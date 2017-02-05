@@ -6,14 +6,11 @@ from django.contrib import messages
 from django.contrib.auth import authenticate, login
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
-from django.core.mail import EmailMultiAlternatives
 from django.core.urlresolvers import reverse
 from django.forms.models import model_to_dict
 from django.http import HttpResponse, Http404, HttpResponseBadRequest
 from django.shortcuts import render, render_to_response, get_object_or_404, redirect
-from django.template.loader import render_to_string
 from django.utils import timezone
-from django.utils.html import strip_tags
 from django.views.decorators.http import require_http_methods
 
 from google.appengine.ext import blobstore
@@ -29,7 +26,7 @@ from sjfnw.grants.forms import (AdminRolloverForm, LoginAsOrgForm, LoginForm,
    AppReportForm, SponsoredAwardReportForm, GPGrantReportForm, OrgReportForm,
    RegisterForm, RolloverForm, RolloverYERForm, OrgMergeForm)
 from sjfnw.grants.modelforms import GrantApplicationModelForm, YearEndReportForm
-from sjfnw.grants.utils import local_date_str, find_blobinfo
+from sjfnw.grants.utils import local_date_str, find_blobinfo, get_user_override
 
 logger = logging.getLogger('sjfnw')
 
@@ -212,7 +209,7 @@ def org_home(request, org):
     'open': current,
     'upcoming': upcoming,
     'applied': applied,
-    'user_override': utils.get_user_override(request)
+    'user_override': get_user_override(request)
   })
 
 # -----------------------------------------------------------------------------
@@ -301,17 +298,14 @@ def grant_application(request, organization, cycle_id):
       if cycle.pk == 35:
         logger.info('Displaced Tenants Fund application; skipping confirmation email')
       else:
-        subject = 'Grant application submitted'
-        from_email = c.GRANT_EMAIL
         to_email = organization.get_email()
-        html_content = render_to_string('grants/email_submitted.html', {
-          'org': organization, 'cycle': cycle
-        })
-        text_content = strip_tags(html_content)
-        msg = EmailMultiAlternatives(subject, text_content, from_email,
-            [to_email], [c.SUPPORT_EMAIL])
-        msg.attach_alternative(html_content, 'text/html')
-        msg.send()
+        utils.send_email(
+          subject='Grant application submitted',
+          sender=c.GRANT_EMAIL,
+          to=[to_email],
+          template='grants/email_submitted.html',
+          context={'org': organization, 'cycle': cycle}
+        )
         logger.info('Application created; confirmation email sent to ' + to_email)
 
       draft.delete()
@@ -378,7 +372,7 @@ def grant_application(request, organization, cycle_id):
     'draft': draft,
     'profiled': profiled,
     'org': organization,
-    'user_override': utils.get_user_override(request),
+    'user_override': get_user_override(request),
     'flag': draft.recently_edited() and draft.modified_by
   })
 
@@ -424,22 +418,16 @@ def year_end_report(request, organization, award_id):
     draft_data['award'] = award.pk
     form = YearEndReportForm(draft_data, files_data)
     if form.is_valid():
-      logger.info('Valid YER')
-      # save YER and delete draft
       yer = form.save()
       draft.delete()
 
-      # send confirmation email
-      html_content = render_to_string('grants/email_yer_submitted.html')
-      text_content = strip_tags(html_content)
-      msg = EmailMultiAlternatives('Year end report submitted', # subject
-                                    text_content,
-                                    c.GRANT_EMAIL, # from
-                                    [yer.email], # to
-                                    [c.SUPPORT_EMAIL]) # bcc
-      msg.attach_alternative(html_content, 'text/html')
-      msg.send()
-      logger.info('YER submission confirmation email send to %s', yer.email)
+      utils.send_email(
+        subject='Year end report submitted',
+        template='grants/email_yer_submitted.html',
+        sender=c.GRANT_EMAIL,
+        to=[yer.email]
+      )
+      logger.info('YER submission confirmation email sent to %s', yer.email)
       return redirect('/report/submitted')
 
     else:
@@ -479,7 +467,7 @@ def year_end_report(request, organization, award_id):
     'draft': draft,
     'award': award,
     'file_urls': file_urls,
-    'user_override': utils.get_user_override(request),
+    'user_override': get_user_override(request),
     'yer_period': yer_period
   })
 
@@ -558,7 +546,7 @@ def get_upload_url(request):
   """ Get a blobstore url for uploading a file """
   draft_id = int(request.GET.get('id'))
   prefix = request.GET.get('type')
-  path = '/%s/%d/add-file%s' % (prefix, draft_id, utils.get_user_override(request))
+  path = '/%s/%d/add-file%s' % (prefix, draft_id, get_user_override(request))
   upload_url = blobstore.create_upload_url(path)
   return HttpResponse(upload_url)
 
@@ -631,7 +619,7 @@ def copy_app(request, organization):
       new_draft.save()
       logger.info('copy_app -- content and files set')
 
-      return redirect('/apply/' + cycle_id + utils.get_user_override(request))
+      return redirect('/apply/' + cycle_id + get_user_override(request))
 
     else: # INVALID FORM
       logger.info('Invalid form: %s', form.errors)

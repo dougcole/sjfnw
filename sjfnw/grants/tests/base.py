@@ -54,10 +54,9 @@ class BaseGrantTestCase(BaseTestCase):
     set_cycle_dates()
     for i, email in enumerate(['neworg@gmail.com', 'testorg@gmail.com']):
       user = User.objects.create_user(email, email, 'pw')
-      org = models.Organization.objects.get(pk=i+1)
+      org = models.Organization.objects.get(pk=i + 1)
       org.user = user
       org.save()
-
 
   # see sjfnw/grants/fixtures/README.md for what objects are associated with each org
   def login_as_org(self, name):
