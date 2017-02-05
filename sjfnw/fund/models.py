@@ -1,5 +1,6 @@
 import datetime, json, logging
 
+from django.contrib.auth.models import User
 from django.contrib.humanize.templatetags.humanize import intcomma
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
@@ -92,6 +93,7 @@ class GivingProject(models.Model):
 
 
 class Member(models.Model):
+  user = models.OneToOneField(User, null=True)
   email = models.EmailField(max_length=100, unique=True) # used to find corresponding User
   first_name = models.CharField(max_length=100)
   last_name = models.CharField(max_length=100)
