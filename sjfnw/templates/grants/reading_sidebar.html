@@ -1,51 +1,49 @@
 {% extends 'grants/reading.html' %}
 
-{% block scripts %}
+{% block script %}
+{{ block.super }}
 <script type="text/javascript">
-	var main_div;
+  var main_div;
   var frame;
   var first = true;
-	function showMain() {
-		console.log('displaying main content');
-		main_div.style.display = '';
-		frame.style.display = 'none';
-	}
+  function showMain() {
+    main_div.style.display = '';
+    frame.style.display = 'none';
+  }
 
   function showAttachment(){
     if (first) {
       first = false;
     } else if (frame) {
-			console.log('Displaying iframe');
-			frame.style.display = '';
-			main_div.style.display = 'none';
-		}
+      frame.style.display = '';
+      main_div.style.display = 'none';
+    }
   }
 
-	$(document).ready(function() {
-		console.log('doc is ready');
-		main_div = document.getElementById('main_content');
+  $(document).ready(function() {
+    main_div = document.getElementById('main_content');
     frame = document.getElementById('reading_frame');
-	});
+  });
 </script>
-{% endblock scripts %}
+{% endblock script %}
 
 {% block sidebar %}
 <div class="reading_sidebar">
 
-	<div class="title">
-		<div class="heading_sm_margin">{{app.organization}}</div>
-		<div class="heading_sm_margin">{{app.grant_cycle}}</div>
-		{{app.submission_time|date:"F j, Y"}}
-	</div>
+  <div class="title">
+    <div class="heading_sm_margin">{{app.organization}}</div>
+    <div class="heading_sm_margin">{{app.grant_cycle}}</div>
+    {{app.submission_time|date:"F j, Y"}}
+  </div>
 
-	<div class="contents">
-		<a onclick="showMain()">Application form</a>
+  <div class="contents">
+    <a onclick="showMain()">Application form</a>
     <a href="?form=1" target="_blank">
       <img class="print" title="Open in new tab for printing" src="/static/images/print.png">
     </a>
     <br><br>
-		Uploaded files:
-		<ol class="contents">
+    Uploaded files:
+    <ol class="contents">
     {% if app.fiscal_letter and perm > 1 %}
       <li>
         <a href="{{file_urls.fiscal_letter}}" target="reading_frame">Fiscal letter</a>
@@ -87,7 +85,7 @@
         <a href="{{file_urls.demographics}}" target="reading_frame">Diversity chart</a>
         <a href="{{print_urls.demographics}}" target="_blank"><img class="print" title="Open in new tab for printing" src="/static/images/print.png"></a>
       </li>
-		</ol>
+    </ol>
   </div>
 
   {% if app.site_visit_report %}
