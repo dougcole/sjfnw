@@ -1307,9 +1307,9 @@ def get_org_results(options):
   # filters
   reg = options.get('registered')
   if reg is True:
-    orgs = orgs.exclude(user__isNull=true)
+    orgs = orgs.exclude(user__isnull=True)
   elif reg is False:
-    org = orgs.filter(user__isNull=true)
+    org = orgs.filter(user__isnull=True)
   if options.get('organization_name'):
     orgs = orgs.filter(name__contains=options['organization_name'])
   if options.get('city'):

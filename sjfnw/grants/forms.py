@@ -317,7 +317,7 @@ class LoginAsOrgForm(forms.Form):
 
   def __init__(self, *args, **kwargs):
     super(LoginAsOrgForm, self).__init__(*args, **kwargs)
-    orgs = Organization.objects.exclude(user__isNull=true).order_by('name')
+    orgs = Organization.objects.exclude(user__isnull=True).order_by('name')
     self.fields['organization'] = forms.ChoiceField(
         choices=[('', '--- Organizations ---')] + [(o.get_email(), unicode(o)) for o in orgs])
 
