@@ -48,7 +48,7 @@ handlers:
 
 - url: /static
   static_dir: sjfnw/static
-  expiration: '1h'
+  expiration: '10m'
 
 - url: /favicon\.ico
   static_files: sjfnw/static/favicon.ico
