@@ -145,6 +145,15 @@ def cycle_info(request, cycle_id):
     'cycle': cycle, 'content': content
   })
 
+def not_registered(request):
+
+  if not request.user.is_authenticated():
+    return redirect(LOGIN_URL)
+
+  username = request.GET.get('user') or request.user.username
+
+  return render(request, 'grants/not_registered.html', {'username': username})
+
 # -----------------------------------------------------------------------------
 #  Org home
 # -----------------------------------------------------------------------------

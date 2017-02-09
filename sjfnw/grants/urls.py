@@ -3,7 +3,6 @@ from django.views.generic.base import TemplateView
 from sjfnw import constants
 
 apply_urls = patterns('',
-  (r'^nr', TemplateView.as_view(template_name='grants/not_grantee.html')),
   (r'^submitted/?', TemplateView.as_view(template_name='grants/submitted.html')),
 )
 
@@ -12,6 +11,7 @@ apply_urls += patterns('sjfnw.grants.views',
   # login, logout, registration
   (r'^login/?$', 'org_login'),
   (r'^register/?$', 'org_register'),
+  (r'^nr', 'not_registered'),
 
   # home page
   (r'^$', 'org_home'),
