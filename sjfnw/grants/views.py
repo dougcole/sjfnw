@@ -18,6 +18,7 @@ from google.appengine.ext import blobstore
 import unicodecsv
 
 from sjfnw import constants as c, utils
+from sjfnw.decorators import login_required_ajax
 from sjfnw.fund.models import Member
 from sjfnw.grants import constants as gc
 from sjfnw.grants import models
@@ -225,18 +226,10 @@ def org_home(request, org):
 #  Grant application & Year-end report
 # -----------------------------------------------------------------------------
 
-def autosave_app(request, cycle_id):
+@login_required_ajax(login_url=LOGIN_URL)
+@registered_org()
+def autosave_app(request, organization, cycle_id):
   """ Save non-file fields to a draft """
-
-  # don't return actual redirect since this is an ajax request
-  if not request.user.is_authenticated():
-    return HttpResponse(LOGIN_URL, status=401)
-
-  try:
-    organization = models.Organization.objects.get(user=request.user)
-    logger.info(organization)
-  except models.Organization.DoesNotExist:
-    return HttpResponse('/apply/nr', status=401)
 
   cycle = get_object_or_404(models.GrantCycle, pk=cycle_id)
   draft = get_object_or_404(models.DraftGrantApplication,
