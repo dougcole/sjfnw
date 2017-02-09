@@ -13,11 +13,7 @@ logger = logging.getLogger('sjfnw')
 
 def get_user_override(request):
   username = request.GET.get('user')
-  if username:
-    logger.info('Staff override - %s logging in as %s', request.user.username, username)
-    return '?user=' + username
-  else:
-    return ''
+  return '?user=' + username if username else ''
 
 def strip_punctuation_and_non_ascii(input_str):
   """ Remove all non-ascii characters. Used for word counts in forms """
