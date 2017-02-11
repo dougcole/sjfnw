@@ -5,9 +5,13 @@ from django.utils.html import strip_tags
 
 from sjfnw import constants as c
 
-def create_link(url, text, new_tab=False):
-  new_tab = ' target="_blank"' if new_tab else ''
-  return '<a href="{}"{}>{}</a>'.format(url, new_tab, text)
+def create_link(url, text, new_tab=False, title=None):
+  return '<a href="{url}"{target}{title}>{text}</a>'.format(
+    url=url,
+    text=text,
+    new_tab=' target="_blank"' if new_tab else '',
+    title = ' title="{}"'.format(title) if title else ''
+  )
 
 def admin_change_link(namespace, obj, new_tab=False):
   url = reverse('admin:{}_change'.format(namespace), args=(obj.pk,))

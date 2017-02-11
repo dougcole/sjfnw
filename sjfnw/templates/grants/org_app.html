@@ -60,14 +60,12 @@ function showConflictWarning(trigger){
 
 
 function showMoreInfo(show_id) {
-  div = show_id + '-info';
-  console.log('showing ' + div);
+  show_id += '-info';
   div = document.getElementById(div);
   if (div) {
-    console.log(div);
     div.style.display = 'block';
   } else {
-    console.error('info to show not found');
+    console.error('Info element with id', show_id, 'not found')
   }
 }
 
@@ -81,18 +79,16 @@ function hide(id) {
 }
 
 function setInfoClicks(){
-  console.log('setInfoClicks');
   $('.has-more-info').each(function(index) {
-      if (this.id) {
-        this.onclick = function(){ showMoreInfo(this.id); };
-        console.log('Linked ' + this.id);
-      } else {
-        console.log('Error - has-more-info without an id');
-      }
+    if (this.id) {
+      this.onclick = function(){ showMoreInfo(this.id); };
+    } else {
+      console.log('Error - has-more-info without an id');
+    }
   });
   $('.more-info').each(function(i) {
-      this.innerHTML = this.innerHTML + '<div class="more-info-hide">click to hide</div>';
-      this.onclick = function() { hide(this.id); };
+    this.innerHTML = this.innerHTML + '<div class="more-info-hide">click to hide</div>';
+    this.onclick = function() { hide(this.id); };
   });
 }
 
@@ -103,12 +99,12 @@ $(document).ready(function() {
   word_limited.on('keyup', updateWordCount)
   word_limited.keyup();
 
-  //check whether it was edited recently -- show override confirmation
+  //check whether draft was edited recently -- show override confirmation
   if ('{{ flag }}' == 'True'){
     autoSave.pause();
     showOverrideWarning(1);
   }
-  // more info toggles
+  // set up click handler for "show more info" buttons
   setInfoClicks();
 });
 

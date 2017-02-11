@@ -358,12 +358,12 @@ def grant_application(request, organization, cycle_id):
 
   # get draft files
   file_urls = get_file_urls(request, draft)
-  link_template = (u'<a href="{0}" target="_blank" title="{1}">{1}</a> '
-                   '[<a onclick="fileUploads.removeFile(\'{2}\');">remove</a>]')
+
+  button_template = '<button class="remove-file" data-target="{}">remove</button>'
   for field, url in file_urls.iteritems():
     if url:
       name = getattr(draft, field).name.split('/')[-1]
-      file_urls[field] = link_template.format(url, name, field)
+      file_urls[field] = utils.create_link(url, name, title=name) + button_template.format(field)
     else:
       file_urls[field] = '<i>no file uploaded</i>'
 
@@ -451,12 +451,11 @@ def year_end_report(request, organization, award_id):
     form = YearEndReportForm(initial=initial_data)
 
   file_urls = get_file_urls(request, draft)
+  button_template = '<button class="remove-file" data-target="{}">remove</button>'
   for field, url in file_urls.iteritems():
     if url:
       name = getattr(draft, field).name.split('/')[-1]
-      file_urls[field] = ('<a href="' + url + '" target="_blank" title="' +
-          name + '">' + name + '</a> [<a onclick="fileUploads.removeFile(\'' +
-          field + '\');">remove</a>]')
+      file_urls[field] = utils.create_link(url, name, title=name) + button_template.format(field)
     else:
       file_urls[field] = '<i>no file uploaded</i>'
 
@@ -513,11 +512,12 @@ def add_file(request, draft_type, draft_id):
     return HttpResponse('ERROR') # TODO use status code
 
   file_urls = get_file_urls(request, draft)
-  content = (field_name + u'~~<a href="' + file_urls[field_name] +
-             u'" target="_blank" title="' + unicode(blob_file) + u'">' +
-             unicode(blob_file) + u'</a> [<a onclick="fileUploads.removeFile(\'' +
-             field_name + u'\');">remove</a>]')
-  logger.info(u'add_file returning: ' + content)
+  filename = unicode(blob_file)
+  button_template = '<button class="remove-file" data-target="{}">remove</button>'
+  content = field_name +
+            u'~~' +
+            utils.create_link(file_urls[field_name], filename, title=filename) +
+            button_template.format(field)
   return HttpResponse(content)
 
 def remove_file(request, draft_type, draft_id, file_field):

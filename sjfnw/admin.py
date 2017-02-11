@@ -86,7 +86,7 @@ class UserA(UserAdmin):
   fieldsets = (
       (None, {
         'fields': (
-          ('username', 'change_password'),
+          ('username', 'password'),
           ('member_link', 'organization_link')
         )
       }),
@@ -98,7 +98,7 @@ class UserA(UserAdmin):
         )
       })
   )
-  readonly_fields = ('last_login', 'date_joined', 'change_password',
+  readonly_fields = ('last_login', 'date_joined', 'password',
                      'member_link', 'organization_link')
 
   def member_link(self, obj):
