@@ -230,8 +230,8 @@ class GivingProjectA(BaseModelAdmin):
   inlines = [MembershipInline]
 
   def change_view(self, request, object_id, form_url='', extra_context=None):
-    self.inlines = self.inlines + [GPSurveyI, ProjectResourcesInline, ProjectAppInline]
-    return super(GivingProjectA, self).change_view(request, object_id)
+    self.inlines = [MembershipInline, GPSurveyI, ProjectResourcesInline, ProjectAppInline]
+    return super(GivingProjectA, self).change_view(request, object_id, form_url=form_url, extra_context=extra_context)
 
   def gp_year(self, obj):
     year = obj.fundraising_deadline.year
