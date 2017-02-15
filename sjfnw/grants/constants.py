@@ -41,6 +41,16 @@ SCREENING = (
   (130, 'Closed')
 )
 
+STANDARD_NARRATIVES = [
+  {'name': 'mission', 'version': 'standard' },
+  {'name': 'most_impacted', 'version': 'standard' },
+  {'name': 'root_causes', 'version': 'standard'},
+  {'name': 'workplan', 'version': 'standard'},
+  {'name': 'timeline', 'version': 'five_quarter'},
+  {'name': 'racial_justice', 'version': 'standard'},
+  {'name': 'collaboration', 'version': 'standard'}
+];
+
 NARRATIVE_WORD_LIMITS = {
   'narrative1': 300,
   'narrative2': 200,

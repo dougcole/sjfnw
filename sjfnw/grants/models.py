@@ -3,7 +3,7 @@ import json, logging
 
 from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError
-from django.core.validators import BaseValidator
+from django.core.validators import BaseValidator, MinValueValidator
 from django.db import models
 from django.utils import timezone
 
@@ -147,6 +147,32 @@ class Organization(models.Model):
     self.save()
     logger.info('org profile updated - %s', self.name)
 
+class NarrativeQuestion(models.Model):
+  created = models.DateTimeField(blank=True, default=timezone.now)
+
+  name = models.CharField(max_length=75,
+    help_text='Short description of question topic, e.g. "mission", "racial_justice"'
+  )
+  version = models.CharField(max_length=40,
+    help_text=(
+      'Short description of this variation of the question, e.g. "standard" for '
+      'general SJF use, "rapid" for rapid response cycles.<br>'
+      'When updating a version without changing the purpose, increment the version '
+      'number. Example: standard -> standard-v2 -> standard-v3'
+    )
+  )
+  text = models.TextField(blank=False, help_text='Text to display, in raw html. Don\'t include question number - that will be added automatically')
+  word_limit = models.PositiveSmallIntegerField(null=True, blank=True, help_text='Word limit for the question. If left blank, no word limit will be enforced')
+
+  archived = models.BooleanField(blank=True, default=False,
+      help_text='Archived questions remain associated with existing grant cycles but can\'t be added to new grant cycles.')
+
+  class Meta:
+    unique_together = ('name', 'version')
+
+  def __unicode__(self):
+    return u'{} ({})'.format(self.name, self.version)
+
 
 class GrantCycle(models.Model):
   title = models.CharField(max_length=100)
@@ -172,6 +198,9 @@ class GrantCycle(models.Model):
       'second year of this grant build on your work in the first year?</li></ol>',
       help_text='Only shown if "Two year grants" is checked. HTML can be used '
       'for formatting')
+  # TODO put reminder in admin for re: adding two-year q
+
+  narrative_questions = models.ManyToManyField(NarrativeQuestion, through='CycleNarrative')
 
   class Meta:
     ordering = ['-close', 'title']
@@ -190,6 +219,21 @@ class GrantCycle(models.Model):
       return 'upcoming'
     else:
       return 'open'
+
+
+class CycleNarrative(models.Model):
+
+  narrative_question = models.ForeignKey(NarrativeQuestion)
+  grant_cycle = models.ForeignKey(GrantCycle)
+
+  order = models.PositiveSmallIntegerField(validators=[MinValueValidator(1)], default=1)
+
+  class Meta:
+    ordering = ('order',)
+    unique_together = ('grant_cycle', 'narrative_question')
+
+  def __unicode__(self):
+    return u'{}: {}'.format(self.order, self.narrative_question)
 
 
 class DraftGrantApplication(models.Model):

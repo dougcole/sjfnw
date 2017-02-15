@@ -10,7 +10,7 @@ from django.utils.safestring import mark_safe
 from sjfnw import utils
 from sjfnw.admin import BaseModelAdmin, BaseShowInline, YearFilter
 from sjfnw.grants import models
-from sjfnw.grants.modelforms import DraftAdminForm, LogAdminForm
+from sjfnw.grants.modelforms import DraftAdminForm, LogAdminForm, CycleNarrativeFormset
 
 logger = logging.getLogger('sjfnw')
 
@@ -183,6 +183,12 @@ class AppCycleI(BaseShowInline):
   change_link_text = "View/edit"
 
 
+class CycleNarrativeI(admin.TabularInline):
+  model = models.CycleNarrative
+  fields = ('order', 'narrative_question')
+  extra = 0
+  formset = CycleNarrativeFormset
+
 class GrantApplicationI(BaseShowInline):
   """ List grant applications on organization page """
   model = models.GrantApplication
@@ -289,7 +295,13 @@ class GrantCycleA(BaseModelAdmin):
     ('two_year_grants', 'two_year_question'),
     'private', 'extra_question', 'conflicts',
   ]
-  inlines = [AppCycleI]
+  inlines = [CycleNarrativeI, AppCycleI]
+
+
+class NarrativeQuestionA(BaseModelAdmin):
+  list_display = ('name', 'version', 'archived')
+  search_fields = ('name', 'version')
+  list_filter = ('name', 'version')
 
 
 class OrganizationA(BaseModelAdmin):
@@ -655,6 +667,7 @@ class LogA(BaseModelAdmin):
 # -----------------------------------------------------------------------------
 
 admin.site.register(models.GrantCycle, GrantCycleA)
+admin.site.register(models.NarrativeQuestion, NarrativeQuestionA)
 admin.site.register(models.Organization, OrganizationA)
 admin.site.register(models.GrantApplication, GrantApplicationA)
 admin.site.register(models.DraftGrantApplication, DraftGrantApplicationA)

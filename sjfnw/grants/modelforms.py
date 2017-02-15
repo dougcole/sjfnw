@@ -10,7 +10,7 @@ from django.utils.text import capfirst
 from sjfnw.forms import IntegerCommaField, PhoneNumberField
 from sjfnw.grants import constants as gc
 from sjfnw.grants.models import (Organization, GrantApplication, DraftGrantApplication,
-    YearEndReport)
+    YearEndReport, CycleNarrative)
 
 logger = logging.getLogger('sjfnw')
 
@@ -24,6 +24,16 @@ class OrgProfile(ModelForm):
   class Meta:
     model = Organization
     fields = Organization.get_profile_fields()
+
+class CycleNarrativeFormset(forms.models.BaseInlineFormSet):
+
+  class Meta:
+    model = CycleNarrative
+
+  def clean(self):
+    orders = [form.cleaned_data['order'] for form in self.forms]
+    if len(set(orders)) < len(orders):
+      raise forms.ValidationError('Cannot have multiple questions with the same order')
 
 
 class TimelineWidget(forms.widgets.MultiWidget):
