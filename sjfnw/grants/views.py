@@ -110,37 +110,41 @@ def org_support(request):
     'support_form': c.GRANT_SUPPORT_FORM
   })
 
-def cycle_info(request, cycle_id):
-  """ Fetches cycle info page from external URL and embeds it """
-
-  cycle = get_object_or_404(models.GrantCycle, pk=cycle_id)
-
-  content = ''
-
-  if not cycle.info_page:
-    raise Http404
-
-  content = ''
-
+def fetch_cycle_info(url):
+  if not re.search(r'https?://socialjusticefund.org', cycle.info_page):
+    return ('<h4>Grant cycle information page could not be loaded</h4>'
+            '<p>You can still continue to the application form.</p>')
   try:
-    info_page = urllib2.urlopen(cycle.info_page)
+    info_page = urllib2.urlopen(url)
   except (urllib2.URLError, ValueError) as err:
     logger.error('Error fetching cycle info page: %s', err)
-    content = ('<h4 class="center">Sorry, the cycle information page could '
-      'not be loaded.<br>Try visiting it directly: <a href="' +
-      cycle.info_page + '" target="_blank">grant cycle information</a>')
+    return (
+      '<h4>Grant cycle information page could not be loaded</h4>'
+      '<p>Try visiting it directly: {}</p>'.format(
+        utils.create_link(url, 'grant cycle information', new_tab=True)
+      )
+    )
   else:
     content = info_page.read()
     # we're getting pages with a known format from socialjusticefund.org
     # these are hacky ways to strip header/footer and make the img urls work
     start = content.find('<div id="content"')
     end = content.find('<!-- /#content')
-    content = content[start:end].replace('modules/file/icons', 'static/images')
+    if start == -1 or end == -1:
+      logger.error('Info page content from %s missing expected content markers', url)
+      return ''
 
-    if content == '':
-      logger.error('Info page content at %s could not be split', cycle.info_page)
-    else:
-      logger.info('Received info page content from ' + cycle.info_page)
+    return content[start:end].replace('modules/file/icons', 'static/images')
+
+
+def cycle_info(request, cycle_id):
+
+  cycle = get_object_or_404(models.GrantCycle, pk=cycle_id)
+
+  if not cycle.info_page:
+    raise Http404
+
+  content = fetch_cycle_info(cycle.info_page)
 
   return render(request, 'grants/cycle_info.html', {
     'cycle': cycle, 'content': content
