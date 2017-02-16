@@ -665,6 +665,7 @@ class LogA(BaseModelAdmin):
 #  REGISTER
 # -----------------------------------------------------------------------------
 
+admin.site.register(models.NarrativeAnswer, BaseModelAdmin)
 admin.site.register(models.GrantCycle, GrantCycleA)
 admin.site.register(models.NarrativeQuestion, NarrativeQuestionA)
 admin.site.register(models.Organization, OrganizationA)

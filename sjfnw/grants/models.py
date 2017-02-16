@@ -366,6 +366,8 @@ class GrantApplication(models.Model):
                                   choices=gc.STATE_CHOICES, blank=True)
   fiscal_zip = models.CharField(verbose_name='ZIP', max_length=50, blank=True)
 
+  narratives = models.ManyToManyField(CycleNarrative, through='NarrativeAnswer')
+
   narrative1 = models.TextField(verbose_name=gc.NARRATIVE_TEXTS['narrative1'],
       validators=[WordLimitValidator(gc.NARRATIVE_WORD_LIMITS['narrative1'])])
   narrative2 = models.TextField(verbose_name=gc.NARRATIVE_TEXTS['narrative2'],
@@ -544,6 +546,12 @@ class GrantApplication(models.Model):
     html += '</table>'
     return html
   timeline_display.allow_tags = True
+
+
+class NarrativeAnswer(models.Model):
+  cycle_narrative = models.ForeignKey(CycleNarrative)
+  grant_application = models.ForeignKey(GrantApplication)
+  text = models.TextField()
 
 
 class GrantApplicationOverflow(models.Model): # pylint: disable=model-missing-unicode
