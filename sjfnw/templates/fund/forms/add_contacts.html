@@ -7,18 +7,20 @@
 
       {# show form labels #}
       {% if forloop.counter == 1 %}
+      <div class="row">
         {% for field in form %}
-          <div class="{% if forloop.counter < 3 %}third{% elif field.name == 'confirm' %}hidden{% else %}sixth{% endif %}">
+          <div class="{% if forloop.counter < 3 %}col-fixed col-1of3{% elif field.name == 'confirm' %}hidden{% else %}col-fixed col-1of6{% endif %}">
             {{ field.label }}
           </div>
         {% endfor %}
         {{ empty_error|safe }}
+      </div>
       {% endif %}
 
       {# show input fields #}
-      <div class="form-row">
+      <div class="row">
         {% for field in form %}
-          <div class="form-field {% if forloop.counter < 3 %}third{% elif field.name == 'confirm' %}hidden{% else %}sixth{% endif %}">
+          <div class="form-field {% if forloop.counter < 3 %}col-fixed col-1of3{% elif field.name == 'confirm' %}hidden{% else %}col-fixed col-1of6{% endif %}">
             {{ field.errors }}{{ field }}
           </div>
         {% endfor %}
