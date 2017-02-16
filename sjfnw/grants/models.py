@@ -178,7 +178,7 @@ class GrantCycle(models.Model):
   title = models.CharField(max_length=100)
   open = models.DateTimeField()
   close = models.DateTimeField()
-  extra_question = models.TextField(blank=True)
+
   info_page = models.URLField()
   email_signature = models.TextField(blank=True)
   conflicts = models.TextField(blank=True,
@@ -187,18 +187,6 @@ class GrantCycle(models.Model):
   private = models.BooleanField(default=False,
       verbose_name='Private (will not be displayed to orgs, but can be '
       'accessed by anyone who has the direct link)')
-  two_year_grants = models.BooleanField(default=False,
-      help_text='Cycles associated with two-year grants have an extra '
-      'question in their application.')
-  two_year_question = models.TextField(blank=True,
-      default='This grant will provide funding for two years. While we know it can be '
-      'difficult to predict your work beyond a year, please give us an idea of '
-      'what the second year might look like.<ol><li>What overall goals and '
-      'strategies do you forecast in the second year?</li><li>How will the '
-      'second year of this grant build on your work in the first year?</li></ol>',
-      help_text='Only shown if "Two year grants" is checked. HTML can be used '
-      'for formatting')
-  # TODO put reminder in admin for re: adding two-year q
 
   narrative_questions = models.ManyToManyField(NarrativeQuestion, through='CycleNarrative')
 
