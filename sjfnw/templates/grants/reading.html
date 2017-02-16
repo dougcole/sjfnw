@@ -5,69 +5,69 @@
 {% block sidebar %}{% endblock %}
 
 {% block main %}
-	<div id="main_content">
+  <div id="main_content">
     {% autoescape off %}{% load humanize %}
     {% if not file_urls %}{# loaded in its own window #}
       <h2 class="text-center">{{app.organization}} - {{app.grant_cycle}}</h2>
       {{app.submission_time|date:"F j, Y"}}
     {% endif %}
 
-		<h2>Organization and Grant Request Profile</h2>
+    <h2>Organization and Grant Request Profile</h2>
 
-		<table>
-			<tr>
-				<td colspan="2">{{form.address.label_tag}}{{app.address}} {{app.city}}, {{app.state}} {{app.zip}}</td>
-			</tr><tr>
-				<td>{{form.telephone_number.label_tag}}{{app.telephone_number}}</td>
-				<td>{{form.fax_number.label_tag}}{{app.fax_number}}</td>
-			</tr><tr>
-				<td>{{form.email_address.label_tag}}{{app.email_address}}</td>
-				<td>{{form.website.label_tag}}{{app.website}}</td>
-			</tr><tr>
-				<td><label>{{form.contact_person.help_text}}</label></td>
-				<td>{{app.contact_person}}, {{app.contact_person_title}}</td>
-			</tr><tr>
-				<td>{{form.status.label_tag}}{{app.status}}</td>
-				<td>{{form.founded.label_tag}}{{app.founded}}</td>
-			</tr><tr>
-				<td>{{form.ein.label_tag}}{{app.ein}}</td>
-			</tr><tr>
-				<td colspan="2"><p>{{form.mission.label_tag}}{{app.mission|linebreaks}}</p></td>
-			</tr><tr>
-				<td>{{form.start_year.label_tag}}{{app.start_year}}</td>
-				<td>{{form.grant_period.label_tag}}{{app.grant_period|default:"n/a"}}</td>
-			</tr><tr>
-				<td>{{form.budget_last.label_tag}}${{app.budget_last|intcomma}}</td>
-				<td>{{form.budget_current.label_tag}}${{app.budget_current|intcomma}}</td>
-			</tr><tr>
-				<td colspan="2">{{form.previous_grants.label_tag}}{{app.previous_grants}}</td>
-			</tr><tr>
-				<td>{{form.amount_requested.label_tag}}${{app.amount_requested|intcomma}}</td>
-				<td>{{form.support_type.label_tag}}{{app.support_type}}</td>
-			</tr><tr>
-				<td>{{form.project_title.label_tag}}{{app.project_title|default:"n/a"}}</td>
-				{%if app.project_budget%}
-				<td>{{form.project_budget.label_tag}}${{app.project_budget|intcomma}}</td>
-				{%endif%}
-			</tr><tr>
-				<td colspan="2"><p>{{form.grant_request.label_tag}}{{app.grant_request|linebreaks}}</p></td>
-			</tr><tr>
-			{%if app.fiscal_org%}
-				<td colspan="2"><label>Fiscal sponsor information</label></td><!-- Fiscal sponsor info -->
-			</tr><tr>
-				<td>{{form.fiscal_org.label_tag}}{{app.fiscal_org|default:"N/A"}}</td>
-				<td>{{form.fiscal_person.label_tag}}{{app.fiscal_person}}</td>
-			</tr><tr>
-				<td>{{form.fiscal_address.label_tag}}{{app.fiscal_address}} {{app.fiscal_city}}, {{app.fiscal_state}} {{app.fiscal_zip}}</td>
-				<td>{{form.fiscal_telephone.label_tag}}{{app.fiscal_telephone}}</td>
-			</tr><tr>
-				<td>{{form.fiscal_email.label_tag}}{{app.fiscal_email}}</td>
-				<td></td>
-			</tr>
-			{% endif %}
-		</table>
+    <table>
+      <tr>
+        <td colspan="2">{{form.address.label_tag}}{{app.address}} {{app.city}}, {{app.state}} {{app.zip}}</td>
+      </tr><tr>
+        <td>{{form.telephone_number.label_tag}}{{app.telephone_number}}</td>
+        <td>{{form.fax_number.label_tag}}{{app.fax_number}}</td>
+      </tr><tr>
+        <td>{{form.email_address.label_tag}}{{app.email_address}}</td>
+        <td>{{form.website.label_tag}}{{app.website}}</td>
+      </tr><tr>
+        <td><label>{{form.contact_person.help_text}}</label></td>
+        <td>{{app.contact_person}}, {{app.contact_person_title}}</td>
+      </tr><tr>
+        <td>{{form.status.label_tag}}{{app.status}}</td>
+        <td>{{form.founded.label_tag}}{{app.founded}}</td>
+      </tr><tr>
+        <td>{{form.ein.label_tag}}{{app.ein}}</td>
+      </tr><tr>
+        <td colspan="2"><p>{{form.mission.label_tag}}{{app.mission|linebreaks}}</p></td>
+      </tr><tr>
+        <td>{{form.start_year.label_tag}}{{app.start_year}}</td>
+        <td>{{form.grant_period.label_tag}}{{app.grant_period|default:"n/a"}}</td>
+      </tr><tr>
+        <td>{{form.budget_last.label_tag}}${{app.budget_last|intcomma}}</td>
+        <td>{{form.budget_current.label_tag}}${{app.budget_current|intcomma}}</td>
+      </tr><tr>
+        <td colspan="2">{{form.previous_grants.label_tag}}{{app.previous_grants}}</td>
+      </tr><tr>
+        <td>{{form.amount_requested.label_tag}}${{app.amount_requested|intcomma}}</td>
+        <td>{{form.support_type.label_tag}}{{app.support_type}}</td>
+      </tr><tr>
+        <td>{{form.project_title.label_tag}}{{app.project_title|default:"n/a"}}</td>
+        {%if app.project_budget%}
+        <td>{{form.project_budget.label_tag}}${{app.project_budget|intcomma}}</td>
+        {%endif%}
+      </tr><tr>
+        <td colspan="2"><p>{{form.grant_request.label_tag}}{{app.grant_request|linebreaks}}</p></td>
+      </tr><tr>
+      {%if app.fiscal_org%}
+        <td colspan="2"><label>Fiscal sponsor information</label></td><!-- Fiscal sponsor info -->
+      </tr><tr>
+        <td>{{form.fiscal_org.label_tag}}{{app.fiscal_org|default:"N/A"}}</td>
+        <td>{{form.fiscal_person.label_tag}}{{app.fiscal_person}}</td>
+      </tr><tr>
+        <td>{{form.fiscal_address.label_tag}}{{app.fiscal_address}} {{app.fiscal_city}}, {{app.fiscal_state}} {{app.fiscal_zip}}</td>
+        <td>{{form.fiscal_telephone.label_tag}}{{app.fiscal_telephone}}</td>
+      </tr><tr>
+        <td>{{form.fiscal_email.label_tag}}{{app.fiscal_email}}</td>
+        <td></td>
+      </tr>
+      {% endif %}
+    </table>
 
-		<h2>Narratives</h2>
+    <h2>Narratives</h2>
     <ol class="main">
       <li>
         <label>{{form.narrative1.label}}</label>
@@ -120,8 +120,8 @@
         <p>{{app.cycle_question|linebreaks}}</p>
       </li>
       {% endif %}
-	{% endautoescape %}
-	</div>
+  {% endautoescape %}
+  </div>
 {% endblock main %}
 
 {% endblock body %}
