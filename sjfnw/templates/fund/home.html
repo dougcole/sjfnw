@@ -15,13 +15,13 @@
 
   {% if donors.0 %}
   <div class="header">YOUR PROGRESS</div>
-  <div class="progress">
-    <div class="half">
+  <div class="progress row">
+    <div class="col col-1of2">
         <div id="contacts">{{ progress.contacts }} contacts</div>
         <div id="chart_div" class="chart"></div>
     </div>
     {% if progress.estimated > 0 %}
-    <div class="half">
+    <div class="col col-1of2">
         <div id="fund-goal" title="Personal fundraising goal of ${{ progress.estimated }} calculated based on your ask amount and estimated likelihood for each contact">{{ progress.header }}</div>
         <div id="chart_div2" class="chart"></div>
     </div>

@@ -42,14 +42,14 @@
       {% block content %}{% endblock %}  
     </div>
 
-    <footer>
-      <div class="fourth">
+    <footer class="row">
+      <div class="col col-1of4">
         <a href="{% url "sjfnw.grants.views.org_support" %}">support</a>
       </div>
-      <div class="fourth">
+      <div class="col col-1of4">
         <a href="http://socialjusticefund.org">socialjusticefund.org</a>
       </div>
-      <div class="half text-right">
+      <div class="col col-2of4 text-right">
         {% if user.is_authenticated %}
           {{user.username}} | <a href="/logout">log out</a>
         {% elif not register %}

@@ -3,7 +3,7 @@
   <h3>1) Complete a step: {{ step }}</h3>
 
   <div class="form-row text-center">
-    <div id="asked" class="form-field third">
+    <div id="asked" class="form-field col-1of3">
       {% if donor.asked %}
       Asked.
       {% endif %}
@@ -12,7 +12,7 @@
       </label>
     </div>
 
-    <div id="response" class="form-field third">
+    <div id="response" class="form-field col-1of3">
       {% if donor.promised == 0 %}
         Declined.
       {% elif donor.promised %}
@@ -23,7 +23,7 @@
       </label>
     </div>
 
-    <div id="promised-amount" class="form-field third">
+    <div id="promised-amount" class="form-field col-1of3">
       {{ form.promised_amount.errors }}
       <label id="{{ step_id }}_promise">
         Promised ${{ form.promised_amount }}
@@ -40,19 +40,19 @@
         follow up on the promise as needed.</p>
 
     <div class="form-row">
-      <div class="form-field third">
+      <div class="form-field col-1of3">
         {{ form.last_name.errors }}
         {{ form.last_name.label_tag }}
         {{ form.last_name }}
       </div>
 
-      <div class="form-field third">
+      <div class="form-field col-1of3">
         {{ form.phone.errors }}
         {{ form.phone.label_tag }}
         {{ form.phone }}
       </div>
 
-      <div class="form-field third">
+      <div class="form-field col-1of3">
         {{ form.email.errors }}
         {{ form.email.label_tag }}
         {{ form.email }}
@@ -73,12 +73,12 @@
     <i><strong>*If this promise will be employer matched, please complete the
     following:</strong></i>
     <div class="form-row">
-      <div class="form-field third">
+      <div class="form-field col-1of3">
         {{ form.match_expected.errors }}
         <i> {{ form.match_expected.label}} </i><br>
         ${{ form.match_expected }}
       </div>
-      <div class="form-field third">
+      <div class="form-field col-1of3">
         {{ form.match_company.errors }}
         <i> {{ form.match_company.label}} </i><br>
         {{ form.match_company }}

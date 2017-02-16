@@ -64,10 +64,10 @@ class MassDonorPre(forms.Form):
 class MassDonor(MassDonorPre):
   amount = IntegerCommaField(label='*Estimated donation ($)',
                              min_value=0,
-                             widget=forms.TextInput(attrs={'class': 'width-75'}))
+                             widget=forms.TextInput())
   likelihood = forms.IntegerField(label='*Estimated likelihood (%)',
                                   min_value=0, max_value=100,
-                                  widget=forms.TextInput(attrs={'class': 'width-75'}))
+                                  widget=forms.TextInput())
 
 
 class DonorEstimates(forms.Form):
@@ -75,10 +75,10 @@ class DonorEstimates(forms.Form):
                                  widget=forms.HiddenInput())
   amount = IntegerCommaField(label='*Estimated donation ($)',
                              min_value=0,
-                             widget=forms.TextInput(attrs={'class': 'width-75'}))
+                             widget=forms.TextInput())
   likelihood = forms.IntegerField(label='*Estimated likelihood (%)',
                                   min_value=0, max_value=100,
-                                  widget=forms.TextInput(attrs={'class': 'width-75'}))
+                                  widget=forms.TextInput())
 
 
 class MassStep(forms.Form):
