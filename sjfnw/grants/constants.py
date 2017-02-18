@@ -42,7 +42,7 @@ SCREENING = (
 )
 
 STANDARD_NARRATIVES = [
-  {'name': 'mission', 'version': 'standard' },
+  {'name': 'describe_mission', 'version': 'standard' },
   {'name': 'most_impacted', 'version': 'standard' },
   {'name': 'root_causes', 'version': 'standard'},
   {'name': 'workplan', 'version': 'standard'},
