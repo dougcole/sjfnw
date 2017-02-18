@@ -9,7 +9,7 @@ from django.db import migrations
 TIMELINE_TEXT = 'Please fill in this timeline to describe your activities over the next five quarters. This will not exactly match up with the time period funded by this grant. We are asking for this information to give us an idea of what your work looks like, what you are doing and how those activities intersect and build on each other and move you towards your goals. Because our grants are usually general operating funds, we want to get a sense of what your organizing work looks like over time. Note, We understand that this timeline is based only on what you know right now and that circumstances change. If you receive this grant, you will submit a brief report one year later, which will ask you what progress you\'ve made on the goals outlined in this application or, if you changed direction, why.'
 QUESTIONS = [
   {
-    'name': 'mission',
+    'name': 'describe_mission',
     'version': 'standard',
     'word_limit': 300,
     'text': 'Describe your organization\'s mission, history and major accomplishments.'
@@ -51,7 +51,7 @@ QUESTIONS = [
     'name': 'racial_justice',
     'version': 'standard',
     'word_limit': 450,
-    'text': '<p>Social Justice Fund prioritizes groups working on racial justice, especially those making connections between racism, economic injustice, homophobia, and other forms of oppression. Tell us how your organization is working toward racial justice and how you are drawing connections to economic injustice, homophobia, and other forms of oppression. While we believe people of color must lead the struggle for racial justice, we also realize that the demographics of our region make the work of white anti-racist allies critical to achieving racial justice. If your organization\'s <span class="has-more-info" id="nar-6"> leadership body</span> is majority white, also describe how you work as an ally to communities of color. Be as specific as possible, and list at least one organization led by people of color that we can contact as a reference for your racial justice work. Include their name, organization, phone number and email.</p> <p><i>Please make sure you have asked permission to list someone as a racial justice reference before submitting their contact information. Your racial justice reference cannot be a representative from your organization. We define "led by people of color" to mean that more that 51% or more of the organizations leadership body (ie. board of directors or other leadership model) are people of color. If your organization is majority people of color led, leave the references blank.</i></p>'
+    'text': 'Social Justice Fund prioritizes groups working on racial justice, especially those making connections between racism, economic injustice, homophobia, and other forms of oppression. Tell us how your organization is working toward racial justice and how you are drawing connections to economic injustice, homophobia, and other forms of oppression. While we believe people of color must lead the struggle for racial justice, we also realize that the demographics of our region make the work of white anti-racist allies critical to achieving racial justice. If your organization\'s <span class="has-more-info" id="nar-6"> leadership body</span> is majority white, also describe how you work as an ally to communities of color. Be as specific as possible, and list at least one organization led by people of color that we can contact as a reference for your racial justice work. Include their name, organization, phone number and email.<p><i>Please make sure you have asked permission to list someone as a racial justice reference before submitting their contact information. Your racial justice reference cannot be a representative from your organization. We define "led by people of color" to mean that more that 51% or more of the organizations leadership body (ie. board of directors or other leadership model) are people of color. If your organization is majority people of color led, leave the references blank.</i></p>'
   }, {
     'name': 'racial_justice',
     'version': 'tenants',
@@ -91,7 +91,7 @@ QUESTIONS = [
     'text': TIMELINE_TEXT.replace('five quarters', 'year')
   }, {
     'name': 'workplan',
-    'version': 'standard',
+    'version': 'epic',
     'word_limit': 300,
     'text': 'Please describe your alternative to youth incarceration work over the next 12 months. (Please list the activities and objectives in timeline form below this question.)<ol><li>What are your overall goals and strategies for the next 12 months?</li><li>How will you assess whether you have met your objectives and goals?</li></ol>'
   }, {
@@ -102,7 +102,7 @@ QUESTIONS = [
     'archived': True
   }, {
     'name': 'workplan',
-    'version': 'epic',
+    'version': 'standard',
     'word_limit': 300,
     'text': 'Please describe your workplan, covering at least the next 12 months. (You will list the activities and objectives in the timeline form below.) <ul><li>What are your overall <span class="has-more-info" id="nar-4"> goals, objectives and strategies</span> for the coming year?</li> <li>How will you assess whether you have met your goals and objectives? </li></ul>',
     'archived': True
