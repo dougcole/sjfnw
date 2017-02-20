@@ -22,13 +22,13 @@ QUESTIONS = [
     'name': 'collaboration',
     'version': 'tenants',
     'word_limit': 300,
-    'text': 'The Displaced Tenants Fund for Housing Justice & Affordability prioritizes groups that see themselves and their work for housing justice as part of a larger movement for social justice.<ol><li>Describe at least two coalitions, collaborations, partnerships or networks that you participate in as an approach to social justice.<li>How do these collaborations strengthen the movement for housing justice?</li><li>What is your organization\'s role in these collaborations?</li><li>If your collaborations cross issue or constituency lines, how this will help build a broad, unified, and winning social justice movement?</li></ol>',
+    'text': 'The Displaced Tenants Fund for Housing Justice & Affordability prioritizes groups that see themselves and their work for housing justice as part of a larger movement for social justice.<ul><li>Describe at least two coalitions, collaborations, partnerships or networks that you participate in as an approach to social justice.<li>How do these collaborations strengthen the movement for housing justice?</li><li>What is your organization\'s role in these collaborations?</li><li>If your collaborations cross issue or constituency lines, how this will help build a broad, unified, and winning social justice movement?</li></ul>',
     'archived': True
   }, {
     'name': 'collaboration',
     'version': 'epic',
     'word_limit': 300,
-    'text': 'The EPIC Zero Detention Project Grant prioritizes groups that see themselves and their work to end youth incarceration as part of a larger movement for social justice.<ol><li>Describe at least two coalitions, collaborations, partnerships or networks that you participate in as an approach to social justice.</li><li>How do these collaborations strengthen the movement for Black liberation?</li><li>What is your organization\'s role in these collaborations?</li><li>If your collaborations cross issue or constituency lines, how this will help build a broad, unified, and winning social justice movement?</li></ol>',
+    'text': 'The EPIC Zero Detention Project Grant prioritizes groups that see themselves and their work to end youth incarceration as part of a larger movement for social justice.<ul><li>Describe at least two coalitions, collaborations, partnerships or networks that you participate in as an approach to social justice.</li><li>How do these collaborations strengthen the movement for Black liberation?</li><li>What is your organization\'s role in these collaborations?</li><li>If your collaborations cross issue or constituency lines, how this will help build a broad, unified, and winning social justice movement?</li></ul>',
     'archived': True
   }, {
     'name': 'most_impacted',
@@ -39,13 +39,13 @@ QUESTIONS = [
     'name': 'most_impacted',
     'version': 'tenants',
     'word_limit': 200,
-    'text': 'The Displaced Tenants Fund for Housing Justice & Affordability prioritizes groups that are led by people who are directly impacted by lack of affordable housing in Seattle (in particular people of color, veterans, LGBTQ, people with disabilities, and low-income people), and continually builds leadership from within their own communities. <ol><li>Who are the communities most directly impacted by the housing issues your organization addresses?</li><li>How are impacted communities involved in the leadership of your organization? How does your organization practice accountable community engagement (we understand this as being responsive, transparent, and serving the best interest of the communities most affected by housing injustice)?</li><li>What is your organization\'s leadership body? (Your organization\'s leadership body is the group of people who together make strategic decisions about the organization\'s direction, provide oversight and guidance, and are ultimately responsible for the organization\'s mission and ability to carry out its mission. In most cases, this will be a Board of Directors, but it might also be a steering committee, collective, or other leadership structure.)</li></ol>',
+    'text': 'The Displaced Tenants Fund for Housing Justice & Affordability prioritizes groups that are led by people who are directly impacted by lack of affordable housing in Seattle (in particular people of color, veterans, LGBTQ, people with disabilities, and low-income people), and continually builds leadership from within their own communities. <ul><li>Who are the communities most directly impacted by the housing issues your organization addresses?</li><li>How are impacted communities involved in the leadership of your organization? How does your organization practice accountable community engagement (we understand this as being responsive, transparent, and serving the best interest of the communities most affected by housing injustice)?</li><li>What is your organization\'s leadership body? (Your organization\'s leadership body is the group of people who together make strategic decisions about the organization\'s direction, provide oversight and guidance, and are ultimately responsible for the organization\'s mission and ability to carry out its mission. In most cases, this will be a Board of Directors, but it might also be a steering committee, collective, or other leadership structure.)</li></ul>',
     'archived': True
   }, {
     'name': 'most_impacted',
     'version': 'epic',
     'word_limit': 200,
-    'text': 'The EPIC Zero Detention Project Grant prioritizes groups that are led by people who are directly impacted by youth detention and mass incarceration, center youth and families who have been disproportionately impacted by mass incarceration or the P.I.C. (Prison Industrial Complex), and continually build leadership from within their own communities.<ol><li>Who are the communities most directly impacted by your work?</li><li>How are impacted communities involved in the leadership of your organization? How does your organization practice accountable community engagement (we understand this as being responsive, transparent, and serving the best interest of the communities most affected by youth incarceration)?</li><li>What is your organization\'s leadership body? (Your organization\'s leadership body is the group of people who together make strategic decisions about the organization\'s direction, provide oversight and guidance, and are ultimately responsible for the organization\'s mission and ability to carry out its mission. In most cases, this will be a Board of Directors, but it might also be a steering committee, collective, or other leadership structure.)</li></ol>',
+    'text': 'The EPIC Zero Detention Project Grant prioritizes groups that are led by people who are directly impacted by youth detention and mass incarceration, center youth and families who have been disproportionately impacted by mass incarceration or the P.I.C. (Prison Industrial Complex), and continually build leadership from within their own communities.<ul><li>Who are the communities most directly impacted by your work?</li><li>How are impacted communities involved in the leadership of your organization? How does your organization practice accountable community engagement (we understand this as being responsive, transparent, and serving the best interest of the communities most affected by youth incarceration)?</li><li>What is your organization\'s leadership body? (Your organization\'s leadership body is the group of people who together make strategic decisions about the organization\'s direction, provide oversight and guidance, and are ultimately responsible for the organization\'s mission and ability to carry out its mission. In most cases, this will be a Board of Directors, but it might also be a steering committee, collective, or other leadership structure.)</li></ul>',
     'archived': True
   }, {
     'name': 'racial_justice',
@@ -73,13 +73,13 @@ QUESTIONS = [
     'name': 'root_causes',
     'version': 'tenants',
     'word_limit': 450,
-    'text': 'The Displaced Tenants Fund for Housing Justice & Affordability prioritizes groups that understand and address the underlying root causes of housing injustice, and that bring people most affected together to build collective power.<ol><li>What specific housing justice problems, needs or issues does your work address?</li><li>What are the root causes of these issues?</li> <li>How does your organization build collective power?</li><li>How will your work make structural change that will affect the root causes and underlying power dynamics of the identified housing justice problems, needs or issues?</li></ol>',
+    'text': 'The Displaced Tenants Fund for Housing Justice & Affordability prioritizes groups that understand and address the underlying root causes of housing injustice, and that bring people most affected together to build collective power.<ul><li>What specific housing justice problems, needs or issues does your work address?</li><li>What are the root causes of these issues?</li> <li>How does your organization build collective power?</li><li>How will your work make structural change that will affect the root causes and underlying power dynamics of the identified housing justice problems, needs or issues?</li></ul>',
     'archived': True
   }, {
     'name': 'root_causes',
     'version': 'epic',
     'word_limit': 450,
-    'text': 'The EPIC Zero Detention Project Grant prioritizes groups that understand and address the underlying root causes of the prison industrial complex, mass incarceration and the school to prison pipeline, and that bring people most affected together to build collective power.<ol><li>What specific youth incarceration problems, needs or issues does your work address?</li><li>What are the root causes of these issues?</li><li>How does your organization build collective power?</li><li>How will your work make structural change that will affect the root causes and underlying power dynamics of the identified youth incarceration problems, needs or issues?</li></ol>',
+    'text': 'The EPIC Zero Detention Project Grant prioritizes groups that understand and address the underlying root causes of the prison industrial complex, mass incarceration and the school to prison pipeline, and that bring people most affected together to build collective power.<ul><li>What specific youth incarceration problems, needs or issues does your work address?</li><li>What are the root causes of these issues?</li><li>How does your organization build collective power?</li><li>How will your work make structural change that will affect the root causes and underlying power dynamics of the identified youth incarceration problems, needs or issues?</li></ul>',
     'archived': True
   }, {
     'name': 'timeline',
@@ -93,7 +93,7 @@ QUESTIONS = [
     'name': 'workplan',
     'version': 'epic',
     'word_limit': 300,
-    'text': 'Please describe your alternative to youth incarceration work over the next 12 months. (Please list the activities and objectives in timeline form below this question.)<ol><li>What are your overall goals and strategies for the next 12 months?</li><li>How will you assess whether you have met your objectives and goals?</li></ol>'
+    'text': 'Please describe your alternative to youth incarceration work over the next 12 months. (Please list the activities and objectives in timeline form below this question.)<ul><li>What are your overall goals and strategies for the next 12 months?</li><li>How will you assess whether you have met your objectives and goals?</li></ul>'
   }, {
     'name': 'workplan',
     'version': 'tenants',
@@ -110,7 +110,7 @@ QUESTIONS = [
     'name': 'two_year_grant',
     'version': 'standard',
     'word_limit': 300,
-    'text': 'This grant will provide funding for two years. While we know it can be difficult to predict your work beyond a year, please give us an idea of what the second year might look like.<ol><li>What overall goals and strategies do you forecast in the second year?</li><li>How will the second year of this grant build on your work in the first year?</li></ol>',
+    'text': 'This grant will provide funding for two years. While we know it can be difficult to predict your work beyond a year, please give us an idea of what the second year might look like.<ul><li>What overall goals and strategies do you forecast in the second year?</li><li>How will the second year of this grant build on your work in the first year?</li></ul>',
   }
 ]
 
