@@ -139,285 +139,96 @@ $(document).ready(function() {
   Only one person should work on an application at a time.  If you proceed, your changes will be saved and will overwrite concurrent changes from other sources.
 </div>
 
-
+{% with 'grants/includes/form_row.html' as row_template %}
 <div class="formwrapper">
   <form id="non_file" action="/apply/{{ cycle.pk }}/{{ user_override|default:''}}" method="POST" accept-charset="UTF-8">
 
     <div align="center">
       <h1>{{cycle}} Application</h1>
       {% if user_override %}<h1>Applying as {{ org }}</h1>{% endif %}
-      {% if cycle.info_page %}<a href="/apply/info/{{ cycle.pk }}" target="_blank">application instructions</a><br><br>{% endif %}
-      <span class="last_saved" title="The form is automatically saved every 60 seconds">Last saved: <span class="autosaved">{{ draft.modified|date:"F j, g:ia" }}</span></span>
+      {% if cycle.info_page %}<p><a href="/apply/info/{{ cycle.pk }}" target="_blank">application instructions</a></p>{% endif %}
+      {% include 'grants/includes/last_saved.html' with interval=60 %}
     </div>
+
     {% if form.errors %}
-    <div style="border:2px groove red;padding:0 10px;margin:10px 0;text-align:center;">
-      <p>Please resolve the errors below and try submitting again.</p>
-    </div>
+      <div class="error-header">Please resolve the errors below and try submitting again.</div>
     {% endif %}
+
     {% autoescape off %}
-    <table id="application_form">
-      <tr>
-        <td><h4>Organization and Grant Request Profile</h4></td> 
-        <td>
-          {% if profiled %}<div id="autofilled" title="As a convenience, some information has been automatically filled in based on your most recent submitted application.  It can be removed or overwritten as needed.">
-          Pre-filled <img class="info" src="/static/images/info.png"></div>{% endif %}
-        </td>
-      </tr>
-      <tr>
-        <td>{{ form.address.errors }}</td>
-        <td>{{ form.city.errors }}</td>
-      </tr><tr>
-        <td>{{ form.address.label_tag }}{{ form.address }}</td>
-        <td>{{ form.city.label_tag }}{{ form.city }} </td>
-      </tr>
-      <tr>
-        <td>{{ form.state.errors }}</td>
-        <td>{{ form.zip.errors }}</td>
-      </tr><tr>
-        <td>{{ form.state.label_tag }}{{ form.state }}</td>
-        <td>{{ form.zip.label_tag }}{{ form.zip }}</td>
-      </tr>
-      <tr>
-        <td>{{ form.telephone_number.errors }}</td>
-        <td>{{ form.fax_number.errors }}</td>
-      </tr><tr>
-        <td>{{ form.telephone_number.label_tag }}{{ form.telephone_number }}</td>
-        <td>{{ form.fax_number.label_tag }}{{ form.fax_number }}</td>
-      </tr>
-      <tr>
-        <td>{{ form.email_address.errors }}</td>
-        <td>{{ form.website.errors }}</td>
-      </tr><tr>
-        <td>{{ form.email_address.label_tag }}{{ form.email_address }}</td>
-        <td>{{ form.website.label_tag }}{{ form.website }}</td>
-      </tr>
+    <div id="application_form">
 
-      <tr>
-        <td colspan="2">{{ form.status.label_tag }}{{ form.status }}{{ form.status.errors }}</td>
-      </tr>
-      <tr>
-        <td>{{ form.ein.errors }}</td>
-        <td>{{ form.founded.errors }}</td>
-      </tr><tr>
-        <td>{{ form.ein.label_tag }}{{ form.ein }}</td>
-        <td>{{ form.founded.label_tag }}{{ form.founded }}</td>
-      </tr><tr>
-        <td colspan="2">
-          <div class="vertical_cushion">{{ form.contact_person.help_text }}</div>
-        </td>
-      </tr><tr>
-        <td>{{ form.contact_person.errors }}</td>
-        <td>{{ form.contact_person_title.errors }}</td>
-      </tr><tr>
-        <td>{{ form.contact_person.label_tag }}{{ form.contact_person }}</td>
-        <td>{{ form.contact_person_title.label_tag }}{{ form.contact_person_title }}</td>
-      </tr><tr>
-        <td colspan="2">
-          <div class="vertical_cushion">
-            {{ form.mission.label_tag }}{{ form.mission.errors }}
-            <span class="wordcount" id="mission_wordcount"></span>
+      <div class="row">
+        <div class="col col-3of4">
+          <h4>Organization and Grant Request Profile</h4>
+        </div>
+        {% if profiled %}
+        <div class="col col-1of4 text-right">
+          <div id="autofilled" title="As a convenience, some information has been automatically filled in based on your most recent submitted application.  It can be removed or overwritten as needed.">
+            Pre-filled <img class="info" src="/static/images/info.png">
           </div>
-          {{ form.mission }}
-        </td>
-      </tr><tr>
-        <td colspan="2">{{ form.previous_grants.errors }}</td>
-      </tr><tr>
-        <td colspan="2">{{ form.previous_grants.label_tag }}{{ form.previous_grants }}</td>
-      </tr>
+        </div>
+        {% endif %}
+      </div>
 
-      <tr>
-        <td>{{ form.start_year.label_tag }}{{ form.start_year }}</td>
-        <td>{{ form.start_year.errors }}</td>
-      </tr><tr>
-        <td>{{ form.budget_last.errors }}</td>
-        <td>{{ form.budget_current.errors }}</td>
-      </tr><tr>
-        <td>{{ form.budget_last.label_tag }} ${{ form.budget_last }} </td>
-        <td>{{ form.budget_current.label_tag }} ${{ form.budget_current }}</td>
-      </tr><tr>
-        <td colspan="2" style="height:28px;">* Upload budget files at the bottom of the form.</td>
-      </tr>
+      {% include row_template with left=form.address right=form.city %}
+      {% include row_template with left=form.state right=form.zip %}
+      {% include row_template with left=form.telephone_number right=form.fax_number %}
+      {% include row_template with left=form.email_address right=form.website %}
 
-      <tr>
-        <td colspan="2">{{ form.grant_period.label_tag }}{{ form.grant_period }}{{ form.grant_period.errors }}</td>
-      </tr><tr>
-        <td>{{ form.amount_requested.errors }}</td>
-        <td>{{ form.support_type.errors }}</td>
-      </tr><tr>
-        <td>{{ form.amount_requested.label_tag }}${{ form.amount_requested }}</td>
-        <td>{{ form.support_type.label_tag }}{{ form.support_type }}</td>
-      </tr><tr>
-        <td>{{ form.project_title.errors }}</td>
-        <td>{{ form.project_budget.errors }}</td>
-      </tr><tr>
-        <td>{{ form.project_title.label_tag }}{{ form.project_title }}</td>
-        <td>{{ form.project_budget.label_tag }} ${{ form.project_budget }}</td>
-      </tr><tr>
-        <td colspan="2">
-          <div class="vertical_cushion">
-            {{ form.grant_request.label_tag }}{{ form.grant_request.errors }}
-            <span class="wordcount" id="grant_request_wordcount"></span>
-          </div>
-          {{ form.grant_request }}
-        </td>
-      </tr>
+      <div class="row">{{ form.status.label_tag }}{{ form.status }}{{ form.status.errors }}</div>
 
-      <tr>
-        <td><br><u>Fiscal sponsor information (if applicable)</u></td>
-      </tr><tr>
-        <td>{{ form.fiscal_org.errors }}</td>
-        <td>{{ form.fiscal_person.errors }}</td>
-      </tr><tr>
-        <td>{{ form.fiscal_org.label_tag }}{{ form.fiscal_org }}</td>
-        <td>{{ form.fiscal_person.label_tag }}{{ form.fiscal_person }}</td>
-      </tr><tr>
-        <td>{{ form.fiscal_telephone.errors }}</td>
-        <td>{{ form.fiscal_email.errors }}</td>
-      </tr><tr>
-        <td>{{ form.fiscal_telephone.label_tag }}{{ form.fiscal_telephone }}</td>
-        <td>{{ form.fiscal_email.label_tag }}{{ form.fiscal_email }}</td>
-      </tr><tr>
-        <td colspan="2">{{ form.fiscal_address.errors }}</td>
-      </tr><tr>
-        <td>{{ form.fiscal_address.errors }}</td>
-        <td>{{ form.fiscal_city.errors }}</td>
-      </tr><tr>
-        <td>{{ form.fiscal_address.label_tag }}{{ form.fiscal_address }}</td>
-        <td>{{ form.fiscal_city.label_tag }}{{ form.fiscal_city }} </td>
-      </tr>
-      <tr>
-        <td>{{ form.fiscal_state.errors }}</td>
-        <td>{{ form.fiscal_zip.errors }}</td>
-      </tr><tr>
-        <td>{{ form.fiscal_state.label_tag }}{{ form.fiscal_state }}</td>
-        <td>{{ form.fiscal_zip.label_tag }}{{ form.fiscal_zip }}</td>
-      </tr><tr>
-        <td colspan="2" style="height:28px;">* Upload fiscal letter at the bottom of the form if applicable.</td>
-      </tr>
-    </table>
+      {% include row_template with left=form.ein right=form.founded %}
+
+      <div class="row">{{ form.contact_person.help_text }}</div>
+      {% include row_template with left=form.contact_person right=form.contact_person_title %}
+
+      <div class="row">
+        {{ form.mission.label_tag }}{{ form.mission.errors }}
+        <span class="wordcount" id="mission_wordcount"></span>
+        {{ form.mission }}
+      </div>
+
+      <div class="row">{{ form.previous_grants.label_tag }}{{ form.previous_grants.errors }}</div>
+      <div class="row">{{ form.previous_grants }}</div>
+
+      <div class="row">{{ form.start_year.label_tag }}{{ form.start_year }}{{ form.start_year.errors }}</div>
+
+      {% include row_template with left=form.budget_last right=form.budget_current %}
+
+      <div class="row">* Upload budget files at the bottom of the form.</div>
+
+      <div class="row">
+        {{ form.grant_period.label_tag }}{{ form.grant_period }}{{ form.grant_period.errors }}
+      </div>
+
+      {% include row_template with left=form.amount_requested right=form.support_type %}
+      {% include row_template with left=form.project_title right=form.project_budget %}
+      <div class="row">
+        {{ form.grant_request.label_tag }}{{ form.grant_request.errors }}
+        <span class="wordcount" id="grant_request_wordcount"></span>
+        {{ form.grant_request }}
+      </div>
+
+      <div class="row"><u>Fiscal sponsor information (if applicable)</u></div>
+      {% include row_template with left=form.fiscal_org right=form.fiscal_person %}
+      {% include row_template with left=form.fiscal_telephone right=form.fiscal_email %}
+      {% include row_template with left=form.fiscal_address right=form.fiscal_city %}
+      {% include row_template with left=form.fiscal_city right=form.fiscal_zip %}
+      <div class="row">* Upload fiscal letter at the bottom of the form if applicable.</div>
+    </div>
 
     <h4>Narratives</h4>
 
-    <p>Be as specific as possible when responding to each item. Your responses will reflect on the soundness of your organizational structure, your social change strategy and your organizing plan.  Please keep in mind that the strength of your written application will significantly influence the overall score you receive in the decision-making process. <img class="info" src="/static/images/info.png" title="See Social Justice Fund's Grantmaking Criteria, included in the application instructions linked at the top of the page."></p>
+    <p>Be as specific as possible when responding to each item. Your responses will reflect on the soundness of your organizational structure, your social change strategy and your organizing plan.  Please keep in mind that the strength of your written application will significantly influence the overall score you receive in the decision-making process. <img class="info" src="/static/images/info.png" title="See Social Justice Fund's Grantmaking Criteria, included in the application instructions linked at the top of the page.">
+    </p>
 
-    <ol class="main">
-      <li class="narrative_q">
-        {{ form.narrative1.label }}<br><br>
-        {{ form.narrative1.errors }}{{ form.narrative1 }}
-        <span class="wordcount" id="narrative1_wordcount"></span>
+    <ol class="narratives">
+      {% for field in form.get_narrative_fields %}
+      <li>
+        {{ field.label }}{{ field.errors }}{{ field }}
+        <div class="wordcount" id="{{ field.name }}_wordcount"></div>
       </li>
-
-      <li class="narrative_q">
-        {{ form.narrative2.label }}
-        <div class="more-info" id="nar-2-info" style="display:none;">{{ form.narrative2.help_text }}</div>
-        {{ form.narrative2.errors }}{{ form.narrative2 }}
-        <span class="wordcount" id="narrative2_wordcount"></span>
-      </li>
-
-      <li class="narrative_q">
-        {{ form.narrative3.label }}{{ form.narrative3.errors }}{{ form.narrative3 }}
-        <span class="wordcount" id="narrative3_wordcount"></span>
-      </li>
-
-      <li class="narrative_q">
-        {{ form.narrative4.label }}
-        <div class="more-info" id="nar-4-info" style="display:none;">{{ form.narrative4.help_text }}</div>
-        {{ form.narrative4.errors }}{{ form.narrative4 }}
-        <span class="wordcount" id="narrative4_wordcount"></span>
-
-        <br><br>
-        <p>{{ form.timeline.label }}</p>
-        <p>{{ form.timeline.errors }}</p>
-        {{ form.timeline }}
-      </li>
-
-      {% if cycle.two_year_grants and cycle.two_year_question %}
-        <li class="narrative_q">
-          {{ form.two_year_question.label }}
-          {{ form.two_year_question.errors }}
-          {{ form.two_year_question }}
-          <span class="wordcount" id="two_year_question_wordcount"></span>
-        </li>
-      {% endif %}
-
-      <li class="narrative_q">
-        {{ form.narrative5.label }}
-        {{ form.narrative5.errors }}
-        {{ form.narrative5 }}
-        <span class="wordcount" id="narrative5_wordcount"></span>
-        <br><br><br>{{ form.collab_ref1_name.help_text }}
-        <table class="narrative_references">
-          <tr class="main_row">
-            <td>{{ form.collab_ref1_name.label_tag }}</td>
-            <td>{{ form.collab_ref1_org.label_tag }}</td>
-            <td>{{ form.collab_ref1_phone.label_tag }}</td>
-            <td>{{ form.collab_ref1_email.label_tag }}</td>
-          </tr><tr>
-            <td>{{ form.collab_ref1_name.errors }}</td>
-            <td>{{ form.collab_ref1_org.errors }}</td>
-            <td>{{ form.collab_ref1_phone.errors }}</td>
-            <td>{{ form.collab_ref1_email.errors }}</td>
-          </tr><tr>
-            <td>{{ form.collab_ref1_name }}</td>
-            <td>{{ form.collab_ref1_org }}</td>
-            <td>{{ form.collab_ref1_phone }}</td>
-            <td>{{ form.collab_ref1_email }}</td>
-          </tr><tr>
-            <td>{{ form.collab_ref2_name.errors }}</td>
-            <td>{{ form.collab_ref2_org.errors }}</td>
-            <td>{{ form.collab_ref2_phone.errors }}</td>
-            <td>{{ form.collab_ref2_email.errors }}</td>
-          </tr><tr>
-            <td>{{ form.collab_ref2_name }}</td>
-            <td>{{ form.collab_ref2_org }}</td>
-            <td>{{ form.collab_ref2_phone }}</td>
-            <td>{{ form.collab_ref2_email }}</td>
-          </tr>
-        </table>
-      </li>
-
-      <li class="narrative_q">{{ form.narrative6.label }}
-      <div class="more-info" id="nar-6-info" style="display:none;">{{ form.narrative6.help_text }}</div>
-      {{ form.narrative6.errors }}{{ form.narrative6 }}
-      <span class="wordcount" id="narrative6_wordcount"></span>
-      <table class="narrative_references">
-        <tr class="main_row">
-        <td>{{ form.racial_justice_ref1_name.label_tag }}</td>
-        <td>{{ form.racial_justice_ref1_org.label_tag }}</td>
-        <td>{{ form.racial_justice_ref1_phone.label_tag }}</td>
-        <td>{{ form.racial_justice_ref1_email.label_tag }}</td>
-        </tr><tr>
-        <td>{{ form.racial_justice_ref1_name.errors }}</td>
-        <td>{{ form.racial_justice_ref1_org.errors }}</td>
-        <td>{{ form.racial_justice_ref1_phone.errors }}</td>
-        <td>{{ form.racial_justice_ref1_email.errors }}</td>
-        </tr><tr>
-        <td>{{ form.racial_justice_ref1_name }}</td>
-        <td>{{ form.racial_justice_ref1_org }}</td>
-        <td>{{ form.racial_justice_ref1_phone }}</td>
-        <td>{{ form.racial_justice_ref1_email }}</td>
-        </tr><tr>
-        <td>{{ form.racial_justice_ref2_name.errors }}</td>
-        <td>{{ form.racial_justice_ref2_org.errors }}</td>
-        <td>{{ form.racial_justice_ref2_phone.errors }}</td>
-        <td>{{ form.racial_justice_ref2_email.errors }}</td>
-        </tr><tr>
-        <td>{{ form.racial_justice_ref2_name }}</td>
-        <td>{{ form.racial_justice_ref2_org }}</td>
-        <td>{{ form.racial_justice_ref2_phone }}</td>
-        <td>{{ form.racial_justice_ref2_email }}</td>
-        </tr>
-      </table>
-      </li>
-
-      {% if cycle.extra_question %}
-        <li class="narrative_q">
-          {{ cycle.extra_question }}<br>
-          {{ form.cycle_question.errors }}{{ form.cycle_question }}
-          <span class="wordcount" id="cycle_question_wordcount"></span>
-        </li>
-      {% endif %}
-
+      {% endfor %}
     </ol>
     <input id="hidden_submit_app" type="submit" value="Submit EVERYTHING" style="display:none;"/>
   </form>
@@ -426,159 +237,26 @@ $(document).ready(function() {
   <iframe class="upload" id="id_upload_frame" name="upload_frame" onload="fileUploads.iframeUpdated(this);"></iframe>
 
   <h4>File uploads</h4>
-  
-  <p>
-  <a href="/apply/info/{{ cycle.pk }}" target="_blank">Download templates here.</a>
-  <br>
-  <br>
-  Templates for budgets, funding sources and diversity chart can be downloaded above.
-  For budget documents, you may use your own format if preferred.</p>
+  <p><a href="/apply/info/{{ cycle.pk }}" target="_blank">Download templates here.</a></p>
+  <p>Templates for budgets, funding sources and diversity chart can be downloaded above. For budget documents, you may use your own format if preferred.</p>
 
-  <table id="file-uploads" style="width:100%;">
-    <tr>
-      <td style="width:300px;">1. Budget documents</td>
-      <td style="width:140px;"></td>
-      <td></td>
-    </tr>
-    {# budget1 #}
-    <tr>
-      <td style="padding-left:30px;">
-        <span class="has-more-info" id="budget1">{{ form.budget1.label }}</span>
-        <div class="more-info" id="budget1-info" style="display:none;">{{ form.budget1.help_text }}</div>
-        {{ form.budget1.errors }}
-      </td>
-      <td>
-        <form class="files_form" id="budget1_form" action="" target="upload_frame" method="POST"
-              enctype="multipart/form-data" accept-charset="UTF-8">
-          <span class="file_wrapper">
-            <span class="default-file-input">{{ form.budget1 }}</span>
-            <span class="upload_button">Choose file</span>
-          </span>
-          <input id="budget1_submit" type="submit" value="Submit files" style="display:none;"/>
-        </form>
-      </td>
-      <td>
-        <span id="budget1_uploaded">{{ file_urls.budget1 }}</span>
-      </td>
-    </tr>
-    {# budget2 #}
-    <tr>
-      <td style="padding-left:30px;">
-        <span class="has-more-info" id="budget2">{{ form.budget2.label }}</span>
-        <div class="more-info" id="budget2-info" style="display:none;">{{ form.budget2.help_text }}</div>
-        {{ form.budget2.errors }}</td>
-      <td>
-        <form class="files_form" id="budget2_form" action="" target="upload_frame" method="POST" enctype="multipart/form-data" accept-charset="UTF-8">
-          <span class="file_wrapper">
-            <span class="default-file-input">{{ form.budget2 }}</span>
-            <span class="upload_button">Choose file</span>
-          </span>
-          <input id="budget2_submit" type="submit" value="Submit files" style="display:none;"/>
-        </form>
-      </td>
-      <td>
-        <span id="budget2_uploaded">{{ file_urls.budget2 }}</span>
-      </td>
-    </tr>
-    {# budget3 #}
-    <tr>
-      <td style="padding-left:30px;">
-        <span class="has-more-info" id="budget3">{{ form.budget3.label }}</span>
-        <div class="more-info" id="budget3-info" style="display:none;">{{ form.budget3.help_text }}</div>
-        {{ form.budget3.errors }}</td>
-      <td>
-        <form class="files_form" id="budget3_form" action="" target="upload_frame" method="POST" enctype="multipart/form-data" accept-charset="UTF-8">
-          <span class="file_wrapper">
-            <span class="default-file-input">{{ form.budget3 }}</span>
-            <span class="upload_button">Choose file</span>
-          </span>
-          <input id="budget3_submit" type="submit" value="Submit files" style="display:none;"/>
-        </form>
-      </td>
-      <td>
-        <span id="budget3_uploaded">{{ file_urls.budget3 }}</span>
-      </td>
-    </tr>
-    {# project budget #}
-    <tr>
-      <td style="padding-left:30px;">
-        <span class="has-more-info" id="project-budget">{{ form.project_budget_file.label }}</span>
-        <div class="more-info" id="project-budget-info" style="display:none;">{{ form.project_budget_file.help_text }}</div>
-        {{ form.project_budget_file.errors }}</td>
-      <td>
-        <form class="files_form" id="project_budget_file_form" action="" target="upload_frame" method="POST" enctype="multipart/form-data" accept-charset="UTF-8">
-          <span class="file_wrapper">
-            <span class="default-file-input">{{ form.project_budget_file }}</span>
-            <span class="upload_button">Choose file</span>
-          </span>
-          <input id="project_budget_file_submit" type="submit" value="Submit files" style="display:none;"/>
-        </form>
-      </td>
-      <td>
-        <span id="project_budget_file_uploaded">{{ file_urls.project_budget_file }}</span>
-      </td>
-    </tr>
-    <tr>
-      <td>2. Diversity chart
-        {{ form.demographics.errors }}</td>
-      <td>
-        <form class="files_form" id="demographics_form" action="" target="upload_frame" method="POST" enctype="multipart/form-data" accept-charset="UTF-8">
-          <span class="file_wrapper">
-            <span class="default-file-input">{{ form.demographics }}</span>
-            <span class="upload_button">Choose file</span>
-          </span>
-          <input id="demographics_submit" type="submit" value="Submit files" style="display:none;"/>
-        </form>
-      </td>
-      <td>
-        <span id="demographics_uploaded">{{ file_urls.demographics }}</span>
-      </td>
-    </tr>
-    <tr>
-      <td>3. Funding sources
-        {{ form.funding_sources.errors }}</td>
-      <td>
-        <form class="files_form" id="funding_sources_form" action="" target="upload_frame" method="POST" enctype="multipart/form-data" accept-charset="UTF-8">
-          <span class="file_wrapper">
-            <span class="default-file-input">{{ form.funding_sources }}</span>
-            <span class="upload_button">Choose file</span>
-          </span>
-          <input id="funding_sources_submit" type="submit" value="Submit files" style="display:none;"/>
-        </form>
-      </td>
-      <td>
-        <span id="funding_sources_uploaded">{{ file_urls.funding_sources }}</span>
-      </td>
-    </tr>
-    <tr>
-      <td>4. <span class="has-more-info" id="fiscal-letter">Fiscal letter</span>
-        <div class="more-info" id="fiscal-letter-info" style="display:none;">{{ form.fiscal_letter.help_text }}</div>
-        {{ form.fiscal_letter.errors }}
-      </td>
-      <td>
-        <form class="files_form" id="fiscal_letter_form" action="" target="upload_frame" method="POST" enctype="multipart/form-data" accept-charset="UTF-8">
-          <span class="file_wrapper">
-            <span class="default-file-input">{{ form.fiscal_letter }}</span>
-            <span class="upload_button">Choose file</span>
-          </span>
-          <input id="fiscal_letter_submit" type="submit" value="Submit files" style="display:none;"/>
-        </form>
-      </td>
-      <td>
-        <span id="fiscal_letter_uploaded">{{ file_urls.fiscal_letter }}</span>
-      </td>
-    </tr>
-  </table>
+  <div class="row">1. Budget documents</div>
+  {% include 'grants/includes/file_upload.html' with field_id='budget1' %}
+  {% include 'grants/includes/file_upload.html' with field_id='budget2' %}
+  {% include 'grants/includes/file_upload.html' with field_id='budget3' %}
+  {% include 'grants/includes/file_upload.html' with field_id='project_budget_file' %}
+  {% include 'grants/includes/file_upload.html' with field_id='demographics' number=2 %}
+  {% include 'grants/includes/file_upload.html' with field_id='funding_sources' number=3 %}
+  {% include 'grants/includes/file_upload.html' with field_id='fiscal_letter' number=4 %}
+
   {% endautoescape %}
 
   <div align="center">
     <img class="ajax-loading" src="/static/images/ajaxloader.gif" style="display:none;">
     <br>
     <button class="submit" onclick="autoSave.save(true);">Submit application</button>
-    <br>
-    <br>
-    <span class="last_saved" title="The form is automatically saved every 60 seconds">Draft auto-saved: <span class="autosaved">{{ draft.modified|date:"F j, g:ia" }}</span>
-    </span>
+    {% include 'grants/includes/last_saved.html' with interval=60 %}
   </div>
 </div>
+{% endwith %}
 {% endblock content %}

@@ -5,123 +5,126 @@
 {% block sidebar %}{% endblock %}
 
 {% block main %}
-  <div id="main_content">
-    {% autoescape off %}{% load humanize %}
-    {% if not file_urls %}{# loaded in its own window #}
-      <h2 class="text-center">{{app.organization}} - {{app.grant_cycle}}</h2>
-      {{app.submission_time|date:"F j, Y"}}
-    {% endif %}
+<div id="grant_reading">
+  {% autoescape off %}{% load humanize %}
+  {% if not file_urls %}{# if template is loaded in its own window #}
+  <h2 class="text-center">{{app.organization}} - {{app.grant_cycle}}</h2>
+  {{app.submission_time|date:"F j, Y"}}
+  {% endif %}
 
-    <h2>Organization and Grant Request Profile</h2>
+  <h2>Organization and Grant Request Profile</h2>
 
-    <table>
-      <tr>
-        <td colspan="2">{{form.address.label_tag}}{{app.address}} {{app.city}}, {{app.state}} {{app.zip}}</td>
-      </tr><tr>
-        <td>{{form.telephone_number.label_tag}}{{app.telephone_number}}</td>
-        <td>{{form.fax_number.label_tag}}{{app.fax_number}}</td>
-      </tr><tr>
-        <td>{{form.email_address.label_tag}}{{app.email_address}}</td>
-        <td>{{form.website.label_tag}}{{app.website}}</td>
-      </tr><tr>
-        <td><label>{{form.contact_person.help_text}}</label></td>
-        <td>{{app.contact_person}}, {{app.contact_person_title}}</td>
-      </tr><tr>
-        <td>{{form.status.label_tag}}{{app.status}}</td>
-        <td>{{form.founded.label_tag}}{{app.founded}}</td>
-      </tr><tr>
-        <td>{{form.ein.label_tag}}{{app.ein}}</td>
-      </tr><tr>
-        <td colspan="2"><p>{{form.mission.label_tag}}{{app.mission|linebreaks}}</p></td>
-      </tr><tr>
-        <td>{{form.start_year.label_tag}}{{app.start_year}}</td>
-        <td>{{form.grant_period.label_tag}}{{app.grant_period|default:"n/a"}}</td>
-      </tr><tr>
-        <td>{{form.budget_last.label_tag}}${{app.budget_last|intcomma}}</td>
-        <td>{{form.budget_current.label_tag}}${{app.budget_current|intcomma}}</td>
-      </tr><tr>
-        <td colspan="2">{{form.previous_grants.label_tag}}{{app.previous_grants}}</td>
-      </tr><tr>
-        <td>{{form.amount_requested.label_tag}}${{app.amount_requested|intcomma}}</td>
-        <td>{{form.support_type.label_tag}}{{app.support_type}}</td>
-      </tr><tr>
-        <td>{{form.project_title.label_tag}}{{app.project_title|default:"n/a"}}</td>
-        {%if app.project_budget%}
-        <td>{{form.project_budget.label_tag}}${{app.project_budget|intcomma}}</td>
-        {%endif%}
-      </tr><tr>
-        <td colspan="2"><p>{{form.grant_request.label_tag}}{{app.grant_request|linebreaks}}</p></td>
-      </tr><tr>
-      {%if app.fiscal_org%}
-        <td colspan="2"><label>Fiscal sponsor information</label></td><!-- Fiscal sponsor info -->
-      </tr><tr>
-        <td>{{form.fiscal_org.label_tag}}{{app.fiscal_org|default:"N/A"}}</td>
-        <td>{{form.fiscal_person.label_tag}}{{app.fiscal_person}}</td>
-      </tr><tr>
-        <td>{{form.fiscal_address.label_tag}}{{app.fiscal_address}} {{app.fiscal_city}}, {{app.fiscal_state}} {{app.fiscal_zip}}</td>
-        <td>{{form.fiscal_telephone.label_tag}}{{app.fiscal_telephone}}</td>
-      </tr><tr>
-        <td>{{form.fiscal_email.label_tag}}{{app.fiscal_email}}</td>
-        <td></td>
-      </tr>
-      {% endif %}
-    </table>
-
-    <h2>Narratives</h2>
-    <ol class="main">
-      <li>
-        <label>{{form.narrative1.label}}</label>
-        <p>{{app.narrative1|linebreaks}}</p>
-      </li>
-      <li>
-        <label>{{form.narrative2.label}}</label>
-        <p>{{app.narrative2|linebreaks}}
-      </li>
-      <li>
-        <label>{{form.narrative3.label}}</label>
-        <p>{{app.narrative3|linebreaks}}</p>
-      </li>
-      <li>
-        <label>{{form.narrative4.label}}</label>
-        <p>{{app.narrative4|linebreaks}}</p>
-        {{app.timeline_display|linebreaks}}
-      </li>
-      {% if app.overflow %}
-      <li>
-        <label>{{form.two_year_question.label}}</label>
-        <p>{{app.overflow.two_year_question|linebreaks}}</p>
-      </li>
-      {% endif %}
-      <li>
-        <label>{{form.narrative5.label}}</label>
-        <p>{{app.narrative5|linebreaks}}</p>
-        <br>
-        <p><label>{{form.collab_ref1_name.help_text}}</label></p>
-        <p>1. {{app.collab_ref1_name}}, {{app.collab_ref1_org}}. {{app.collab_ref1_phone|add:" "}}{{app.collab_ref1_email}}</p>
-        <p>2. {{app.collab_ref2_name}}, {{app.collab_ref2_org}}. {{app.collab_ref2_phone|add:" "}}{{app.collab_ref2_email}}</p>
-      </li>
-      <li>
-        <label>{{form.narrative6.label}}</label>
-        <p>{{app.narrative6|linebreaks}}</p>
-        <br>
-        <p><label>Racial justice references</label></p>
-        {% if app.racial_justice_ref1_org %}
-          <p>1. {{app.racial_justice_ref1_name}}, {{app.racial_justice_ref1_org}}. {{app.racial_justice_ref1_phone|add:" "}}{{app.racial_justice_ref1_email}}</p>
-          {% if app.racial_justice_ref2_name %}
-            <p>2. {{app.racial_justice_ref2_name}}, {{app.racial_justice_ref2_org}}. {{app.racial_justice_ref2_phone|add:" "}}{{app.racial_justice_ref2_email}}</p>
-          {% endif %}
-        {% else %}
-          <p>N/A</p>
-        {% endif %}
-      </li>
-      {% if app.cycle_question %}
-      <li>
-        <label>{{form.cycle_question.label}}</label>
-        <p>{{app.cycle_question|linebreaks}}</p>
-      </li>
-      {% endif %}
-  {% endautoescape %}
+  <div class="row">{{form.address.label_tag}}{{app.address}} {{app.city}}, {{app.state}} {{app.zip}}</div>
+  <div class="row">
+    <div class="col col-1of2">{{form.telephone_number.label_tag}}{{app.telephone_number}}</div>
+    <div class="col col-1of2">{{form.fax_number.label_tag}}{{app.fax_number}}</div>
   </div>
+  <div class="row">
+    <div class="col col-1of2">{{form.email_address.label_tag}}{{app.email_address}}</div>
+    <div class="col col-1of2">{{form.website.label_tag}}{{app.website}}</div>
+  </div>
+  <div class="row">
+    <div class="col col-1of2"><label>{{form.contact_person.help_text}}</label></div>
+    <div class="col col-1of2">{{app.contact_person}}, {{app.contact_person_title}}</div>
+  </div>
+  <div class="row">
+    <div class="col col-1of2">{{form.status.label_tag}}{{app.status}}</div>
+    <div class="col col-1of2">{{form.founded.label_tag}}{{app.founded}}</div>
+  </div>
+  <div class="row">{{form.ein.label_tag}}{{app.ein}}</div>
+  <div class="row">{{form.mission.label_tag}}{{app.mission|linebreaks}}</div>
+  <div class="row">
+    <div class="col col-1of2">{{form.start_year.label_tag}}{{app.start_year}}</div>
+    <div class="col col-1of2">{{form.grant_period.label_tag}}{{app.grant_period|default:"n/a"}}</div>
+  </div>
+  <div class="row">
+    <div class="col col-1of2">{{form.budget_last.label_tag}}${{app.budget_last|intcomma}}</div>
+    <div class="col col-1of2">{{form.budget_current.label_tag}}${{app.budget_current|intcomma}}</div>
+  </div>
+  <div class="row">{{form.previous_grants.label_tag}}{{app.previous_grants}}</div>
+  <div class="row">
+    <div class="col col-1of2">{{form.amount_requested.label_tag}}${{app.amount_requested|intcomma}}</div>
+    <div class="col col-1of2">{{form.support_type.label_tag}}{{app.support_type}}</div>
+  </div>
+  <div class="row">
+    <div class="col col-1of2">{{form.project_title.label_tag}}{{app.project_title|default:"n/a"}}</div>
+    {%if app.project_budget%}
+    <div class="col col-1of2">{{form.project_budget.label_tag}}${{app.project_budget|intcomma}}</div>
+    {%endif%}
+  </div>
+  <div class="row">{{form.grant_request.label_tag}}{{app.grant_request|linebreaks}}</div>
+  {%if app.fiscal_org%}
+  <div class="row"><label>Fiscal sponsor information</label></div>
+  <div class="row">
+    <div class="col col-1of2">{{form.fiscal_org.label_tag}}{{app.fiscal_org|default:"N/A"}}</div>
+    <div class="col col-1of2">{{form.fiscal_person.label_tag}}{{app.fiscal_person}}</div>
+  </div>
+  <div class="row">
+    <div class="col col-1of2">{{form.fiscal_address.label_tag}}{{app.fiscal_address}} {{app.fiscal_city}}, {{app.fiscal_state}} {{app.fiscal_zip}}</div>
+    <div class="col col-1of2">{{form.fiscal_telephone.label_tag}}{{app.fiscal_telephone}}</div>
+  </div>
+  <div class="row">{{form.fiscal_email.label_tag}}{{app.fiscal_email}}</div>
+  {% endif %}
+
+  <h2>Narratives</h2>
+  <ol class="narratives">
+    <li>
+      <label>{{form.narrative1.label}}</label>
+      <p>{{app.narrative1|linebreaks}}</p>
+    </li>
+    <li>
+      <label>{{form.narrative2.label}}</label>
+      <p>{{app.narrative2|linebreaks}}
+    </li>
+    <li>
+      <label>{{form.narrative3.label}}</label>
+      <p>{{app.narrative3|linebreaks}}</p>
+    </li>
+    <li>
+      <label>{{form.narrative4.label}}</label>
+      <p>{{app.narrative4|linebreaks}}</p>
+      {{app.timeline_display|linebreaks}}
+    </li>
+    {% if app.overflow %}
+    <li>
+      <label>{{form.two_year_question.label}}</label>
+      <p>{{app.overflow.two_year_question|linebreaks}}</p>
+    </li>
+    {% endif %}
+    <li>
+      <label>{{form.narrative5.label}}</label>
+      <p>{{app.narrative5|linebreaks}}</p>
+      <br>
+      <p>
+      <label>{{form.collab_ref1_name.help_text}}</label>
+      </p>
+      <p>1. {{app.collab_ref1_name}}, {{app.collab_ref1_org}}. {{app.collab_ref1_phone|add:" "}}{{app.collab_ref1_email}}</p>
+      <p>2. {{app.collab_ref2_name}}, {{app.collab_ref2_org}}. {{app.collab_ref2_phone|add:" "}}{{app.collab_ref2_email}}</p>
+    </li>
+    <li>
+      <label>{{form.narrative6.label}}</label>
+      <p>{{app.narrative6|linebreaks}}</p>
+      <br>
+      <p>
+      <label>Racial justice references</label>
+      </p>
+      {% if app.racial_justice_ref1_org %}
+      <p>1. {{app.racial_justice_ref1_name}}, {{app.racial_justice_ref1_org}}. {{app.racial_justice_ref1_phone|add:" "}}{{app.racial_justice_ref1_email}}</p>
+      {% if app.racial_justice_ref2_name %}
+      <p>2. {{app.racial_justice_ref2_name}}, {{app.racial_justice_ref2_org}}. {{app.racial_justice_ref2_phone|add:" "}}{{app.racial_justice_ref2_email}}</p>
+      {% endif %}
+      {% else %}
+      <p>N/A</p>
+      {% endif %}
+    </li>
+    {% if app.cycle_question %}
+    <li>
+      <label>{{form.cycle_question.label}}</label>
+      <p>{{app.cycle_question|linebreaks}}</p>
+    </li>
+    {% endif %}
+    {% endautoescape %}
+</div>
 {% endblock main %}
 
 {% endblock body %}

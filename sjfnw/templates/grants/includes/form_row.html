@@ -1,0 +1,11 @@
+{% if left.errors or right.errors %}
+<div class="row-sm">
+  {# &nbsp; is a hack to make sure the left col still takes up space if it's empty #}
+  <div class="col col-1of2">{{ left.errors|default:'&nbsp;' }}</div>
+  <div class="col col-1of2">{{ right.errors }}</div>
+</div>
+{% endif %}
+<div class="row">
+  <div class="col col-1of2">{{ left.label_tag }}{{ left }}</div>
+  <div class="col col-1of2">{{ right.label_tag }}{{ right }}</div>
+</div>

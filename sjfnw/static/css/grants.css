@@ -15,12 +15,10 @@ header  {
 }
 
 #org-wrapper {
-  width: 725px;
+  min-width: 725px;
+  max-width: 900px;
   margin: 0 auto;
-}
-
-#org-wrapper ul {
-  padding-left: 30px;
+  padding: 5px;
 }
 
 /*-------------------------------- Home page --------------------------------*/
@@ -65,30 +63,13 @@ table.org td {
 
 /*-------------------------------- General ----------------------------------*/
 
-div.formwrapper {
-  width: 725px;
-  border-color:#CCC;
-  word-wrap: break-word;
-  line-height: 120%;
-}
-
-div.formwrapper h1 {
-  margin-bottom:.25em;
-}
-
 #application_form {
-  margin-top: 5px;
-  width: 100%;
   border: 1px solid black;
-  padding-left: 4px;
-}
-
-#application_form td {
-  width: 360px;
+  padding: 4px;
 }
 
 #application_form h4 {
-  margin-top:.5em;
+  margin-top: 0;
 }
 
 label {
@@ -97,13 +78,15 @@ label {
 
 /*------------------------------ Info/errors --------------------------------*/
 
-#org-wrapper ul.errorlist, ul.errorlist li {
-  list-style-type: none;
-  font-style: italic;
-  color: red;
-  margin: 0;
-  padding: 0;
-  display: inline;
+.error-header {
+  border: 2px groove red;
+  padding: 10px 0;
+  margin: 10px 0;
+  text-align:center;
+}
+
+ul.errorlist {
+  margin-top: 10px;
 }
 
 #file-uploads ul.errorlist {
@@ -115,14 +98,8 @@ div.form_error {
   color: red;
 }
 
-#last_saved {
-  font-style: italic;
-}
-
 #autofilled {
   cursor: help;
-  float: right;
-  margin-right: 15px;
 }
 
 .has-more-info {
@@ -157,10 +134,11 @@ div.form_error {
 /** specific field/input types **/
 
 textarea {
-  font-family: Arial, sans-serif;
+  font-family: inherit;
+  font-size: inherit;
+  margin-top: 8px;
   width: 99%;
   resize: vertical;
-  font-size: inherit;
   overflow: hidden;
 }
 
@@ -210,11 +188,16 @@ div.ui-dialog {
 
 /*------------------------------- Narratives --------------------------------*/
 
-li.narrative_q {
+.narratives {
+  padding-left: 0;
+  list-style-position: inside;
+}
+
+.narratives>li {
   margin-top: 2em;
 }
 
-.narrative_q ol {
+.narratives ol {
   list-style-type: lower-roman;
 }
 
@@ -232,7 +215,7 @@ table.narrative_references .label {
 }
 
 .wordcount, .wordcount_over {
-  float: right;
+  text-align: right;
   padding-right: 2%; /* to match text boxes */
 }
 
@@ -250,10 +233,8 @@ table.narrative_references .label {
 
 #timeline_form th {
   font-weight: normal;
-}
-
-#timeline_form tr.heading th {
-  padding-bottom: 2px;
+  vertical-align: middle;
+  text-align: center;
 }
 
 /*------------------------------ File uploads -------------------------------*/
@@ -318,23 +299,22 @@ iframe.upload {
 /*-------------------------- Other specific fields ---------------------------*/
 
 /*  make radio buttons more compact */
-#id_support_type li {
-    margin: 0;
-    display: inline;
-}
-
 ul#id_support_type {
-    list-style-type: none;
-    margin: 0;
-    padding: 0;
+  list-style-type: none;
+  padding: 0;
+  display: inline;
 }
 
-#id_contact_person, #id_previous_grants, #id_fiscal_address {
-  width: 300px;
+#id_support_type li {
+  display: inline;
+}
+
+#id_previous_grants {
+  width: 90%;
 }
 
 #id_ein {
-  width: 100px;
+  width: 80px;
 }
 
 div.vertical_cushion { /* mission & grant req labels */
@@ -343,7 +323,7 @@ div.vertical_cushion { /* mission & grant req labels */
 }
 
 .submit {
-  font-size: 135%;
+  font-size: 1.25em;
   font-weight: bold;
 }
 
@@ -374,22 +354,18 @@ div.vertical_cushion { /* mission & grant req labels */
   height: 100%;
 }
 
-#main_content {
+#grant_reading {
   width: 725px;
   padding: 5px;
 }
 
-#main_content label {
+#grant_reading label {
   font-weight: bold;
-  margin: 3px 8px 3px 0;
+  margin-right: 8px;
 }
 
-#main_content ol>li {
+#grant_reading ol>li {
   margin: 10px 0;
-}
-
-#main_content td {
-  padding: 3px 0;
 }
 
 #reading_frame {
@@ -461,7 +437,11 @@ img.print {
 
 /*-------------------------- Year end report form ---------------------------*/
 
-div.narrative_q label {
+.narrative_q { /* used in yer_form */
+  margin-top: 1.5em;
+}
+
+.narrative_q label {
   display: block;
   margin-bottom:.5em;
 }
@@ -482,11 +462,6 @@ div.narrative_q label {
   max-width: 500px;
   margin: 1em auto;
   display: block;
-}
-
-.file-uploads {
-  width: 100%;
-  margin: 1em 0;
 }
 
 .file-uploads td {

@@ -23,9 +23,10 @@ footer, header, hgroup, menu, nav, section {
   display: block;
 }
 
-button {
+button, input, select {
   font-size: inherit;
 }
+
 
 body {
   line-height: 1.25;
@@ -101,49 +102,39 @@ footer {
 
 /*---------------------------- Rows / columns -------------------------------*/
 
-.row {
+.row, .row-sm {
   clear: both;
   padding: 0;
   margin: 0;
 }
 
-.row:before, .row:after {
+.row {
+  margin: 5px 0;
+}
+
+.row:before, .row:after, .row-sm:before, .row-sm:after {
   content: "";
   display: table;
 }
 
-.row:after {
+.row:after, .row-sm:after {
   clear: both;
 }
 
-.row {
+.row, .row-sm {
   zoom: 1;
 }
 
-.col {
+.col, .col-fixed {
   -moz-box-sizing: border-box;
   -webkit-box-sizing: border-box;
   box-sizing: border-box;
   display: block;
   float: left;
-  margin: 1% 0 1% 1.6%;
+  margin-left: 1.6%;
 }
 
-.col:first-child {
-  margin-left: 0;
-}
-
-/* -fixed version doesn't change relative width if screen is small */
-.col-fixed {
-  -moz-box-sizing: border-box;
-  -webkit-box-sizing: border-box;
-  box-sizing: border-box;
-  display: block;
-  float: left;
-  margin: 1% 0 1% 1.6%;
-}
-
-.col-fixed:first-child {
+.col:first-child, .col-fixed:first-child {
   margin-left: 0;
 }
 
@@ -152,13 +143,7 @@ footer {
 }
 
 .col-1of4 {
-  display: inline-block;
   width: 23.8%;
-}
-
-.col-2of4 {
-  display: inline-block;
-  width: 49.2%;
 }
 
 .col-3of4 {
@@ -226,12 +211,11 @@ footer {
   padding: 3px;
 }
 
-ol.main {
-  padding-left: 0;
-  list-style-position: inside;
-}
-
 /*---------------------- Shared specific classes/ids ------------------------*/
+
+.input-s {
+  width: 75px; /* ~50% of default width */
+};
 
 .multiple-choice ul {
   list-style-type: none;
@@ -340,7 +324,7 @@ li.error {
     width: 49.2%;
   }
 
-  .col.col-2of4,
+  .col.col-1of2,
   .col.col-3of4,
   .col.col-1of3,
   .col.col-2of3,
