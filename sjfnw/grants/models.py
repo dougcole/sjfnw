@@ -342,8 +342,8 @@ class GrantApplication(models.Model):
                                   verbose_name='Grant period (if different than fiscal year)')
   amount_requested = models.PositiveIntegerField()
 
-  SUPPORT_CHOICES = [('General support', 'General support'),
-                     ('Project support', 'Project support')]
+  SUPPORT_CHOICES = [('General support', 'General'),
+                     ('Project support', 'Project')]
   support_type = models.CharField(max_length=50, choices=SUPPORT_CHOICES, default='General support')
   project_title = models.CharField(max_length=250, blank=True,
                                    verbose_name='Project title (if applicable)')
@@ -366,27 +366,7 @@ class GrantApplication(models.Model):
                                   choices=gc.STATE_CHOICES, blank=True)
   fiscal_zip = models.CharField(verbose_name='ZIP', max_length=50, blank=True)
 
-  narratives = models.ManyToManyField(CycleNarrative, through='NarrativeAnswer')
-
-  narrative1 = models.TextField(verbose_name=gc.NARRATIVE_TEXTS['narrative1'],
-      validators=[WordLimitValidator(gc.NARRATIVE_WORD_LIMITS['narrative1'])])
-  narrative2 = models.TextField(verbose_name=gc.NARRATIVE_TEXTS['narrative2'],
-      help_text=gc.HELP_TEXTS['leadership'],
-      validators=[WordLimitValidator(gc.NARRATIVE_WORD_LIMITS['narrative2'])])
-  narrative3 = models.TextField(verbose_name=gc.NARRATIVE_TEXTS['narrative3'],
-      validators=[WordLimitValidator(gc.NARRATIVE_WORD_LIMITS['narrative3'])])
-  narrative4 = models.TextField(verbose_name=gc.NARRATIVE_TEXTS['narrative4'],
-      validators=[WordLimitValidator(gc.NARRATIVE_WORD_LIMITS['narrative4'])],
-      help_text=gc.HELP_TEXTS['goals'])
-  narrative5 = models.TextField(verbose_name=gc.NARRATIVE_TEXTS['narrative5'],
-      validators=[WordLimitValidator(gc.NARRATIVE_WORD_LIMITS['narrative5'])])
-  narrative6 = models.TextField(verbose_name=gc.NARRATIVE_TEXTS['narrative6'],
-      validators=[WordLimitValidator(gc.NARRATIVE_WORD_LIMITS['narrative6'])],
-      help_text=gc.HELP_TEXTS['leadership'])
-  cycle_question = models.TextField(blank=True,
-      validators=[WordLimitValidator(gc.NARRATIVE_WORD_LIMITS['cycle_question'])])
-
-  timeline = models.TextField(verbose_name=gc.NARRATIVE_TEXTS['timeline'])
+  narratives = models.ManyToManyField(CycleNarrative, through='NarrativeAnswer', blank=True)
 
   # collab references (after narrative 5)
   collab_ref1_name = models.CharField(verbose_name='Name', max_length=150,
@@ -552,13 +532,6 @@ class NarrativeAnswer(models.Model):
   cycle_narrative = models.ForeignKey(CycleNarrative)
   grant_application = models.ForeignKey(GrantApplication)
   text = models.TextField()
-
-
-class GrantApplicationOverflow(models.Model): # pylint: disable=model-missing-unicode
-
-  grant_application = models.OneToOneField(GrantApplication, related_name='overflow')
-  two_year_question = models.TextField(blank=True,
-      validators=[WordLimitValidator(gc.NARRATIVE_WORD_LIMITS['two_year_question'])])
 
 
 class ProjectApp(models.Model):
