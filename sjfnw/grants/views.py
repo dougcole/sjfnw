@@ -264,9 +264,11 @@ def autosave_app(request, organization, cycle_id):
 def grant_application(request, organization, cycle_id):
   """ Get or submit the whole application form """
 
+
   cycle = get_object_or_404(models.GrantCycle, pk=cycle_id)
 
   # check for app already submitted
+  # TODO should this redirect instead of rendering different template?
   if (models.GrantApplication.objects
        .filter(organization=organization, grant_cycle=cycle)
        .exists()):
@@ -276,11 +278,15 @@ def grant_application(request, organization, cycle_id):
 
   draft, created = models.DraftGrantApplication.objects.get_or_create(
       organization=organization, grant_cycle=cycle)
-  profiled = False
+  filled_profile = False
 
   if request.method == 'POST':
     if not draft.editable():
       return render(request, 'grants/submitted_closed.html', {'cycle': cycle})
+
+    # application data is not sent in POST request
+    # all the grant application data is saved on the DraftGrantApplication
+    # and POST request just indicates that they wish to submit it
 
     # get fields & files from draft
     draft_data = json.loads(draft.contents)
@@ -293,26 +299,25 @@ def grant_application(request, organization, cycle_id):
     form = GrantApplicationModelForm(cycle, draft_data, files_data)
 
     if form.is_valid():
-      logger.info('========= Application form valid')
+      logger.info('Application form valid')
 
       application = form.save()
-      if cycle.two_year_grants:
-        overflow = models.GrantApplicationOverflow(
-            grant_application=application, two_year_question=draft_data['two_year_question'])
-        overflow.save()
 
-      if cycle.pk == 35:
-        logger.info('Displaced Tenants Fund application; skipping confirmation email')
-      else:
-        to_email = organization.get_email()
-        utils.send_email(
-          subject='Grant application submitted',
-          sender=c.GRANT_EMAIL,
-          to=[to_email],
-          template='grants/email_submitted.html',
-          context={'org': organization, 'cycle': cycle}
-        )
-        logger.info('Application created; confirmation email sent to ' + to_email)
+      for cn in models.CycleNarrative.objects.filter(grant_cycle=cycle).select_related('narrative_question'):
+        text = form[cn.narrative_question.name]
+        answer = NarrativeAnswer(cycle_narrative=cn, grant_application=application, text=text)
+        answer.save()
+
+      to_email = organization.get_email()
+      utils.send_email(
+        subject='Grant application submitted',
+        sender=c.GRANT_EMAIL,
+        to=[to_email],
+        template='grants/email_submitted.html',
+        context={'org': organization, 'cycle': cycle}
+      )
+      logger.info('Application submitted for %s; confirmation email sent to %s',
+        organization.name, to_email)
 
       draft.delete()
 
@@ -356,7 +361,7 @@ def grant_application(request, organization, cycle_id):
     if (not (referer and referer.find('copy') != -1) and
         organization.mission and
         (('grant_request' not in org_dict) or (not org_dict['grant_request']))):
-      profiled = True
+      filled_profile = True
 
     form = GrantApplicationModelForm(cycle, initial=org_dict)
 
@@ -376,7 +381,7 @@ def grant_application(request, organization, cycle_id):
     'cycle': cycle,
     'file_urls': file_urls,
     'draft': draft,
-    'profiled': profiled,
+    'profiled': filled_profile,
     'org': organization,
     'user_override': get_user_override(request),
     'flag': draft.recently_edited() and draft.modified_by
