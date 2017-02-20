@@ -16,7 +16,8 @@ logger = logging.getLogger('sjfnw')
 
 
 def _form_error(text):
-  return '<div class="form_error">%s</div>' % text
+  """ Match the format used by django """
+  return '<ul class="errorlist"><li>%s</li></ul>' % text
 
 
 class OrgProfile(ModelForm):
@@ -24,6 +25,7 @@ class OrgProfile(ModelForm):
   class Meta:
     model = Organization
     fields = Organization.get_profile_fields()
+
 
 class CycleNarrativeFormset(forms.models.BaseInlineFormSet):
 
@@ -102,17 +104,11 @@ def custom_fields(field, **kwargs): # sets phonenumber and money fields
 
 class GrantApplicationModelForm(forms.ModelForm):
 
-  two_year_question = forms.CharField(required=False,
-      widget=forms.Textarea(attrs={
-        'class': 'wordlimited',
-        'data-limit': gc.NARRATIVE_WORD_LIMITS['two_year_question']
-      }))
-
   formfield_callback = custom_fields
 
   class Meta:
     model = GrantApplication
-    exclude = ['pre_screening_status', 'submission_time', 'giving_projects']
+    exclude = ['narratives', 'pre_screening_status', 'submission_time', 'giving_projects']
     widgets = {
       'mission': forms.Textarea(attrs={
         'rows': 3,
@@ -124,86 +120,48 @@ class GrantApplicationModelForm(forms.ModelForm):
         'class': 'wordlimited',
         'data-limit': 100
       }),
-      'support_type': forms.RadioSelect(),
-      'narrative1': forms.Textarea(attrs={
-        'class': 'wordlimited',
-        'data-limit': gc.NARRATIVE_WORD_LIMITS['narrative1']
-      }),
-      'narrative2': forms.Textarea(attrs={
-        'class': 'wordlimited',
-        'data-limit': gc.NARRATIVE_WORD_LIMITS['narrative2']
-      }),
-      'narrative3': forms.Textarea(attrs={
-        'class': 'wordlimited',
-        'data-limit': gc.NARRATIVE_WORD_LIMITS['narrative3']
-      }),
-      'narrative4': forms.Textarea(attrs={
-        'class': 'wordlimited',
-        'data-limit': gc.NARRATIVE_WORD_LIMITS['narrative4']
-      }),
-      'narrative5': forms.Textarea(attrs={
-        'class': 'wordlimited',
-        'data-limit': gc.NARRATIVE_WORD_LIMITS['narrative5']
-      }),
-      'narrative6': forms.Textarea(attrs={
-        'class': 'wordlimited',
-        'data-limit': gc.NARRATIVE_WORD_LIMITS['narrative6']
-      }),
-      'cycle_question': forms.Textarea(attrs={
-        'class': 'wordlimited',
-        'data-limit': gc.NARRATIVE_WORD_LIMITS['cycle_question']
-      }),
-      'timeline': TimelineWidget()
+      'support_type': forms.RadioSelect()
     }
 
   def __init__(self, cycle, *args, **kwargs):
     super(GrantApplicationModelForm, self).__init__(*args, **kwargs)
-    if cycle:
-      if cycle.extra_question:
-        self.fields['cycle_question'].required = True
-        self.fields['cycle_question'].label = cycle.extra_question
-        logger.info('Requiring the cycle question')
-      if cycle.two_year_grants:
-        self.fields['two_year_question'].required = True
-        self.fields['two_year_question'].label = cycle.two_year_question
-        logger.info('Requiring the two-year question')
 
-    # hack to support customized grant cycles. pk matches prod, name is for local dev
-    if cycle.pk == 35 or cycle.title == "Displaced Tenants Fund":
-      logger.info('Setting customized questions texts for Displaced Tenants Fund')
-      for i in range(1, 7):
-        field_name = 'narrative{}'.format(i)
-        self.fields[field_name].label = gc.NARRATIVE_TEXTS_DT[field_name]
-    elif cycle.pk == 36 or cycle.title == "EPIC Zero Detention Project":
-      logger.info('Setting customized questions texts for EPIC Zero Detention Project')
-      self.fields['timeline'].widget = TimelineWidget(quarters=4)
-      self.fields['timeline'].label = gc.NARRATIVE_TEXTS_EPIC['timeline']
-      for i in range(1, 7):
-        field_name = 'narrative{}'.format(i)
-        self.fields[field_name].label = gc.NARRATIVE_TEXTS_EPIC[field_name]
+    narratives = cycle.narrative_questions.order_by('cyclenarrative__order')
+    self._narrative_fields = []
 
-  def clean(self):
-    cleaned_data = super(GrantApplicationModelForm, self).clean()
+    for n in narratives:
+      if n.name == 'timeline':
+        widget = TimelineWidget()
+      else:
+        widget = forms.Textarea(attrs={
+          'class': 'wordlimited',
+          'data-limit': n.word_limit
+        })
+      field = forms.CharField(label=n.text, widget=widget)
+      self.fields[n.name] = field
+      self._narrative_fields.append(n.name)
 
-    # timeline
-    timeline = json.loads(cleaned_data.get('timeline'))
-    empty = False
-    incomplete = False
+  def clean_timeline(self):
+    print('clean_timeline')
+    timeline = json.loads(self.cleaned_data.get('timeline'))
+    print(timeline)
+
     for i in range(2, len(timeline), 3):
       date = timeline[i - 2]
-      act = timeline[i - 1]
-      obj = timeline[i]
+      action = timeline[i - 1]
+      objective = timeline[i]
 
-      if i == 2 and not (date or act or obj):
-        empty = True
-      if (date or act or obj) and not (date and act and obj):
-        incomplete = True
+      if i == 2 and not (date or action or objective):
+        raise ValidationError('This field is required.')
+      if (date or action or objective) and not (date and action and objective):
+        raise ValidationError('All three columns are required for each quarter that you include in your timeline.')
 
-    if incomplete:
-      self._errors['timeline'] = _form_error('All three columns are required '
-          'for each quarter that you include in your timeline.')
-    elif empty:
-      self._errors['timeline'] = _form_error('This field is required.')
+    return self.cleaned_data.get('timeline')
+
+  def clean(self):
+    print('cleaning')
+    cleaned_data = super(GrantApplicationModelForm, self).clean()
+    print('after super')
 
     # collab refs - require phone or email
     phone = cleaned_data.get('collab_ref1_phone')
@@ -216,28 +174,19 @@ class GrantApplicationModelForm(forms.ModelForm):
       self._errors['collab_ref2_phone'] = _form_error('Enter a phone number or email.')
 
     # racial justice refs - require full set if any
-    name = cleaned_data.get('racial_justice_ref1_name')
-    org = cleaned_data.get('racial_justice_ref1_org')
-    phone = cleaned_data.get('racial_justice_ref1_phone')
-    email = cleaned_data.get('racial_justice_ref1_email')
-    if name or org or phone or email:
-      if not name:
-        self._errors['racial_justice_ref1_name'] = _form_error('Enter a contact person.')
-      if not org:
-        self._errors['racial_justice_ref1_org'] = _form_error('Enter the organization name.')
-      if not phone and not email:
-        self._errors['racial_justice_ref1_phone'] = _form_error('Enter a phone number or email.')
-    name = cleaned_data.get('racial_justice_ref2_name')
-    org = cleaned_data.get('racial_justice_ref2_org')
-    phone = cleaned_data.get('racial_justice_ref2_phone')
-    email = cleaned_data.get('racial_justice_ref2_email')
-    if name or org or phone or email:
-      if not name:
-        self._errors['racial_justice_ref2_name'] = _form_error('Enter a contact person.')
-      if not org:
-        self._errors['racial_justice_ref2_org'] = _form_error('Enter the organization name.')
-      if not phone and not email:
-        self._errors['racial_justice_ref2_phone'] = _form_error('Enter a phone number or email.')
+    for i in [1, 2]:
+      base = 'racial_justice_ref{}'.format(i)
+      name = cleaned_data.get(base + '_name')
+      org = cleaned_data.get(base + '_org')
+      phone = cleaned_data.get(base + '_phone')
+      email = cleaned_data.get(base + '_email')
+      if name or org or phone or email:
+        if not name:
+          self._errors[base + '_name'] = _form_error('Enter a contact person.')
+        if not org:
+          self._errors[base + '_org'] = _form_error('Enter the organization name.')
+        if not phone and not email:
+          self._errors[base + '_phone'] = _form_error('Enter a phone number or email.')
 
     # project - require title & budget if type
     support_type = cleaned_data.get('support_type')
@@ -279,7 +228,11 @@ class GrantApplicationModelForm(forms.ModelForm):
       if not fiscal_letter:
         self._errors['fiscal_letter'] = _form_error('This field is required.')
 
+    print(cleaned_data)
     return cleaned_data
+
+  def get_narrative_fields(self):
+    return [self[n] for n in self._narrative_fields]
 
 
 class ContactPersonWidget(forms.widgets.MultiWidget):
@@ -343,9 +296,15 @@ class YearEndReportForm(ModelForm):
   class Meta:
     model = YearEndReport
     exclude = ['submitted', 'visible']
-    widgets = {'award': forms.HiddenInput(),
-               'stay_informed': forms.HiddenInput(),
-               'contact_person': ContactPersonWidget}
+    widgets = {
+      'award': forms.HiddenInput(),
+      'stay_informed': forms.HiddenInput(),
+      'total_size': forms.TextInput(attrs={'class': 'input-s'}),
+      'donations_count_prev': forms.TextInput(attrs={'class': 'input-s'}),
+      'donations_count': forms.TextInput(attrs={'class': 'input-s'}),
+      'total_size': forms.TextInput(attrs={'class': 'input-s'}),
+      'contact_person': ContactPersonWidget
+    }
 
   def clean(self):
     stay_informed = {}
