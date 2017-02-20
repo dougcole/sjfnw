@@ -3,7 +3,6 @@
     "pk": 1,
     "model": "grants.grantcycle",
     "fields": {
-      "extra_question": "",
       "close": "2023-01-15T00:51:51Z",
       "open": "2001-09-19T23:51:44Z",
       "title": "Open cycle",
@@ -15,7 +14,6 @@
     "pk": 2,
     "model": "grants.grantcycle",
     "fields": {
-      "extra_question": "",
       "close": "2013-05-15T19:57:45Z",
       "open": "2013-01-01T20:57:44Z",
       "title": "Another Open Cycle",
@@ -27,7 +25,6 @@
     "pk": 3,
     "model": "grants.grantcycle",
     "fields": {
-      "extra_question": "",
       "close": "2023-01-15T00:51:51Z",
       "open": "2001-09-19T23:51:44Z",
       "title": "Closed cycle",
@@ -39,7 +36,6 @@
     "pk": 4,
     "model": "grants.grantcycle",
     "fields": {
-      "extra_question": "",
       "close": "2013-05-15T19:57:45Z",
       "open": "2013-01-01T20:57:44Z",
       "title": "Upcoming Cycle",
@@ -51,7 +47,6 @@
     "pk": 5,
     "model": "grants.grantcycle",
     "fields": {
-      "extra_question": "",
       "close": "2013-05-15T19:57:45Z",
       "open": "2013-01-01T20:57:44Z",
       "title": "Let's Have A Kiki",
@@ -63,7 +58,6 @@
     "pk": 6,
     "model": "grants.grantcycle",
     "fields": {
-      "extra_question": "",
       "close": "2013-05-15T19:57:45Z",
       "open": "2013-01-01T20:57:44Z",
       "title": "Oui",
@@ -123,75 +117,256 @@
   },
   {
     "pk": 1,
+    "model": "grants.cyclenarrative",
+    "fields": {
+      "narrative_question": 1,
+      "grant_cycle": 1,
+      "order": 1
+    }
+  },
+  {
+    "pk": 2,
+    "model": "grants.cyclenarrative",
+    "fields": {
+      "narrative_question": 2,
+      "grant_cycle": 1,
+      "order": 2
+    }
+  },
+  {
+    "pk": 3,
+    "model": "grants.cyclenarrative",
+    "fields": {
+      "narrative_question": 3,
+      "grant_cycle": 1,
+      "order": 3
+    }
+  },
+  {
+    "pk": 4,
+    "model": "grants.cyclenarrative",
+    "fields": {
+      "narrative_question": 4,
+      "grant_cycle": 1,
+      "order": 4
+    }
+  },
+  {
+    "pk": 5,
+    "model": "grants.cyclenarrative",
+    "fields": {
+      "narrative_question": 5,
+      "grant_cycle": 1,
+      "order": 5
+    }
+  },
+  {
+    "pk": 6,
+    "model": "grants.cyclenarrative",
+    "fields": {
+      "narrative_question": 6,
+      "grant_cycle": 1,
+      "order": 6
+    }
+  },
+  {
+    "pk": 7,
+    "model": "grants.cyclenarrative",
+    "fields": {
+      "narrative_question": 7,
+      "grant_cycle": 1,
+      "order": 7
+    }
+  },
+  {
+    "pk": 1,
+    "model": "grants.narrativeanswer",
+    "fields": {
+      "cycle_narrative": 1,
+      "grant_application": 1,
+      "text": "eckout to set a daily resource budget. When you convert to a paid app you will spend a minimum of $2.10/week. This allows you to purchase additional resources when needed. App Engine will always be free to get started, and after you've"
+    }
+  },
+  {
+    "pk": 2,
+    "model": "grants.narrativeanswer",
+    "fields": {
+      "cycle_narrative": 2,
+      "grant_application": 1,
+      "text": "tion you wish to have SSL related charges billed through and click Enable SSL for App Engine Applications. All SSL charges from this Google Apps account will be added to the given application's bill.\nYou will be redirected to the Admin Console of the application named in the previous step. (You may need to log in to the App Engine Application if you use a different account than used to administer the Google Apps account.)\nConfirm that you wish to bill all SSL-related charges to "
+    }
+  },
+  {
+    "pk": 3,
+    "model": "grants.narrativeanswer",
+    "fields": {
+      "cycle_narrative": 3,
+      "grant_application": 1,
+      "text": "or SNI and a VIP. (The UI will present choices based on what slots you have available. If you haven't already, you can add SNI slots or add VIPs. SNI and VIP will only charge you for the VIP, not 1 Sate to the Domain Settings tab and then to the SSL subtab. (This subtab will not appear until you have configured your application to use a custom domain.)\nEnter the Application ID of the application you wish to have SSL related charges billed through and click Enable SSL for App Engine Applications. All SSL charges from this Google Apps account will be added to the given application's bill.\nYou will be redirected to the Admin Console of the application named in the previous step. (You may need to log in to the App Engine Application if you use a different account than used to administer the Google AppsN"
+    }
+  },
+  {
+    "pk": 4,
+    "model": "grants.narrativeanswer",
+    "fields": {
+      "cycle_narrative": 4,
+      "grant_application": 1,
+      "text": "e should be uploaded in PEM format.\nPrivate Keys must not be encrypted.\nA certificate file can contain at most five certificates; t"
+    }
+  },
+  {
+    "pk": 5,
+    "model": "grants.narrativeanswer",
+    "fields": {
+      "cycle_narrative": 5,
+      "grant_application": 1,
+      "text": "he UI will present choices based on what slots you have available. If you haven't already, you can add SNI slots or add VIPs. SNI and VIP will only charge you for the VIP, not 1 SNI slot plus 1 VIP.)\nChoose which URLs the certificate should handle. You can choose URLs from the drop-down list or add all matching URLs by using the Assign all Matching URLs button.\nClick the Save button at the bottom of the page to save your changes."
+    }
+  },
+  {
+    "pk": 6,
+    "model": "grants.narrativeanswer",
+    "fields": {
+      "cycle_narrative": 6,
+      "grant_application": 1,
+      "text": "re removing the certificate, change your DNS configuration. The CNAME records for the certificate's URLs should be ghs.googlehosted.com. (Work with your domain provider to change your DNS configuration.) Because DNS servers cache records, you probably want to change this at least 24 hours before removing the ce"
+    }
+  },
+  {
+    "pk": 7,
+    "model": "grants.narrativeanswer",
+    "fields": {
+      "cycle_narrative": 1,
+      "grant_application": 2,
+      "text": "eckout to set a daily resource budget. When you convert to a paid app you will spend a minimum of $2.10/week. This allows you to purchase additional resources when needed. App Engine will always be free to get started, and after you've"
+    }
+  },
+  {
+    "pk": 8,
+    "model": "grants.narrativeanswer",
+    "fields": {
+      "cycle_narrative": 2,
+      "grant_application": 2,
+      "text": "tion you wish to have SSL related charges billed through and click Enable SSL for App Engine Applications. All SSL charges from this Google Apps account will be added to the given application's bill.\nYou will be redirected to the Admin Console of the application named in the previous step. (You may need to log in to the App Engine Application if you use a different account than used to administer the Google Apps account.)\nConfirm that you wish to bill all SSL-related charges to "
+    }
+  },
+  {
+    "pk": 9,
+    "model": "grants.narrativeanswer",
+    "fields": {
+      "cycle_narrative": 3,
+      "grant_application": 2,
+      "text": "or SNI and a VIP. (The UI will present choices based on what slots you have available. If you haven't already, you can add SNI slots or add VIPs. SNI and VIP will only charge you for the VIP, not 1 Sate to the Domain Settings tab and then to the SSL subtab. (This subtab will not appear until you have configured your application to use a custom domain.)\nEnter the Application ID of the application you wish to have SSL related charges billed through and click Enable SSL for App Engine Applications. All SSL charges from this Google Apps account will be added to the given application's bill.\nYou will be redirected to the Admin Console of the application named in the previous step. (You may need to log in to the App Engine Application if you use a different account than used to administer the Google AppsN"
+    }
+  },
+  {
+    "pk": 10,
+    "model": "grants.narrativeanswer",
+    "fields": {
+      "cycle_narrative": 4,
+      "grant_application": 2,
+      "text": "e should be uploaded in PEM format.\nPrivate Keys must not be encrypted.\nA certificate file can contain at most five certificates; t"
+    }
+  },
+  {
+    "pk": 11,
+    "model": "grants.narrativeanswer",
+    "fields": {
+      "cycle_narrative": 5,
+      "grant_application": 2,
+      "text": "he UI will present choices based on what slots you have available. If you haven't already, you can add SNI slots or add VIPs. SNI and VIP will only charge you for the VIP, not 1 SNI slot plus 1 VIP.)\nChoose which URLs the certificate should handle. You can choose URLs from the drop-down list or add all matching URLs by using the Assign all Matching URLs button.\nClick the Save button at the bottom of the page to save your changes."
+    }
+  },
+  {
+    "pk": 13,
+    "model": "grants.narrativeanswer",
+    "fields": {
+      "cycle_narrative": 6,
+      "grant_application": 2,
+      "text": "re removing the certificate, change your DNS configuration. The CNAME records for the certificate's URLs should be ghs.googlehosted.com. (Work with your domain provider to change your DNS configuration.) Because DNS servers cache records, you probably want to change this at least 24 hours before removing the ce"
+    }
+  },
+  {
+    "pk": "14",
+    "model": "grants.narrativeanswer",
+    "fields": {
+      "cycle_narrative": 7,
+      "grant_application": 2,
+      "text": "[\"Jan\", \"Chillin\", \"Not applicable\", \"Feb\", \"Petting dogs\", \"5 dogs\", \"Mar\", \"Planting daffodils\", \"s\", \"July\", \"Walking around Greenlake\", \"9 times\", \"August\", \"Reading in the shade\", \"No sunburns\"]"
+    }
+  },
+  {
+    "pk": "15",
+    "model": "grants.narrativeanswer",
+    "fields": {
+      "cycle_narrative": 7,
+      "grant_application": 1,
+      "text": "[\"Jan\", \"Chillin\", \"Not applicable\", \"Feb\", \"Petting dogs\", \"5 dogs\", \"Mar\", \"Planting daffodils\", \"s\", \"July\", \"Walking around Greenlake\", \"9 times\", \"August\", \"Reading in the shade\", \"No sunburns\"]"
+    }
+  },
+  {
+    "pk": 1,
     "model": "grants.grantapplication",
     "fields": {
-      "status": "501c3",
-      "funding_sources": "funding_sources.docx",
       "address": "asdfsdf",
-      "fiscal_letter": "fiscal.jpg",
-      "mission": "A missiong statement of some importancer!",
-      "racial_justice_ref1_name": "",
-      "founded": 351,
-      "narrative3": "or SNI and a VIP. (The UI will present choices based on what slots you have available. If you haven't already, you can add SNI slots or add VIPs. SNI and VIP will only charge you for the VIP, not 1 Sate to the Domain Settings tab and then to the SSL subtab. (This subtab will not appear until you have configured your application to use a custom domain.)\nEnter the Application ID of the application you wish to have SSL related charges billed through and click Enable SSL for App Engine Applications. All SSL charges from this Google Apps account will be added to the given application's bill.\nYou will be redirected to the Admin Console of the application named in the previous step. (You may need to log in to the App Engine Application if you use a different account than used to administer the Google AppsN",
-      "fiscal_telephone": "",
-      "racial_justice_ref1_email": "",
-      "email_address": "as@gmail.com",
-      "collab_ref1_name": "asdfaf",
-      "city": "sdaf",
       "amount_requested": 500,
-      "zip": "654",
-      "project_budget_file": "",
-      "grant_cycle": 1,
-      "collab_ref1_phone": "560-540-5840",
-      "support_type": "General support",
-      "collab_ref1_org": "asdf",
-      "state": "OR",
-      "project_budget": null,
-      "budget2": "",
-      "collab_ref2_name": "asdfsadfsdf",
-      "budget1": "",
-      "racial_justice_ref2_name": "",
-      "collab_ref2_phone": "",
-      "budget3": "",
-      "website": "asdfsdaf",
-      "narrative1": "eckout to set a daily resource budget. When you convert to a paid app you will spend a minimum of $2.10/week. This allows you to purchase additional resources when needed. App Engine will always be free to get started, and after you've",
-      "start_year": "12986",
-      "contact_person_title": "Se\u00f1or Moose",
-      "narrative4": "e should be uploaded in PEM format.\nPrivate Keys must not be encrypted.\nA certificate file can contain at most five certificates; t",
-      "narrative5": "he UI will present choices based on what slots you have available. If you haven't already, you can add SNI slots or add VIPs. SNI and VIP will only charge you for the VIP, not 1 SNI slot plus 1 VIP.)\nChoose which URLs the certificate should handle. You can choose URLs from the drop-down list or add all matching URLs by using the Assign all Matching URLs button.\nClick the Save button at the bottom of the page to save your changes.",
-      "narrative6": "re removing the certificate, change your DNS configuration. The CNAME records for the certificate's URLs should be ghs.googlehosted.com. (Work with your domain provider to change your DNS configuration.) Because DNS servers cache records, you probably want to change this at least 24 hours before removing the ce",
-      "collab_ref2_org": "asfdsfsdgf",
-      "timeline": "[\"Jan\", \"Chillin\", \"Not applicable\", \"Feb\", \"Petting dogs\", \"5 dogs\", \"Mar\", \"Planting daffodils\", \"s\", \"July\", \"Walking around Greenlake\", \"9 times\", \"August\", \"Reading in the shade\", \"No sunburns\"]",
-      "demographics": "diversity.doc",
-      "fax_number": "(325)589-9269",
-      "budget_last": 32321,
-      "collab_ref2_email": "asdfdas@facebook.com",
-      "racial_justice_ref2_email": "",
-      "submission_time": "2013-02-05T19:46:08Z",
-      "pre_screening_status": 10,
-      "racial_justice_ref2_org": "",
-      "fiscal_email": "",
-      "narrative2": "tion you wish to have SSL related charges billed through and click Enable SSL for App Engine Applications. All SSL charges from this Google Apps account will be added to the given application's bill.\nYou will be redirected to the Admin Console of the application named in the previous step. (You may need to log in to the App Engine Application if you use a different account than used to administer the Google Apps account.)\nConfirm that you wish to bill all SSL-related charges to ",
-      "grant_period": "Fake",
-      "racial_justice_ref1_phone": "",
-      "previous_grants": "Never in all my days",
-      "grant_request": "at have SSL, work with your DNS provider to change the CNAME record for those addresses to ghs.googlehosted.com before disabling SSL billing.\nNavigate to the Billing Settings page on the Administration Console\nClick Disable Billing for SSL for the domain you wish to disable SSL",
-      "fiscal_person": "Albert",
-      "fiscal_org": "Canadian Mothers",
-      "project_title": "",
-      "racial_justice_ref2_phone": "",
-      "budget_current": 354654,
-      "scoring_bonus_geo": false,
-      "fiscal_address": "",
-      "telephone_number": "(325) 586 8965",
       "budget": "toggloptions.png",
-      "scoring_bonus_poc": false,
-      "cycle_question": "The other question ahahaha",
+      "budget1": "",
+      "budget2": "",
+      "budget3": "",
+      "budget_current": 354654,
+      "budget_last": 32321,
+      "city": "sdaf",
       "collab_ref1_email": "",
-      "racial_justice_ref1_org": "",
-      "organization": 2,
+      "collab_ref1_name": "asdfaf",
+      "collab_ref1_org": "asdf",
+      "collab_ref1_phone": "560-540-5840",
+      "collab_ref2_email": "asdfdas@facebook.com",
+      "collab_ref2_name": "asdfsadfsdf",
+      "collab_ref2_org": "asfdsfsdgf",
+      "collab_ref2_phone": "",
       "contact_person": "So and so",
-      "ein": "654"
+      "contact_person_title": "Se\u00f1or Moose",
+      "demographics": "diversity.doc",
+      "ein": "654",
+      "email_address": "as@gmail.com",
+      "fax_number": "(325)589-9269",
+      "fiscal_address": "",
+      "fiscal_email": "",
+      "fiscal_letter": "fiscal.jpg",
+      "fiscal_org": "Canadian Mothers",
+      "fiscal_person": "Albert",
+      "fiscal_telephone": "",
+      "founded": 351,
+      "funding_sources": "funding_sources.docx",
+      "grant_cycle": 1,
+      "grant_period": "Fake",
+      "grant_request": "at have SSL, work with your DNS provider to change the CNAME record for those addresses to ghs.googlehosted.com before disabling SSL billing.\nNavigate to the Billing Settings page on the Administration Console\nClick Disable Billing for SSL for the domain you wish to disable SSL",
+      "organization": 2,
+      "mission": "A missiong statement of some importancer!",
+      "pre_screening_status": 10,
+      "previous_grants": "Never in all my days",
+      "project_budget": null,
+      "project_budget_file": "",
+      "project_title": "",
+      "racial_justice_ref1_email": "",
+      "racial_justice_ref1_name": "",
+      "racial_justice_ref1_org": "",
+      "racial_justice_ref1_phone": "",
+      "racial_justice_ref2_email": "",
+      "racial_justice_ref2_name": "",
+      "racial_justice_ref2_org": "",
+      "racial_justice_ref2_phone": "",
+      "scoring_bonus_geo": false,
+      "scoring_bonus_poc": false,
+      "start_year": "12986",
+      "state": "OR",
+      "status": "501c3",
+      "submission_time": "2013-02-05T19:46:08Z",
+      "support_type": "General support",
+      "telephone_number": "(325) 586 8965",
+      "website": "asdfsdaf",
+      "zip": "654"
     }
   },
   {
@@ -200,7 +375,6 @@
     "fields": {
       "status": "501c3",
       "funding_sources": "AMIfv96HIt1_RdPbrMw3u0vFwvfF3u8fnZzRDR5vzGZwE31uRO5cfbzdv4FlEpjxmrSq7XR1TZDzpjBVZGeJQEWlSnWKRt_7zGRO3qBDET9AvZLBDT_McMsEQprooMu8XL22RWOmfP4Vms9O-K9WedBKigq-6HJ2fw/funding_sources.docx",
-      "narrative1": "TESTINGGGGGGG",
       "address": "7517",
       "fiscal_letter": "",
       "mission": "Mission Ridge has more than 36 designated runs spread over 2,000 spectacular acres of trails, chutes, screamers and bowls, with a thrilling 2,250 foot vertical drop. Arriving two weeks after a storm? No problem. Mission Ridge has some amazing backcountry that is about as easy to access as you'll find. If you plan on heading out to these areas, be sure to check in with the ski patrol and Know Before You Go! ",
@@ -212,7 +386,6 @@
       "email_address": "test@fake.com",
       "collab_ref1_name": "Robyn",
       "city": "Seattle",
-      "narrative3": "Sara Ahmed argues that Black and Postcolonial feminisms pose a challenge \"to some of the organizing premises of Western feminist thought.\"[34] During much of its history, feminist movements and theoretical developments were led predominantly by middle-class white women from Western Europe and North America.[35][36][37] However women of other races have proposed alternative feminisms.[36] This trend accelerated in the 1960s with the civil rights movement in the United States and the collapse of European colonialism in Africa, the Caribbean, parts of Latin America, and Southeast Asia. Since that time, women in developing nations and former colonies and who are of colour or various ethnicities or living in poverty have proposed additional feminisms.[37] Womanism[38][39] emerged after early feminist movements were largely white and middle-class.[35] Postcolonial feminists argue that colonial oppression and Western feminism marginalized postcolonial women but did not turn them passive or voiceless.[11] Third-world feminism is closely related to postcolonial feminism.[37] These ideas also correspond with ideas in African feminism, motherism,[40] Stiwanism,[41] negofeminism,[42] femalism, transnational feminism, and Africana womanism.[43]",
       "amount_requested": 5000,
       "zip": "98117",
       "project_budget_file": "AMIfv966MhdfE1mAOrNs3aKySw2x8GUU59Yn9U5Jq-6YzF361EpSk7uffxgVN7VXFcCBvWOJkFMYpP84JdxI8QeTQzOzR8Hv9FdEkZDmn3dpvcUGj3FYDKXAUwZvLXMN3MsjcY2-yRsLSC9jMZG4yirZToKY5jBEWA/project.png",
@@ -233,12 +406,7 @@
       "fiscal_zip": "",
       "start_year": "January 1",
       "contact_person_title": "Mr.",
-      "narrative4": "I don't feel like dancing', dancin'\r\nEven if I find nothing better to do\r\nDon't feel like dancin', dancin'\r\nWhy'd you pick a tune when I'm not in the mood?\r\nDon't feel like dancin', dancin'",
-      "narrative5": "Being so thoroughly informed by social science perspectives on identity and society, Le Guin treats race and gender quite deliberately. The majority of Le Guin's main characters are people of color, a choice made to reflect the non-white majority of humans, and one to which she attributes the frequent lack of character illustrations on her book covers.[33] Her writing often makes use of alien cultures to examine structural characteristics of human culture and society and their impact on the individual. In The Left Hand of Darkness, for example, she implicitly explores social, cultural, and personal consequences of sexual identity through a novel involving a human encounter with an unpredictably androgynous race.",
-      "narrative6": "Sociology is the systematic study of society and human social action. The meaning of the word comes from the suffix \"-ology\" which means \"study of,\" derived from Greek, and the stem \"soci-\" which is from the Latin word socius, meaning \"companion\", or society in general.",
       "collab_ref2_org": "SJF",
-      "timeline": "[\"Jan - Mar\", \"Cordially convinced did incommode existence put out suffering certainly.\", \"It was grounded in the DIY philosophy of punk values. \", \"Apr - Jun\", \"Modern feminist science challenges the biological essentialist view of gender.\", \"Delightful own attachment her partiality unaffected occasional thoroughly\", \"\", \"\", \"\", \"\", \"\", \"\", \"\", \"\", \"\"]",
-      "demographics": "AMIfv97fMhNZkYZsqZT6cDE900LaChuCvkt5Qcl6KyypaICWBMHSOBgC10tGt11gCZw16WjuQ0j17bkbhDB_05x45Aha4lW-HnySwsy1W8RVY34ltUOMfrZ9OUyra56ejiF_jwQBrwr7veG5g1DN16Cy0XP8qN2j58dVNx-X2BHTKoiesMiWbG4/diversity.docx",
       "fax_number": "",
       "budget_last": 4238,
       "fiscal_state": "",
@@ -247,7 +415,6 @@
       "submission_time": "2013-04-24T21:52:13Z",
       "racial_justice_ref2_org": "",
       "fiscal_email": "",
-      "narrative2": "As a political movement, socialism includes a diverse array of political philosophies, ranging from reformism to revolutionary socialism. Proponents of state socialism advocate the nationalisation of the means of production, distribution and exchange as a strategy for implementing socialism. In contrast, libertarian socialism proposes the traditional view of direct worker's control of the means of production and opposes the use of state power to achieve such an arrangement, opposing both parliamentary politics and state ownership.[citation needed] Democratic socialism seeks to establish socialism through democratic processes and propagate its ideals within the context of a democratic political system.",
       "grant_period": "",
       "racial_justice_ref1_phone": "",
       "previous_grants": "Never",
@@ -262,7 +429,6 @@
       "telephone_number": "555-555-0048",
       "budget": "",
       "scoring_bonus_poc": false,
-      "cycle_question": "For who thoroughly her boy estimating conviction. Removed demands expense account in outward tedious do. Particular way thoroughly unaffected projection favourable mrs can projecting own. Thirty it matter enable become admire in giving. See resolved goodness felicity shy civility domestic had but. Drawings offended yet answered jennings perceive laughing six did far.",
       "collab_ref1_email": "fake@fake.com",
       "racial_justice_ref1_org": "",
       "organization": 2,

@@ -1,6 +1,7 @@
 from datetime import timedelta
 import json
 import logging
+import unittest
 
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.core.urlresolvers import reverse
@@ -42,7 +43,10 @@ class BaseGrantFilesTestCase(BaseGrantTestCase):
 
 
 def alter_draft_timeline(draft, values):
-  """ values: list of timeline widget values (0-14) """
+  """ Helper method to set timeline field on draft
+    Args:
+      values: list of timeline widget values (0-14)
+  """
   contents_dict = json.loads(draft.contents)
   for i in range(15):
     contents_dict['timeline_' + str(i)] = values[i]
@@ -51,9 +55,12 @@ def alter_draft_timeline(draft, values):
 
 
 def alter_draft_files(draft, file_values):
-  """ file_values list should match this order:
+  """ Helper method to update draft's file fields
+  Args:
+    file_values: list, should match this order:
       ['demographics', 'funding_sources', 'budget1', 'budget2',
-      'budget3', 'project_budget_file', 'fiscal_letter'] """
+       'budget3', 'project_budget_file', 'fiscal_letter']
+  """
   files = dict(zip(DraftGrantApplication.file_fields(), file_values))
   for key, val in files.iteritems():
     setattr(draft, key, val)
@@ -106,7 +113,6 @@ class CycleInfo(BaseGrantTestCase):
     FILE_UPLOAD_HANDLERS=('django.core.files.uploadhandler.MemoryFileUploadHandler',))
 class ApplySuccessful(BaseGrantFilesTestCase):
 
-  org_id = 2
   cycle_id = 2
 
   def setUp(self):
@@ -126,10 +132,10 @@ class ApplySuccessful(BaseGrantFilesTestCase):
     response = self.client.post('/apply/%d/' % self.cycle_id, follow=True)
 
     self.assertEqual(response.status_code, 200)
+    self.assertTemplateUsed(response, 'grants/submitted.html')
     app = GrantApplication.objects.get(organization_id=self.org_id,
                                               grant_cycle_id=self.cycle_id)
     self.assertEqual(app.timeline, json.dumps(answers))
-    self.assertFalse(hasattr(app, 'overflow'))
 
   def test_saved_timeline5(self):
     """ Verify that a completely filled out timeline is accepted """
@@ -148,6 +154,7 @@ class ApplySuccessful(BaseGrantFilesTestCase):
 
     response = self.client.post('/apply/%d/' % self.cycle_id, follow=True)
     self.assertEqual(response.status_code, 200)
+    self.assertTemplateUsed(response, 'grants/submitted.html')
     app = GrantApplication.objects.get(organization_id=self.org_id,
                                        grant_cycle_id=self.cycle_id)
     self.assertEqual(app.timeline, json.dumps(answers))
@@ -189,7 +196,8 @@ class ApplySuccessful(BaseGrantFilesTestCase):
     self.assertTemplateUsed(response, 'grants/submitted.html')
     self.assertEqual(draft_contents['mission'], org.mission)
 
-  def test_overflow_created(self):
+  @unittest.skip('TO DO')
+  def test_two_year_question(self):
     """ Verify that GrantApplicationOverflow is created when two_year_question is filled out """
 
     cycle = GrantCycle.objects.get(pk=self.cycle_id)
