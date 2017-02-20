@@ -73,7 +73,7 @@ formUtils.currentTimeDisplay = function() {
 function updateWordCount(event) {
   var area = event.target;
   var limit = area.dataset.limit;
-  var display = document.getElementById(area.name + '_wordcount');
+  var display = $('#' + area.name + '_wordcount');
 
   var word_count = 0;
   if (area.value && area.value.trim()) {
@@ -88,11 +88,11 @@ function updateWordCount(event) {
   var diff = limit - word_count;
 
   if (diff >= 0) {
-    display.innerHTML = diff + ' words remaining';
-    display.className = 'wordcount';
+    display.html(diff + ' words remaining');
+    display.removeClass('wordcount_over');
   } else {
-    display.innerHTML = -diff + ' words over the limit';
-    display.className = 'wordcount_over';
+    display.html(-diff + ' words over the limit');
+    display.addClass('wordcount_over');
   }
 }
 
