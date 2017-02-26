@@ -48,12 +48,12 @@ def yer_reminder_email(request):
 
   # get awards due in 7 or 30 days
   year_ago = today.replace(year=today.year - 1)
-  award_dates = [
-      today + timedelta(days=7),
-      today + timedelta(days=30),
-      year_ago + timedelta(days=7),
-      year_ago + timedelta(days=30)
-  ]
+  reminder_deltas = [timedelta(days=7), timedelta(days=30)]
+  award_dates = []
+  for delta in reminder_deltas:
+    award_dates.append(today + delta)
+    award_dates.append((today + delta).replace(year=today.year - 1))
+
   awards = GivingProjectGrant.objects.filter(first_yer_due__in=award_dates)
 
   for award in awards:
@@ -74,5 +74,4 @@ def yer_reminder_email(request):
         }
       )
       logger.info('YER reminder email sent to %s for award %d', to, award.pk)
-
   return HttpResponse('success')
