@@ -90,9 +90,16 @@
         <td>
           Last modified {{ draft.modified|date:"n/j" }}
         </td>
-        <td class="due">
-          Due {{ draft.award.next_yer_due|date:"n/j/y" }}
-        </td>
+        {% if draft.award.next_yer_due %}
+          <td class="due">
+          {% if draft.is_overdue %}
+            <span style="color:red">Past due</span>
+          {% else %}
+            Due
+          {% endif %}
+          {{ draft.award.next_yer_due|date:"n/j/y" }}
+          </td>
+        {% endif %}
         <td></td>
       </tr>
       {% endfor %}
@@ -142,11 +149,19 @@
             {% if forloop.counter > 1 %}<br>{% endif %}
             <a href="{% url 'sjfnw.grants.views.view_yer' report_id=yer.pk %}">Year end report</a> submitted {{ yer.submitted|date:"n/j/y" }}.
           {% endfor %}
-          {% with next_due=award.next_yer_due %}
-            {% if next_due %}
-              <div class="due"><a href="/report/{{ award.pk }}{{ user_override|default:'' }}">Year end report</a> due {{ next_due|date:"n/j/y" }}</div>.
-            {% endif %}
-          {% endwith %}
+
+	  {% now "Y-m-d" as todays_date %}
+	  {% for single_yer_due in award.yers_due %}
+	    {% if forloop.first %}
+	      <div class="due"> <a href="/report/{{ award.pk }}{{ user_override|default:'' }}">Year end report</a>
+	    {% else %}
+	      <div>Year end report
+	    {% endif %}
+	    {% if todays_date > single_yer_due|date:"Y-m-d" %}
+	      <span style="color:red">past</span>
+	    {% endif %}
+	    due {{ single_yer_due|date:"n/j/y" }}</div>
+          {% endfor %}
         </td>
       </tr>
     {% endfor %}{# awards #}

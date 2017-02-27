@@ -1,6 +1,9 @@
+from datetime import timedelta
 from django.test import TestCase
+from django.utils import timezone
 
-from sjfnw.grants.models import Organization
+from sjfnw.grants.tests.base import BaseGrantTestCase
+from sjfnw.grants.models import Organization, GivingProjectGrant, YearEndReport
 
 class OrganizationGetStaffEntered(TestCase):
 
@@ -20,3 +23,62 @@ class OrganizationGetStaffEntered(TestCase):
       staff_contact_email='who@what.z'
     )
     self.assertEqual(org.get_staff_entered_contact_info(), 'Ray, Mx, 555-999-4242, who@what.z')
+
+class YearEndReportModel(BaseGrantTestCase):
+
+  projectapp_id = 1
+
+  def test_yers_due_two_year(self):
+    first_yer_due = timezone.now().date() + timedelta(days=9)
+
+    award = GivingProjectGrant(
+      projectapp_id=self.projectapp_id,
+      amount=5000,
+      second_amount=400,
+      first_yer_due=first_yer_due
+    )
+    award.save()
+
+    yersdue = award.yers_due()
+
+    self.assertEqual(award.grant_length(), 2)
+    self.assert_length(yersdue, 2)
+    self.assertEqual(yersdue[0], first_yer_due)
+    self.assertEqual(yersdue[1], first_yer_due.replace(year=first_yer_due.year + 1))
+
+  def test_yers_due_one(self):
+    first_yer_due = timezone.now().date() + timedelta(days=9)
+
+    award = GivingProjectGrant(
+      projectapp_id=self.projectapp_id,
+      amount=5000,
+      second_amount=0,
+      first_yer_due=first_yer_due
+    )
+    award.save()
+
+    yersdue = award.yers_due()
+
+    self.assertEqual(award.grant_length(), 1)
+    self.assert_length(yersdue, 1)
+    self.assertEqual(yersdue[0], first_yer_due)
+
+  def test_yers_due_completed(self):
+    first_yer_due = timezone.now().date() + timedelta(days=9)
+
+    award = GivingProjectGrant(
+      projectapp_id=self.projectapp_id,
+      amount=5000,
+      second_amount=0,
+      first_yer_due=first_yer_due
+    )
+    award.save()
+    yer = YearEndReport(
+      award=award, total_size=83, donations_count_prev=6, donations_count=9,
+      other_comments='Critical feedback'
+    )
+    yer.save()
+    yersdue = award.yers_due()
+
+    self.assertEqual(award.grant_length(), 1)
+    self.assert_length(yersdue, 0)

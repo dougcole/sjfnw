@@ -1,4 +1,4 @@
-from datetime import timedelta
+from datetime import timedelta, date
 import json, logging
 
 from django.contrib.auth.models import User
@@ -603,15 +603,25 @@ class GivingProjectGrant(models.Model):
     else:
       return None
 
-  def next_yer_due(self):
+  def yers_due(self):
+    today = timezone.now().date()
+    completed = self.yearendreport_set.count()
+    yers_due = []
+    # these won't be done out of order as are forced to do in order
+    for x in range(self.grant_length()):
+      if (completed <= x):
+        yers_due.append(self.first_yer_due.replace(year=self.first_yer_due.year + x))
+    return yers_due
+
+  def next_yer_due(self): # also used by draft.award.next_yer_due line
     """ Year-end reports are due n year(s) after agreement was mailed
       Returns datetime.date or None if all YER have been submitted for this grant
     """
-    completed = self.yearendreport_set.count()
-    if completed >= self.grant_length():
-      return None
+    due = self.yers_due()
+    if len(due) > 0:
+      return due[0]
     else:
-      return self.first_yer_due.replace(year=self.first_yer_due.year + completed)
+      return None
 
   def total_amount(self):
     """ Total amount granted, or 0 if no amount has been entered """
@@ -770,3 +780,6 @@ class YERDraft(models.Model):
 
   def __unicode__(self):
     return 'DRAFT year-end report for ' + unicode(self.award)
+
+  def is_overdue(self):
+    return self.award.next_yer_due() < timezone.now().date()
