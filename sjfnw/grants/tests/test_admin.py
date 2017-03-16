@@ -4,7 +4,7 @@ from unittest import skip
 from django.core.urlresolvers import reverse
 from django.contrib.auth.models import User
 
-from sjfnw.grants.tests.base import BaseGrantTestCase, LIVE_FIXTURES
+from sjfnw.grants.tests.base import BaseGrantTestCase
 from sjfnw.grants.models import (DraftGrantApplication, GrantApplication,
     Organization, ProjectApp, GrantApplicationLog, GivingProjectGrant,
     SponsoredProgramGrant)
@@ -14,8 +14,6 @@ logger = logging.getLogger('sjfnw')
 @skip("Needs additional fixtures")
 class AdminInlines(BaseGrantTestCase):
   """ Verify basic display of related inlines for grants objects in admin """
-
-  fixtures = LIVE_FIXTURES
 
   def setUp(self): # don't super, can't set cycle dates with this fixture
     self.login_as_admin()

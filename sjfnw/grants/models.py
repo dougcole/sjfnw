@@ -5,6 +5,7 @@ from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError
 from django.core.validators import BaseValidator, MinValueValidator
 from django.db import models
+from django.forms.models import model_to_dict
 from django.utils import timezone
 
 from sjfnw.fund.models import GivingProject
@@ -153,14 +154,12 @@ class NarrativeQuestion(models.Model):
   name = models.CharField(max_length=75,
     help_text='Short description of question topic, e.g. "mission", "racial_justice"'
   )
-  version = models.CharField(max_length=40,
-    help_text=(
-      'Short description of this variation of the question, e.g. "standard" for '
-      'general SJF use, "rapid" for rapid response cycles.<br>'
-      'When updating a version without changing the purpose, increment the version '
-      'number. Example: standard -> standard-v2 -> standard-v3'
-    )
-  )
+  version = models.CharField(max_length=40, help_text=(
+    'Short description of this variation of the question, e.g. "standard" for '
+    'general SJF use, "rapid" for rapid response cycles.<br>'
+    'When updating a version without changing the purpose, increment the version '
+    'number. Example: standard -> standard-v2 -> standard-v3'
+  ))
   text = models.TextField(blank=False, help_text='Text to display, in raw html. Don\'t include question number - that will be added automatically')
   word_limit = models.PositiveSmallIntegerField(null=True, blank=True, help_text='Word limit for the question. If left blank, no word limit will be enforced')
 
@@ -197,7 +196,8 @@ class GrantCycle(models.Model):
     return self.title
 
   def is_open(self):
-    return self.open < timezone.now() < self.close
+    a = self.open < timezone.now() < self.close
+    return a
 
   def get_status(self):
     today = timezone.now()
@@ -221,11 +221,57 @@ class CycleNarrative(models.Model):
     unique_together = ('grant_cycle', 'narrative_question')
 
   def __unicode__(self):
-    return u'{}: {}'.format(self.order, self.narrative_question)
+    return u'{}. {}'.format(self.order, self.narrative_question)
+
+
+class DraftManager(models.Manager):
+
+  def create_from_submitted_app(self, app, save=True):
+    if not isinstance(app, GrantApplication):
+      raise ValueError('create_from_submitted_app must be called with GrantApplication instance')
+
+    draft = self.model(organization=app.organization, grant_cycle=app.grant_cycle)
+
+    # TODO store this somewhere instead of computing every time
+    fields_to_exclude = app.file_fields() + [
+      'organization', 'grant_cycle', 'giving_projects', 'narratives', 'budget',
+      'submission_time', 'pre_screening_status',
+      'scoring_bonus_poc', 'scoring_bonus_geo'
+    ]
+    contents = model_to_dict(app, exclude=fields_to_exclude)
+    answers = (NarrativeAnswer.objects.filter(grant_application=app)
+                  .select_related('cycle_narrative__narrative_question'))
+    for answer in answers:
+      contents[answer.cycle_narrative.narrative_question.name] = answer.text
+    draft.contents = json.dumps(contents)
+
+    for field in app.file_fields():
+      if hasattr(app, field):
+        setattr(draft, field, getattr(app, field))
+
+    draft.modified = timezone.now()
+    if save:
+      draft.save()
+    return draft
+
+  def copy(self, draft, cycle_id):
+    if not isinstance(draft, DraftGrantApplication):
+      raise ValueError('DraftManager copy must be called with DraftGrantApplication instance')
+    new_draft = self.model(
+      organization_id=draft.organization_id,
+      grant_cycle_id=cycle_id,
+      contents=draft.contents
+    )
+    for field in GrantApplication.file_fields():
+      if hasattr(draft, field):
+        setattr(new_draft, field, getattr(draft, field))
+    new_draft.save()
+    return new_draft
 
 
 class DraftGrantApplication(models.Model):
   """ Autosaved draft application """
+  objects = DraftManager()
 
   organization = models.ForeignKey(Organization)
   grant_cycle = models.ForeignKey(GrantCycle)
@@ -318,17 +364,14 @@ class GrantApplication(models.Model):
 
   # org info
   status = models.CharField(max_length=50, choices=gc.STATUS_CHOICES)
-  ein = models.CharField(max_length=50,
-                         verbose_name="Organization or Fiscal Sponsor EIN")
+  ein = models.CharField(max_length=50, verbose_name="Organization or Fiscal Sponsor EIN")
   founded = models.PositiveIntegerField(verbose_name='Year founded')
-  mission = models.TextField(verbose_name="Mission statement",
-                             validators=[WordLimitValidator(150)])
+  mission = models.TextField(verbose_name="Mission statement", validators=[WordLimitValidator(150)])
   previous_grants = models.CharField(max_length=255, blank=True,
       verbose_name='Previous SJF grants awarded (amounts and year)')
 
   # budget info
-  start_year = models.CharField(max_length=250,
-                                verbose_name='Start date of fiscal year')
+  start_year = models.CharField(max_length=250, verbose_name='Start date of fiscal year')
   budget_last = models.PositiveIntegerField(verbose_name='Org. budget last fiscal year')
   budget_current = models.PositiveIntegerField(verbose_name='Org. budget this fiscal year')
 
@@ -342,25 +385,20 @@ class GrantApplication(models.Model):
                                   verbose_name='Grant period (if different than fiscal year)')
   amount_requested = models.PositiveIntegerField()
 
-  SUPPORT_CHOICES = [('General support', 'General'),
-                     ('Project support', 'Project')]
-  support_type = models.CharField(max_length=50, choices=SUPPORT_CHOICES, default='General support')
-  project_title = models.CharField(max_length=250, blank=True,
-                                   verbose_name='Project title (if applicable)')
-  project_budget = models.PositiveIntegerField(null=True, blank=True,
-                                               verbose_name='Project budget (if applicable)')
+  SUPPORT_CHOICES = [('General support', 'General'), ('Project support', 'Project')]
+  support_type = models.CharField(
+      max_length=50, choices=SUPPORT_CHOICES, default='General support')
+  project_title = models.CharField(
+      max_length=250, blank=True, verbose_name='Project title (if applicable)')
+  project_budget = models.PositiveIntegerField(
+      null=True, blank=True, verbose_name='Project budget (if applicable)')
 
   # fiscal sponsor
-  fiscal_org = models.CharField(verbose_name='Fiscal org. name',
-                                max_length=255, blank=True)
-  fiscal_person = models.CharField(verbose_name='Contact person',
-                                   max_length=255, blank=True)
-  fiscal_telephone = models.CharField(verbose_name='Telephone',
-                                      max_length=25, blank=True)
-  fiscal_email = models.CharField(verbose_name='Email address',
-                                  max_length=70, blank=True)
-  fiscal_address = models.CharField(verbose_name='Address',
-                                    max_length=255, blank=True)
+  fiscal_org = models.CharField(verbose_name='Fiscal org. name', max_length=255, blank=True)
+  fiscal_person = models.CharField(verbose_name='Contact person', max_length=255, blank=True)
+  fiscal_telephone = models.CharField(verbose_name='Telephone', max_length=25, blank=True)
+  fiscal_email = models.CharField(verbose_name='Email address', max_length=70, blank=True)
+  fiscal_address = models.CharField(verbose_name='Address', max_length=255, blank=True)
   fiscal_city = models.CharField(verbose_name='City', max_length=50, blank=True)
   fiscal_state = models.CharField(verbose_name='State', max_length=2,
                                   choices=gc.STATE_CHOICES, blank=True)
@@ -389,23 +427,15 @@ class GrantApplication(models.Model):
                                         blank=True)
 
   # racial justice references (after narrative 6)
-  racial_justice_ref1_name = models.CharField(
-      verbose_name='Name', max_length=150, blank=True)
-  racial_justice_ref1_org = models.CharField(
-      verbose_name='Organization', max_length=150, blank=True)
-  racial_justice_ref1_phone = models.CharField(
-      verbose_name='Phone number', max_length=20, blank=True)
-  racial_justice_ref1_email = models.EmailField(
-      verbose_name='Email', max_length=100, blank=True)
+  racial_justice_ref1_name = models.CharField(verbose_name='Name', max_length=150, blank=True)
+  racial_justice_ref1_org = models.CharField(verbose_name='Organization', max_length=150, blank=True)
+  racial_justice_ref1_phone = models.CharField(verbose_name='Phone number', max_length=20, blank=True)
+  racial_justice_ref1_email = models.EmailField(verbose_name='Email', max_length=100, blank=True)
 
-  racial_justice_ref2_name = models.CharField(verbose_name='Name',
-                                              max_length=150, blank=True)
-  racial_justice_ref2_org = models.CharField(verbose_name='Organization',
-                                             max_length=150, blank=True)
-  racial_justice_ref2_phone = models.CharField(verbose_name='Phone number',
-                                               max_length=20, blank=True)
-  racial_justice_ref2_email = models.EmailField(verbose_name='Email',
-                                                max_length=100, blank=True)
+  racial_justice_ref2_name = models.CharField(verbose_name='Name', max_length=150, blank=True)
+  racial_justice_ref2_org = models.CharField(verbose_name='Organization', max_length=150, blank=True)
+  racial_justice_ref2_phone = models.CharField(verbose_name='Phone number', max_length=20, blank=True)
+  racial_justice_ref2_email = models.EmailField(verbose_name='Email', max_length=100, blank=True)
 
   # files
   budget = models.FileField( # no longer shown, but field holds file from early apps
@@ -506,32 +536,46 @@ class GrantApplication(models.Model):
       logger.info('App updated, is most recent, updating org profile')
       self.organization.update_profile(self)
 
-  def timeline_display(self):
-    # TODO clean this up
-    timeline = json.loads(self.timeline)
-    html = ('<table id="timeline_display">'
-            '<tr class="heading">'
-            '<td></td>'
-            '<th>date range</th>'
-            '<th>activities</th>'
-            '<th>goals/objectives</th>'
-            '</tr>')
-    row = u'<tr><th class="left">q{}</th><td>{}</td><td>{}</td><td>{}</td></tr>'
-    for i in range(0, 15, 3):
-      q = i / 3 + 1
-      colA = timeline[i] if len(timeline) > i else ''
-      colB = timeline[i + 1] if len(timeline) > i + 1 else ''
-      colC = timeline[i + 2] if len(timeline) > i + 2 else ''
-      html += row.format(q, colA, colB, colC)
-    html += '</table>'
-    return html
-  timeline_display.allow_tags = True
+  def get_narrative_answer(self, name):
+    try:
+      answer = NarrativeAnswer.objects.get(
+          grant_application=self, cycle_narrative__narrative_question__name=name)
+      return answer.text
+    except NarrativeAnswer.DoesNotExist:
+      return ''
 
 
 class NarrativeAnswer(models.Model):
   cycle_narrative = models.ForeignKey(CycleNarrative)
   grant_application = models.ForeignKey(GrantApplication)
   text = models.TextField()
+
+  def get_question_text(self):
+    return self.cycle_narrative.narrative_question.text
+
+  def get_display_value(self):
+    name = self.cycle_narrative.narrative_question.name
+
+    if name == 'timeline':
+      timeline = json.loads(self.text)
+      html = ('<table class="timeline_display">'
+              '<tr>'
+              '<td></td>'
+              '<td>date range</td>'
+              '<td>activities</td>'
+              '<td>goals/objectives</td>'
+              '</tr>')
+      row = u'<tr><td class="left">q{}</td><td>{}</td><td>{}</td><td>{}</td></tr>'
+      for i in range(0, 15, 3):
+        q = i / 3 + 1
+        colA = timeline[i] if len(timeline) > i else ''
+        colB = timeline[i + 1] if len(timeline) > i + 1 else ''
+        colC = timeline[i + 2] if len(timeline) > i + 2 else ''
+        html += row.format(q, colA, colB, colC)
+      html += '</table>'
+      return html
+
+    return self.text
 
 
 class ProjectApp(models.Model):
@@ -626,8 +670,8 @@ class GivingProjectGrant(models.Model):
         yers_due.append(self.first_yer_due.replace(year=self.first_yer_due.year + x))
     return yers_due
 
-  def next_yer_due(self): # also used by draft.award.next_yer_due line
-    """ Year-end reports are due n year(s) after agreement was mailed
+  def next_yer_due(self):
+    """ Year-end reports are due n year(s) after first_yer_due
       Returns datetime.date or None if all YER have been submitted for this grant
     """
     due = self.yers_due()

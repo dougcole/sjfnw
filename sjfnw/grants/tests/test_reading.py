@@ -28,7 +28,7 @@ class GrantReading(BaseGrantTestCase):
     self.yer_id = yer.pk
 
   def test_author(self):
-    self.login_as_org('test')
+    self.login_as_org()
 
     response = self.client.get('/grants/view/1', follow=True)
 
@@ -37,7 +37,7 @@ class GrantReading(BaseGrantTestCase):
     self.assertContains(response, 'year end report')
 
   def test_other_org(self):
-    self.login_as_org('new')
+    self.login_as_org()
 
     response = self.client.get('/grants/view/1', follow=True)
 
@@ -97,7 +97,7 @@ class GrantReading(BaseGrantTestCase):
     self.assertNotContains(response, 'year end report')
 
   def test_two_year_grant_question(self):
-    self.login_as_org('test')
+    self.login_as_org()
 
     response = self.client.get('/grants/view/1', follow=True)
 

@@ -142,9 +142,7 @@ class GrantApplicationModelForm(forms.ModelForm):
       self._narrative_fields.append(n.name)
 
   def clean_timeline(self):
-    print('clean_timeline')
     timeline = json.loads(self.cleaned_data.get('timeline'))
-    print(timeline)
 
     for i in range(2, len(timeline), 3):
       date = timeline[i - 2]
@@ -159,9 +157,7 @@ class GrantApplicationModelForm(forms.ModelForm):
     return self.cleaned_data.get('timeline')
 
   def clean(self):
-    print('cleaning')
     cleaned_data = super(GrantApplicationModelForm, self).clean()
-    print('after super')
 
     # collab refs - require phone or email
     phone = cleaned_data.get('collab_ref1_phone')
@@ -228,7 +224,6 @@ class GrantApplicationModelForm(forms.ModelForm):
       if not fiscal_letter:
         self._errors['fiscal_letter'] = _form_error('This field is required.')
 
-    print(cleaned_data)
     return cleaned_data
 
   def get_narrative_fields(self):

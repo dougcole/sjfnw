@@ -4,6 +4,8 @@ import json, logging
 from django.core.urlresolvers import reverse
 from django.utils import timezone
 
+from sjfnw.grants import views
+from sjfnw.grants.tests import factories
 from sjfnw.grants.tests.base import BaseGrantTestCase
 from sjfnw.grants.models import (DraftGrantApplication, GrantApplication,
     Organization, GivingProjectGrant)
@@ -13,15 +15,17 @@ logger = logging.getLogger('sjfnw')
 class OrgHomeAwards(BaseGrantTestCase):
   """ Verify that correct data is showing on the org home page """
 
-  url = reverse('sjfnw.grants.views.org_home')
+  url = reverse(views.org_home)
   template = 'grants/org_home.html'
 
   def setUp(self):
     super(OrgHomeAwards, self).setUp()
-    self.login_as_org('test')
+    self.login_as_org()
 
   def test_none(self):
-    """ org has no awards. verify no award info is shown """
+    self.assert_count(
+      GivingProjectGrant.objects.filter(projectapp__application__organization=self.org),
+      0)
 
     response = self.client.get(self.url)
 
@@ -30,9 +34,10 @@ class OrgHomeAwards(BaseGrantTestCase):
 
   def test_early(self):
     """ org has an award, but agreement has not been mailed. verify not shown """
-    award = GivingProjectGrant(projectapp_id=1, amount=9000,
-                                      first_yer_due=timezone.now() + timedelta(weeks=53))
-    award.save()
+    award = factories.GivingProjectGrant(
+      projectapp__application__organization=self.org,
+      agreement_mailed=None
+    )
 
     response = self.client.get(self.url)
 
@@ -40,14 +45,12 @@ class OrgHomeAwards(BaseGrantTestCase):
     self.assertNotContains(response, 'Agreement mailed')
 
   def test_sent(self):
-    """ org has award, agreement mailed. verify shown """
     today = timezone.now()
-    award = GivingProjectGrant(
-        projectapp_id=1,
-        amount=9000,
-        agreement_mailed=today - timedelta(days=1),
-        first_yer_due=today + timedelta(weeks=52))
-    award.save()
+    award = factories.GivingProjectGrant(
+      projectapp__application__organization=self.org,
+      agreement_mailed=today - timedelta(days=1),
+      first_yer_due=today + timedelta(weeks=52)
+    )
 
     response = self.client.get(self.url)
 
@@ -55,90 +58,41 @@ class OrgHomeAwards(BaseGrantTestCase):
     self.assertContains(response, 'Agreement mailed')
 
 class OrgRollover(BaseGrantTestCase):
-  """ Basic success
-  content,   timeline,   files,   not extra cycle q   """
 
   def setUp(self):
     super(OrgRollover, self).setUp()
-    self.login_as_org('new')
+    self.login_as_org()
 
   def test_draft_rollover(self):
-    """ scenario: take complete draft, make it belong to new org, rollover to cycle 1
-        verify:
-          success (status code & template)
-          new draft created
-          new draft contents = old draft contents (ignoring cycle q)
-          new draft files = old draft files  """
-
-    draft = DraftGrantApplication.objects.get(pk=2)
-    draft.organization = Organization.objects.get(pk=1)
-    draft.save()
-    # prior to rollover, make sure target draft does not exist
-    self.assertEqual(0,
-        DraftGrantApplication.objects.filter(organization_id=1, grant_cycle_id=1).count())
+    draft = factories.DraftGrantApplication(organization=self.org)
+    target_cycle = factories.GrantCycle(status='open')
 
     response = self.client.post('/apply/copy',
-        {'cycle': '1', 'draft': '2', 'application': ''}, follow=True)
+        {'cycle': target_cycle.pk, 'draft': draft.pk, 'application': ''}, follow=True)
 
+    ids = {'organization_id': self.org.pk, 'grant_cycle_id': target_cycle.pk}
     self.assertEqual(response.status_code, 200)
     self.assertTemplateUsed(response, 'grants/org_app.html')
-    self.assertEqual(1,
-        DraftGrantApplication.objects.filter(organization_id=1, grant_cycle_id=1).count())
-    new_draft = DraftGrantApplication.objects.get(organization_id=1, grant_cycle_id=1)
+
+    new_draft = DraftGrantApplication.objects.get(**ids)
     old_contents = json.loads(draft.contents)
-    old_cycle_q = old_contents.pop('cycle_question', None)
     new_contents = json.loads(new_draft.contents)
-    new_cycle_q = new_contents.pop('cycle_question', '')
     self.assertEqual(old_contents, new_contents)
-    self.assertNotEqual(old_cycle_q, new_cycle_q)
     for field in GrantApplication.file_fields():
       if hasattr(draft, field):
         self.assertEqual(getattr(draft, field), getattr(new_draft, field))
 
   def test_app_rollover(self):
-    """ scenario: take a submitted app, make it belong to new org, rollover to cycle 1
-        verify:
-          success (status code & template)
-          new draft created
-          draft contents = app contents (ignoring cycle q)
-          draft files = app files  """
+    app = factories.GrantApplication(organization=self.org)
+    target_cycle = factories.GrantCycle(status='open')
 
-    self.assertEqual(0,
-        DraftGrantApplication.objects.filter(organization_id=1, grant_cycle_id=2).count())
-
-    app = GrantApplication.objects.get(organization_id=2, grant_cycle_id=1)
-    app.organization = Organization.objects.get(pk=1)
-    app.save()
-
-    post_data = {'cycle': '2', 'draft': '', 'application': '1'}
+    post_data = {'cycle': target_cycle.pk, 'draft': '', 'application': app.pk}
     response = self.client.post('/apply/copy', post_data, follow=True)
 
     self.assertEqual(response.status_code, 200)
     self.assertTemplateUsed(response, 'grants/org_app.html')
-    self.assertEqual(1,
-        DraftGrantApplication.objects.filter(organization_id=1, grant_cycle_id=2).count())
 
-    draft = DraftGrantApplication.objects.get(organization_id=1, grant_cycle_id=2)
-    self.assert_draft_matches_app(draft, app, exclude_cycle_q=True)
+    ids = {'organization_id': self.org.pk, 'grant_cycle_id': target_cycle.pk}
 
-  def test_rollover_form_display(self):
-    """ Verify that rollover form displays correctly for both orgs
-
-    cycle_count = number of open cycles that don't have a draft or app already
-    apps_count = number of drafts + number of apps
-    (+1 are for the starting option)
-    """
-    # start out logged into neworg
-    response = self.client.get('/apply/copy')
-    self.assertTemplateUsed(response, 'grants/org_app_copy.html')
-    self.assertEqual(response.context['apps_count'], 0)
-    self.assertEqual(response.context['cycle_count'], 4)
-    self.assertNotContains(response, 'Select')
-    self.client.logout()
-    # login to testorg (officemax)
-    self.login_as_org('test')
-    response = self.client.get('/apply/copy')
-    self.assertTemplateUsed(response, 'grants/org_app_copy.html')
-    self.assertEqual(response.context['apps_count'], 4)
-    self.assertEqual(response.context['cycle_count'], 1)
-    self.assertContains(response, 'Select')
+    draft = DraftGrantApplication.objects.get(**ids)
+    self.assert_draft_matches_app(draft, app)

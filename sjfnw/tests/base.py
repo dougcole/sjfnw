@@ -32,11 +32,11 @@ class BaseTestCase(TestCase):
     'blank': 'blankacct@gmail.com'
   }
 
-  def login_strict(self, email, password):
+  def login_strict(self, username, password):
     """ Attempt to login using the test client; mark test failed if login fails """
-    success = self.client.login(username=self.email, password=password)
+    success = self.client.login(username=username, password=password)
     if not success:
-      self.fail('login failed with username: {}, password: {}'.format(email, password))
+      self.fail('login failed with username: {}, password: {}'.format(username, password))
 
   def login_as_member(self, name):
     if name not in self.known_members:

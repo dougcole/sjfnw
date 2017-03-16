@@ -7,7 +7,7 @@ from django.utils import timezone
 
 from sjfnw.grants.forms import (AppReportForm, SponsoredAwardReportForm,
     GPGrantReportForm, OrgReportForm)
-from sjfnw.grants.tests.base import BaseGrantTestCase, LIVE_FIXTURES
+from sjfnw.grants.tests.base import BaseGrantTestCase
 from sjfnw.grants import models
 
 import unicodecsv
@@ -93,7 +93,6 @@ def fill_report_form(form, select_filters=False, select_fields=False, fmt='brows
 
 class AppReports(BaseGrantTestCase):
 
-  fixtures = LIVE_FIXTURES
   url = reverse('sjfnw.grants.views.grants_report')
   template_success = 'grants/report_results.html'
   template_error = 'grants/reporting.html'
@@ -149,7 +148,6 @@ class AppReports(BaseGrantTestCase):
 
 class OrgReports(BaseGrantTestCase):
 
-  fixtures = LIVE_FIXTURES
   url = reverse('sjfnw.grants.views.grants_report')
   template_success = 'grants/report_results.html'
   template_error = 'grants/reporting.html'
@@ -233,7 +231,6 @@ class OrgReports(BaseGrantTestCase):
 
 class GPGReports(BaseGrantTestCase):
 
-  fixtures = LIVE_FIXTURES
   url = reverse('sjfnw.grants.views.grants_report')
   template_success = 'grants/report_results.html'
   template_error = 'grants/reporting.html'
@@ -318,7 +315,6 @@ class GPGReports(BaseGrantTestCase):
 
 class SponsoredAwardReports(BaseGrantTestCase):
 
-  fixtures = LIVE_FIXTURES
   url = reverse('sjfnw.grants.views.grants_report')
   template_success = 'grants/report_results.html'
   template_error = 'grants/reporting.html'

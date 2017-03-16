@@ -330,14 +330,18 @@ div.vertical_cushion { /* mission & grant req labels */
 
 /*----------------------------- Cycle info page -----------------------------*/
 
-.info-frame {
-  margin-bottom: 3em;
-}
-
 .apply-now {
-  margin-top: 20px;
+  display: inline-block;
+  background-color: #efefef;
+  border: 1px solid #bbb;
+  margin: 20px 0;
+  padding: 5px 10px;
   font-size: 135%;
   font-weight: bold;
+}
+
+.apply-now:hover {
+  text-decoration: none;
 }
 
 /*------------------------------ Grant reading ------------------------------*/
@@ -403,16 +407,11 @@ img.print {
   padding-left: 20px;
 }
 
-#timeline_display {
-  margin: auto;
-  padding: 0 5px;
-  border: 1px solid black;
-  text-align: left;
-  border-collapse: collapse;
+.timeline_display {
+  margin: auto; /* center on page */
 }
 
-#timeline_display th, #timeline_display td {
-  font-weight: normal;
+.timeline_display td {
   border: 1px solid black;
   padding: 5px 10px;
 }

@@ -68,62 +68,16 @@
 
   <h2>Narratives</h2>
   <ol class="narratives">
+    {% for answer in answers %}
     <li>
-      <label>{{form.narrative1.label}}</label>
-      <p>{{app.narrative1|linebreaks}}</p>
+      {{ answer.cycle_narrative.narrative_question.name }}
+      <label>{{ answer.cycle_narrative.narrative_question.text }}</label>
+      {{ answer.get_display_value|linebreaks }}
     </li>
-    <li>
-      <label>{{form.narrative2.label}}</label>
-      <p>{{app.narrative2|linebreaks}}
-    </li>
-    <li>
-      <label>{{form.narrative3.label}}</label>
-      <p>{{app.narrative3|linebreaks}}</p>
-    </li>
-    <li>
-      <label>{{form.narrative4.label}}</label>
-      <p>{{app.narrative4|linebreaks}}</p>
-      {{app.timeline_display|linebreaks}}
-    </li>
-    {% if app.overflow %}
-    <li>
-      <label>{{form.two_year_question.label}}</label>
-      <p>{{app.overflow.two_year_question|linebreaks}}</p>
-    </li>
-    {% endif %}
-    <li>
-      <label>{{form.narrative5.label}}</label>
-      <p>{{app.narrative5|linebreaks}}</p>
-      <br>
-      <p>
-      <label>{{form.collab_ref1_name.help_text}}</label>
-      </p>
-      <p>1. {{app.collab_ref1_name}}, {{app.collab_ref1_org}}. {{app.collab_ref1_phone|add:" "}}{{app.collab_ref1_email}}</p>
-      <p>2. {{app.collab_ref2_name}}, {{app.collab_ref2_org}}. {{app.collab_ref2_phone|add:" "}}{{app.collab_ref2_email}}</p>
-    </li>
-    <li>
-      <label>{{form.narrative6.label}}</label>
-      <p>{{app.narrative6|linebreaks}}</p>
-      <br>
-      <p>
-      <label>Racial justice references</label>
-      </p>
-      {% if app.racial_justice_ref1_org %}
-      <p>1. {{app.racial_justice_ref1_name}}, {{app.racial_justice_ref1_org}}. {{app.racial_justice_ref1_phone|add:" "}}{{app.racial_justice_ref1_email}}</p>
-      {% if app.racial_justice_ref2_name %}
-      <p>2. {{app.racial_justice_ref2_name}}, {{app.racial_justice_ref2_org}}. {{app.racial_justice_ref2_phone|add:" "}}{{app.racial_justice_ref2_email}}</p>
-      {% endif %}
-      {% else %}
-      <p>N/A</p>
-      {% endif %}
-    </li>
-    {% if app.cycle_question %}
-    <li>
-      <label>{{form.cycle_question.label}}</label>
-      <p>{{app.cycle_question|linebreaks}}</p>
-    </li>
-    {% endif %}
-    {% endautoescape %}
+    {% endfor %}
+  </ol>
+  {# TODO references #}
+  {% endautoescape %}
 </div>
 {% endblock main %}
 

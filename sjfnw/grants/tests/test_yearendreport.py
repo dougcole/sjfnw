@@ -32,7 +32,7 @@ class YearEndReportHomeLinks(BaseGrantTestCase):
 
   def setUp(self):
     super(YearEndReportHomeLinks, self).setUp()
-    self.login_as_org('new')
+    self.login_as_org()
 
   def test_home_link(self):
     award = factories.GivingProjectGrant(
@@ -198,7 +198,7 @@ class YearEndReportForm(BaseGrantFilesTestCase):
 
   def setUp(self):
     super(YearEndReportForm, self).setUp()
-    self.login_as_org('new')
+    self.login_as_org()
 
   def test_start_report(self):
     award = factories.GivingProjectGrant(projectapp__application__organization=self.org)
@@ -400,7 +400,7 @@ class RolloverYER(BaseGrantTestCase):
 
   def setUp(self):
     super(RolloverYER, self).setUp()
-    self.login_as_org('new')
+    self.login_as_org()
 
   def test_rollover_link(self):
     """ Verify that link shows on home page """
@@ -509,7 +509,7 @@ class ViewYER(BaseGrantTestCase):
     self.assertTemplateUsed(res, 'grants/blocked.html')
 
   def test_org_author(self):
-    self.login_as_org('new')
+    self.login_as_org()
     yer = factories.YearEndReport(award__projectapp__application__organization=self.org)
 
     url = reverse(views.view_yer, kwargs={'report_id': yer.pk})

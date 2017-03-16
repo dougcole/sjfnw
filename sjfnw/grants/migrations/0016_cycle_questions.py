@@ -7,7 +7,7 @@ from sjfnw.grants.constants import STANDARD_NARRATIVES
 def get_questions(cycle):
   if cycle.title == 'Displaced Tenants Fund':
     return [
-      {'name': 'mission', 'version': 'standard'},
+      {'name': 'describe_mission', 'version': 'standard'},
       {'name': 'most_impacted', 'version': 'tenants'},
       {'name': 'root_causes', 'version': 'tenants'},
       {'name': 'workplan', 'version': 'tenants'},
@@ -17,7 +17,7 @@ def get_questions(cycle):
     ]
   elif cycle.title == 'EPIC Zero Detention Project':
     return [
-      {'name': 'mission', 'version': 'standard'},
+      {'name': 'describe_mission', 'version': 'standard'},
       {'name': 'most_impacted', 'version': 'epic'},
       {'name': 'root_causes', 'version': 'epic'},
       {'name': 'workplan', 'version': 'epic'},

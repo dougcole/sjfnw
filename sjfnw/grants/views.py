@@ -1,5 +1,5 @@
 from datetime import datetime, timedelta
-import json, logging, urllib2
+import json, logging, re, urllib2
 
 from django.conf import settings
 from django.contrib import messages
@@ -110,8 +110,8 @@ def org_support(request):
     'support_form': c.GRANT_SUPPORT_FORM
   })
 
-def fetch_cycle_info(url):
-  if not re.search(r'https?://socialjusticefund.org', cycle.info_page):
+def _fetch_cycle_info(url):
+  if not re.search(r'https?://(www.)?socialjusticefund.org', url):
     return ('<h4>Grant cycle information page could not be loaded</h4>'
             '<p>You can still continue to the application form.</p>')
   try:
@@ -144,7 +144,7 @@ def cycle_info(request, cycle_id):
   if not cycle.info_page:
     raise Http404
 
-  content = fetch_cycle_info(cycle.info_page)
+  content = _fetch_cycle_info(cycle.info_page)
 
   return render(request, 'grants/cycle_info.html', {
     'cycle': cycle, 'content': content
@@ -230,6 +230,28 @@ def org_home(request, org):
 #  Grant application & Year-end report
 # -----------------------------------------------------------------------------
 
+def _load_draft(draft):
+  org_dict = json.loads(draft.contents)
+  timeline = []
+  for i in range(15): # covering both timeline formats
+    if 'timeline_' + str(i) in org_dict:
+      timeline.append(org_dict['timeline_' + str(i)])
+  org_dict['timeline'] = json.dumps(timeline)
+  return org_dict
+
+def _autofill_draft(draft):
+  """ If org has profile information, use it to autofill draft fields
+    Returns: indicator of whether draft was updated. """
+  if draft.organization.mission:
+    org_dict = model_to_dict(draft.organization, exclude=['fiscal_letter'])
+    draft.fiscal_letter = draft.organization.fiscal_letter
+    draft.contents = json.dumps(org_dict)
+    draft.save()
+    logger.debug('Autofilled draft %s, %s', draft.organization, draft.grant_cycle)
+    return True
+  return False
+
+
 @login_required_ajax(login_url=LOGIN_URL)
 @registered_org()
 def autosave_app(request, organization, cycle_id):
@@ -262,25 +284,24 @@ def autosave_app(request, organization, cycle_id):
 @login_required(login_url=LOGIN_URL)
 @registered_org()
 def grant_application(request, organization, cycle_id):
-  """ Get or submit the whole application form """
-
+  """ Get or submit the whole application form
+    The first time an org visits this page, it will redirect to cycle info page.
+  """
 
   cycle = get_object_or_404(models.GrantCycle, pk=cycle_id)
 
+  filter_by = {'organization': organization, 'grant_cycle': cycle}
+
   # check for app already submitted
-  # TODO should this redirect instead of rendering different template?
-  if (models.GrantApplication.objects
-       .filter(organization=organization, grant_cycle=cycle)
-       .exists()):
+  if (models.GrantApplication.objects.filter(**filter_by).exists()):
     return render(request, 'grants/already_applied.html', {
       'organization': organization, 'cycle': cycle
     })
 
-  draft, created = models.DraftGrantApplication.objects.get_or_create(
-      organization=organization, grant_cycle=cycle)
-  filled_profile = False
+  profiled = False
 
   if request.method == 'POST':
+    draft = get_object_or_404(models.DraftGrantApplication, **filter_by)
     if not draft.editable():
       return render(request, 'grants/submitted_closed.html', {'cycle': cycle})
 
@@ -304,8 +325,8 @@ def grant_application(request, organization, cycle_id):
       application = form.save()
 
       for cn in models.CycleNarrative.objects.filter(grant_cycle=cycle).select_related('narrative_question'):
-        text = form[cn.narrative_question.name]
-        answer = NarrativeAnswer(cycle_narrative=cn, grant_application=application, text=text)
+        text = form.cleaned_data.get(cn.narrative_question.name)
+        answer = models.NarrativeAnswer(cycle_narrative=cn, grant_application=application, text=text)
         answer.save()
 
       to_email = organization.get_email()
@@ -328,41 +349,24 @@ def grant_application(request, organization, cycle_id):
       logger.info(form.errors)
 
   else: # GET
-
-    if created or draft.contents == '{}':
-      # new/blank draft; load profile
-      org_dict = model_to_dict(organization, exclude=['fiscal_letter'])
-      draft.fiscal_letter = organization.fiscal_letter
-      draft.contents = json.dumps(org_dict)
-      draft.save()
-      logger.debug('Created new draft')
-      if cycle.info_page: # redirect to instructions first
-        return redirect(
-          reverse('sjfnw.grants.views.cycle_info', kwargs={'cycle_id': cycle.pk})
-        )
-
-    else: # load the draft
-      org_dict = json.loads(draft.contents)
-      timeline = []
-      for i in range(15): # covering both timeline formats
-        if 'timeline_' + str(i) in org_dict:
-          timeline.append(org_dict['timeline_' + str(i)])
-      org_dict['timeline'] = json.dumps(timeline)
-      logger.debug('Loaded draft')
-
-    if not draft.editable():
+    if not cycle.is_open():
       return render(request, 'grants/closed.html', {'cycle': cycle})
 
-    # try to determine initial load - hacky way
-    # 1) if referer, make sure it wasn't from copy
-    # 2) check for mission from profile
-    # 3) make sure grant request is not there (since it's not in profile)
-    referer = request.META.get('HTTP_REFERER')
-    if (not (referer and referer.find('copy') != -1) and
-        organization.mission and
-        (('grant_request' not in org_dict) or (not org_dict['grant_request']))):
-      filled_profile = True
+    draft = models.DraftGrantApplication.objects.filter(**filter_by).first()
 
+    # if they weren't sent here from info page and draft has not been created, redirect
+    if cycle.info_page and not request.GET.get('info') and draft is None:
+      return redirect(reverse(cycle_info, kwargs={'cycle_id': cycle.pk}))
+
+    if draft is None:
+      draft = models.DraftGrantApplication(**filter_by)
+      profiled = _autofill_draft(draft)
+      if not profiled: # wasn't saved by _autofill_draft
+        draft.save()
+    elif draft.contents == '{}': # if draft was created via admin site
+      profiled = _autofill_draft(draft)
+
+    org_dict = _load_draft(draft)
     form = GrantApplicationModelForm(cycle, initial=org_dict)
 
   # get draft files
@@ -381,7 +385,7 @@ def grant_application(request, organization, cycle_id):
     'cycle': cycle,
     'file_urls': file_urls,
     'draft': draft,
-    'profiled': filled_profile,
+    'profiled': profiled,
     'org': organization,
     'user_override': get_user_override(request),
     'flag': draft.recently_edited() and draft.modified_by
@@ -574,7 +578,7 @@ def copy_app(request, organization):
     if form.is_valid():
       cycle_id = form.cleaned_data.get('cycle')
       draft = form.cleaned_data.get('draft')
-      app = form.cleaned_data.get('application')
+      app_id = form.cleaned_data.get('application')
 
       # get cycle
       try:
@@ -584,51 +588,29 @@ def copy_app(request, organization):
         return render(request, 'grants/copy_app_error.html')
 
       # make sure the combo does not exist already
-      new_draft, created = models.DraftGrantApplication.objects.get_or_create(
-          organization=organization, grant_cycle=cycle)
-      if not created:
+      if models.DraftGrantApplication.objects.filter(
+          organization=organization, grant_cycle=cycle).exists():
         logger.warning('copy_app the combo already exists!?')
         return render(request, 'grants/copy_app_error.html')
 
       # get app/draft and its contents (json format for draft)
-      if app:
+      if app_id:
         try:
-          application = models.GrantApplication.objects.get(pk=int(app))
-          content = model_to_dict(application,
-                                  exclude=application.file_fields() + [
-                                    'organization', 'grant_cycle',
-                                    'submission_time', 'pre_screening_status',
-                                    'giving_projects', 'scoring_bonus_poc',
-                                    'scoring_bonus_geo', 'cycle_question',
-                                    'timeline', 'budget' # old all-in-one budget
-                                  ])
-          content.update(dict(zip(
-              ['timeline_' + str(i) for i in range(15)],
-              json.loads(application.timeline)
-              )))
-          if hasattr(application, 'overflow') and cycle.two_year_grants:
-            content['two_year_question'] = application.overflow.two_year_question
-          content = json.dumps(content)
+          application = models.GrantApplication.objects.get(pk=int(app_id))
+          draft = models.DraftGrantApplication.objects.create_from_submitted_app(application, save=False)
+          draft.grant_cycle = cycle
+          draft.save()
         except models.GrantApplication.DoesNotExist:
-          logger.warning('copy_app - submitted app %s not found', app)
+          logger.warning('copy_app - submitted app %s not found', app_id)
       elif draft:
         try:
-          application = models.DraftGrantApplication.objects.get(pk=int(draft))
-          content = json.loads(application.contents)
-          content['cycle_question'] = ''
-          content = json.dumps(content)
+          draft = models.DraftGrantApplication.objects.get(pk=int(draft))
+          models.DraftGrantApplication.objects.copy(draft, cycle.pk)
         except models.DraftGrantApplication.DoesNotExist:
           logger.warning('copy_app - draft %s not found', draft)
       else:
         logger.warning('copy_app no draft or app...')
         return render(request, 'grants/copy_app_error.html')
-
-      # set contents & files
-      new_draft.contents = content
-      for field in application.file_fields():
-        setattr(new_draft, field, getattr(application, field))
-      new_draft.save()
-      logger.info('copy_app -- content and files set')
 
       return redirect('/apply/' + cycle_id + get_user_override(request))
 
@@ -782,6 +764,10 @@ def _view_permission(user, application):
 
 def view_application(request, app_id):
   app = get_object_or_404(models.GrantApplication, pk=app_id)
+  answers = (models.NarrativeAnswer.objects
+      .filter(grant_application=app)
+      .select_related('cycle_narrative__narrative_question')
+      .order_by('cycle_narrative__order'))
 
   if not request.user.is_authenticated():
     perm = 0
@@ -803,7 +789,7 @@ def view_application(request, app_id):
       awards[papp.giving_project] = papp.givingprojectgrant
 
   return render(request, 'grants/reading_sidebar.html',
-                {'app': app, 'form': form, 'file_urls': file_urls, 'print_urls': print_urls,
+      {'app': app, 'answers': answers, 'form': form, 'file_urls': file_urls, 'print_urls': print_urls,
                  'awards': awards, 'perm': perm})
 
 def view_blob(request, blobkey):
@@ -874,12 +860,9 @@ def view_yer(request, report_id):
 # -----------------------------------------------------------------------------
 
 def revert_app_to_draft(request, app_id):
-  """ Turn a submitted application back into a draft
-
-    By creating a DraftGrantApplication with all of its content and then
-    deleting the GrantApplication.
-
-    All GrantApplication-specific fields (screening status, etc) are lost.
+  """ Turn a submitted application back into a draft by creating a
+    DraftGrantApplication with all of its content and then deleting the
+    GrantApplication.
   """
 
   submitted_app = get_object_or_404(models.GrantApplication, pk=app_id)
@@ -887,26 +870,8 @@ def revert_app_to_draft(request, app_id):
   grant_cycle = submitted_app.grant_cycle
 
   if request.method == 'POST':
-    # create draft from app
-    draft = models.DraftGrantApplication(organization=organization, grant_cycle=grant_cycle)
-    content = model_to_dict(submitted_app,
-                            exclude=submitted_app.file_fields() + [
-                                'organization', 'grant_cycle',
-                                'submission_time', 'pre_screening_status',
-                                'giving_projects', 'scoring_bonus_poc',
-                                'scoring_bonus_geo', 'timeline'])
-    content.update(dict(zip(['timeline_' + str(i) for i in range(15)],
-                            json.loads(submitted_app.timeline))
-                       ))
-    if hasattr(submitted_app, "overflow"):
-      content['two_year_question'] = submitted_app.overflow.two_year_question
-    draft.contents = json.dumps(content)
-    for field in submitted_app.file_fields():
-      if hasattr(draft, field):
-        setattr(draft, field, getattr(submitted_app, field))
-    draft.modified = timezone.now()
-    draft.save()
-    logger.info('Reverted to draft, draft id ' + str(draft.pk))
+    draft = models.DraftGrantApplication.objects.create_from_submitted_app(submitted_app)
+    logger.info('Reverted to draft, draft id %s', draft.pk)
 
     submitted_app.delete()
 
@@ -931,12 +896,7 @@ def admin_rollover(request, app_id):
       application.cycle_question = ''
       application.budget = ''
       application.save()
-      if hasattr(application, 'overflow') and cycle.two_year_grants:
-        overflow = models.GrantApplicationOverflow(
-            grant_application=application,
-            two_year_question=application.overflow.two_year_question
-        )
-        overflow.save()
+      # TODO narratives
       logger.info(u'Successful rollover of %s to %s', application, cycle)
       return redirect('/admin/grants/grantapplication/' + str(application.pk) + '/')
   else:

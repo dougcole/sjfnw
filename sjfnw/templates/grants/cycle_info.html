@@ -3,29 +3,20 @@
 {% block title %}Grant cycle information | {{block.super}}{% endblock %}
 
 {% block content %}
-<br>
-<br>
-<h3>Please review grant cycle information below before beginning the application</h3>
+<h2 class="text-center">Please review the information below before beginning the application</h2>
 
 {% if cycle.is_open %}
-  <div align="center">
-    <button class="apply-now" onclick="location.href='/apply/{{ cycle.pk }}'">Continue to application</button>
-  </div>
+  {% include 'grants/includes/continue_to_application.html' %}
   <hr>
 {% endif %}
 
-<div id="cycle-info" class="info-frame">
+<div id="cycle-info">
   {{ content|safe }}
 </div>
 
 {% if cycle.is_open %}
   <hr>
-  <div align="center">
-    <button class="apply-now" onclick="location.href='/apply/{{ cycle.pk }}'">Continue to application</button>
-  </div>
-  <br>
-  <br>
+  {% include 'grants/includes/continue_to_application.html' %}
 {% endif %}
 
-{% endblock %}
-
+{% endblock content %}

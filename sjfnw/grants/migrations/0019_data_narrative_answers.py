@@ -5,7 +5,7 @@ import sys
 from django.db import models, migrations
 
 narratives = {
-  'mission': 'narrative1',
+  'describe_mission': 'narrative1',
   'most_impacted': 'narrative2',
   'root_causes': 'narrative3',
   'workplan': 'narrative4',
