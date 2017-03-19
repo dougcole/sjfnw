@@ -60,15 +60,17 @@ else:
     }
   }
   DEBUG = True
+  INTERNAL_IPS = ['127.0.0.1', '::1']
   # Uncomment below to enable debugging toolbar
-  # INSTALLED_APPS.append('django.contrib.staticfiles')
-  # INSTALLED_APPS.append('debug_toolbar')
+  INSTALLED_APPS.append('django.contrib.staticfiles')
+  INSTALLED_APPS.append('debug_toolbar')
 
 MIDDLEWARE_CLASSES = (
   'django.middleware.common.CommonMiddleware',
   'django.contrib.sessions.middleware.SessionMiddleware',
   'django.contrib.auth.middleware.AuthenticationMiddleware',
-  'django.contrib.messages.middleware.MessageMiddleware'
+  'django.contrib.messages.middleware.MessageMiddleware',
+  'debug_toolbar.middleware.DebugToolbarMiddleware',
 )
 
 TEMPLATES = [
