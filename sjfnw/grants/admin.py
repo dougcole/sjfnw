@@ -189,6 +189,10 @@ class CycleNarrativeI(admin.TabularInline):
   extra = 0
   formset = CycleNarrativeFormset
 
+  def formfield_for_manytomany(self, db_field, request, **kwargs):
+    kwargs['queryset'] = CycleNarrative.objects.exclude(archived=True)
+    return super(CycleNarrativeI, self).formfield_for_manytomany(db_field, request, **kwargs)
+
 class GrantApplicationI(BaseShowInline):
   """ List grant applications on organization page """
   model = models.GrantApplication

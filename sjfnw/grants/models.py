@@ -167,6 +167,7 @@ class NarrativeQuestion(models.Model):
       help_text='Archived questions remain associated with existing grant cycles but can\'t be added to new grant cycles.')
 
   class Meta:
+    ordering = ('name', 'version')
     unique_together = ('name', 'version')
 
   def __unicode__(self):
