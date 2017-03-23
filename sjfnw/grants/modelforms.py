@@ -33,7 +33,14 @@ class CycleNarrativeFormset(forms.models.BaseInlineFormSet):
     model = CycleNarrative
 
   def clean(self):
-    orders = [form.cleaned_data['order'] for form in self.forms]
+    super(CycleNarrativeFormset, self).clean()
+    orders = []
+    for form in self.forms:
+      data = form.cleaned_data
+      if data.get('order') and data.get('narrative_question'):
+        orders.append(data.get('order'))
+      else:
+        return
     if len(set(orders)) < len(orders):
       raise forms.ValidationError('Cannot have multiple questions with the same order')
 
