@@ -86,10 +86,9 @@ class GrantCycle(factory.django.DjangoModelFactory):
     if not create:
       return
 
-    if not questions:
-      questions = gc.STANDARD_NARRATIVES
-      if self.two_year_grants:
-        questions.append({ name: 'two_year_grant', version: 'standard' })
+    questions = questions or gc.STANDARD_NARRATIVES
+    if kwargs.get('add'):
+      questions += kwargs['add']
 
     for i, q in enumerate(questions):
       nq = models.NarrativeQuestion.objects.get(**q)
