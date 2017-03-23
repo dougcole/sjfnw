@@ -290,9 +290,9 @@ class GrantCycleA(BaseModelAdmin):
   list_display = ['title', 'open', 'close']
   list_filter = (CycleOpenFilter,)
   fields = [
-    ('title', 'open', 'close'),
+    ('title', 'open', 'close', 'private'),
     ('info_page', 'email_signature'),
-    'private', 'conflicts',
+    'conflicts'
   ]
   inlines = [CycleNarrativeI, AppCycleI]
 
