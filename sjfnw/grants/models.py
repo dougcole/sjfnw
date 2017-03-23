@@ -146,7 +146,7 @@ class Organization(models.Model):
       if hasattr(app, field):
         setattr(self, field, getattr(app, field))
     self.save()
-    logger.info('org profile updated - %s', self.name)
+    logger.info('Org profile updated - %s', self.name)
 
 class NarrativeQuestion(models.Model):
   created = models.DateTimeField(blank=True, default=timezone.now)
@@ -227,6 +227,9 @@ class CycleNarrative(models.Model):
 class DraftManager(models.Manager):
 
   def create_from_submitted_app(self, app, save=True):
+    """ Creates a new draft using contents of given GrantApplication
+      Saves the new draft by default.
+    """
     if not isinstance(app, GrantApplication):
       raise ValueError('create_from_submitted_app must be called with GrantApplication instance')
 
@@ -255,8 +258,9 @@ class DraftManager(models.Manager):
     return draft
 
   def copy(self, draft, cycle_id):
+    """ Copy given draft to a new grant cycle """
     if not isinstance(draft, DraftGrantApplication):
-      raise ValueError('DraftManager copy must be called with DraftGrantApplication instance')
+      raise ValueError('DraftGrantApplication instance is required')
     new_draft = self.model(
       organization_id=draft.organization_id,
       grant_cycle_id=cycle_id,
@@ -533,7 +537,6 @@ class GrantApplication(models.Model):
     if apps.exists():
       logger.info('App updated, not the most recent for org, regular save')
     else:
-      logger.info('App updated, is most recent, updating org profile')
       self.organization.update_profile(self)
 
   def get_narrative_answer(self, name):
