@@ -944,6 +944,18 @@ def login_as_org(request):
   form = LoginAsOrgForm()
   return render(request, 'admin/grants/impersonate.html', {'form': form})
 
+def _merge_conflict(a, b):
+  cycles = {}
+
+  # check for conflicts
+  for appset in [a.grantapplication_set.all(), a.draftgrantapplication_set.all(),
+                 b.grantapplication_set.all(), b.draftgrantapplication_set.all()]:
+    for app in appset:
+      if app.grant_cycle_id in cycles:
+        return True
+      else:
+        cycles[app.grant_cycle_id] = True
+
 def merge_orgs(request, id_a, id_b):
 
   org_a = (models.Organization.objects
@@ -956,18 +968,10 @@ def merge_orgs(request, id_a, id_b):
   error = ''
   cycles = {}
 
-  # check for conflicts
-  for appset in [org_a.grantapplication_set.all(), org_a.draftgrantapplication_set.all(),
-                 org_b.grantapplication_set.all(), org_b.draftgrantapplication_set.all()]:
-    for app in appset:
-      if app.grant_cycle_id in cycles:
-        error = 'Orgs have a draft or submitted application for the same grant cycle.'
-        break
-      else:
-        cycles[app.grant_cycle_id] = True
-
-  if error:
-    messages.error(request, error + ' Cannot be automatically merged.')
+  if _merge_conflict(org_a, org_b):
+    messages.error(request,
+      'Orgs have a draft or submitted application for the same grant cycle.'
+      ' Cannot be automatically merged.')
     return redirect(reverse('admin:grants_organization_changelist'))
 
   if request.method == 'POST':
@@ -996,6 +1000,7 @@ def merge_orgs(request, id_a, id_b):
         if not primary_latest or (primary_latest.submission_time < sec_latest.submission_time):
           primary.update_profile(sec_latest)
 
+      # transfer related objects
       sec.grantapplication_set.update(organization_id=primary.pk)
       sec.draftgrantapplication_set.update(organization_id=primary.pk)
       sec.sponsoredprogramgrant_set.update(organization_id=primary.pk)
