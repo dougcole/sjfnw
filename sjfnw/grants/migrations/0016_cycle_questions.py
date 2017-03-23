@@ -2,7 +2,7 @@
 from __future__ import unicode_literals
 
 from django.db import models, migrations
-from sjfnw.grants.constants import STANDARD_NARRATIVES
+from sjfnw.grants.constants import STANDARD_NARRATIVES, TWO_YEAR_GRANT_QUESTION
 
 def get_questions(cycle):
   if cycle.title == 'Displaced Tenants Fund':
@@ -32,7 +32,7 @@ def set_cycle_questions(apps, schema_editor):
   NarrativeQuestion = apps.get_model('grants', 'NarrativeQuestion')
   GrantCycle = apps.get_model('grants', 'GrantCycle')
   CycleNarrative = apps.get_model('grants', 'CycleNarrative')
-  standard_two_year = NarrativeQuestion.objects.get(name='two_year_grant', version='standard')
+  standard_two_year = NarrativeQuestion.objects.get(**TWO_YEAR_GRANT_QUESTION)
 
   for cycle in GrantCycle.objects.all():
 
@@ -51,7 +51,7 @@ def set_cycle_questions(apps, schema_editor):
       question = standard_two_year
       if cycle.two_year_question != standard_two_year.text:
         question = NarrativeQuestion(
-          name='two_year_question', version=str(cycle.pk),
+          name=TWO_YEAR_GRANT_QUESTION['name'], version=str(cycle.pk),
           text=cycle.two_year_question, archived=True
         )
         question.save()
