@@ -1,17 +1,16 @@
-import logging
 from unittest import skip
 
 from django.core.urlresolvers import reverse
 from django.contrib.auth.models import User
 
+from sjfnw.grants import views
+from sjfnw.grants.tests import factories
 from sjfnw.grants.tests.base import BaseGrantTestCase
 from sjfnw.grants.models import (DraftGrantApplication, GrantApplication,
     Organization, ProjectApp, GrantApplicationLog, GivingProjectGrant,
-    SponsoredProgramGrant)
+    NarrativeAnswer, SponsoredProgramGrant)
 
-logger = logging.getLogger('sjfnw')
-
-@skip("Needs additional fixtures")
+@skip("Needs additional fixtures") #TODO
 class AdminInlines(BaseGrantTestCase):
   """ Verify basic display of related inlines for grants objects in admin """
 
@@ -54,93 +53,107 @@ class AdminRevert(BaseGrantTestCase):
     super(AdminRevert, self).setUp()
     self.login_as_admin()
 
-  def test_load_revert(self):
+  def _get_url(self, app_id):
+    return reverse(views.revert_app_to_draft, kwargs={'app_id': app_id})
 
-    res = self.client.get('/admin/grants/grantapplication/1/revert')
+  def test_load_revert(self):
+    app = factories.GrantApplication()
+
+    res = self.client.get(self._get_url(app.pk))
 
     self.assertEqual(200, res.status_code)
     self.assertContains(res, 'Are you sure you want to revert this application into a draft?')
 
   def test_revert_app(self):
-    """ scenario: revert submitted app pk1
-        verify:
-          draft created
-          app gone
-          draft fields match app (incl cycle, timeline) """
+    app = factories.GrantApplication()
 
-    self.assertEqual(0,
-        DraftGrantApplication.objects.filter(organization_id=2, grant_cycle_id=1).count())
-    app = GrantApplication.objects.get(organization_id=2, grant_cycle_id=1)
+    answers = (NarrativeAnswer.objects
+        .filter(grant_application=app)
+        .values('cycle_narrative__narrative_question__name', 'text'))
+    a = {}
+    for ans in answers:
+      a[ans['cycle_narrative__narrative_question__name']] = ans['text']
 
-    self.client.post('/admin/grants/grantapplication/1/revert')
+    self.client.post(self._get_url(app.pk))
 
-    self.assertEqual(1,
-      DraftGrantApplication.objects.filter(organization_id=2, grant_cycle_id=1).count())
-    draft = DraftGrantApplication.objects.get(organization_id=2, grant_cycle_id=1)
-    self.assert_draft_matches_app(draft, app)
+    self.assert_count(
+      GrantApplication.objects.filter(organization_id=app.organization_id),
+      0)
+    draft = DraftGrantApplication.objects.get(
+        organization_id=app.organization_id, grant_cycle_id=app.grant_cycle_id)
+    self.assert_draft_matches_app(draft, app, a)
 
 
 class AdminRollover(BaseGrantTestCase):
 
-  url = reverse('sjfnw.grants.views.admin_rollover', kwargs={'app_id': 1})
+  url = reverse(views.admin_rollover, kwargs={'app_id': 1})
 
   def setUp(self):
     super(AdminRollover, self).setUp()
     self.login_as_admin()
 
   def test_unknown_app(self):
-    res = self.client.post(reverse('sjfnw.grants.views.admin_rollover',
-                                        kwargs={'app_id': 101}))
+    res = self.client.post(reverse(views.admin_rollover, kwargs={'app_id': 101}))
     self.assertEqual(res.status_code, 404)
 
   def test_unknown_cycle(self):
+    source_app = factories.GrantApplication()
     res = self.client.post(
-      reverse('sjfnw.grants.views.admin_rollover', kwargs={'app_id': 1}),
-      data={'cycle': u'99'}
+      reverse(views.admin_rollover, kwargs={'app_id': source_app.pk}),
+      data={'cycle': 99}
     )
     self.assertEqual(res.status_code, 200)
     self.assertIn('Select a valid choice', res.context['form'].errors['cycle'][0])
 
   def test_app_exists(self):
-    self.assertEqual(GrantApplication.objects.filter(grant_cycle_id=1).count(), 1)
+    source_app = factories.GrantApplication()
+    target_cycle = factories.GrantCycle(status='open')
+    app = factories.GrantApplication(
+      organization=source_app.organization, grant_cycle=target_cycle)
+
     res = self.client.post(
-      reverse('sjfnw.grants.views.admin_rollover', kwargs={'app_id': 2}),
-      data={'cycle': u'1'}
+      reverse(views.admin_rollover, kwargs={'app_id': source_app.pk}),
+      data={'cycle': target_cycle.pk}
     )
     self.assertEqual(res.status_code, 200)
-    self.assertEqual(GrantApplication.objects.filter(grant_cycle_id=1).count(), 1)
     self.assertFalse(res.context['form'].is_valid())
+    self.assert_count(GrantApplication.objects.filter(grant_cycle_id=target_cycle.pk), 1)
 
   def test_draft_exists(self):
-    self.assertEqual(GrantApplication.objects.filter(grant_cycle_id=3).count(), 0)
-    self.assertEqual(DraftGrantApplication.objects.filter(grant_cycle_id=3).count(), 1)
+    source_app = factories.GrantApplication()
+    draft = factories.DraftGrantApplication(
+      organization=source_app.organization, grant_cycle__status='open')
     res = self.client.post(
-      reverse('sjfnw.grants.views.admin_rollover', kwargs={'app_id': 2}),
-      data={'cycle': u'3'}
+      reverse(views.admin_rollover, kwargs={'app_id': source_app.pk}),
+      data={'cycle': draft.grant_cycle.pk}
     )
+
     self.assertEqual(res.status_code, 200)
-    self.assertEqual(GrantApplication.objects.filter(grant_cycle_id=3).count(), 0)
-    self.assertEqual(DraftGrantApplication.objects.filter(grant_cycle_id=3).count(), 1)
     self.assertFalse(res.context['form'].is_valid())
+    self.assert_count(GrantApplication.objects.filter(grant_cycle=draft.grant_cycle), 0)
 
   def test_cycle_closed(self):
-    self.assertEqual(GrantApplication.objects.filter(grant_cycle_id=4).count(), 0)
+    """ Admin can rollover into closed cycle """
+    source_app = factories.GrantApplication()
+    target_cycle = factories.GrantCycle(status='closed')
     res = self.client.post(
-      reverse('sjfnw.grants.views.admin_rollover', kwargs={'app_id': 2}),
-      data={'cycle': u'4'}
+      reverse(views.admin_rollover, kwargs={'app_id': source_app.pk}),
+      data={'cycle': target_cycle.pk}
     )
     self.assertEqual(res.status_code, 302)
-    self.assertEqual(GrantApplication.objects.filter(grant_cycle_id=4).count(), 1)
+    self.assertRegexpMatches(res.get('Location'), r'/admin/grants/grantapplication/\d+/$')
+    self.assert_count(GrantApplication.objects.filter(grant_cycle=target_cycle), 1)
 
   def test_cycle_open(self):
-    self.assert_count(GrantApplication.objects.filter(grant_cycle_id=2), 0)
+    source_app = factories.GrantApplication()
+    target_cycle = factories.GrantCycle(status='open')
     res = self.client.post(
-      reverse('sjfnw.grants.views.admin_rollover', kwargs={'app_id': 2}),
-      data={'cycle': u'6'}
+      reverse(views.admin_rollover, kwargs={'app_id': source_app.pk}),
+      data={'cycle': target_cycle.pk}
     )
     self.assertEqual(res.status_code, 302)
     self.assertRegexpMatches(res.get('Location'), r'/admin/grants/grantapplication/\d/$')
-    self.assertEqual(GrantApplication.objects.filter(grant_cycle_id=6).count(), 1)
+    self.assert_count(GrantApplication.objects.filter(grant_cycle=target_cycle), 1)
 
 class MergeOrgs(BaseGrantTestCase):
 
@@ -151,110 +164,95 @@ class MergeOrgs(BaseGrantTestCase):
     self.login_as_admin()
 
   def test_action_available(self):
+    factories.Organization() # need at least 1 org to exist for actions to appear
 
     res = self.client.get(self.admin_url, follow=True)
     self.assertContains(res, '<option value="merge"')
 
   def test_start_single_org(self):
+    org = factories.Organization()
 
     post_data = {
       'action': 'merge',
-      '_selected_action': 1
+      '_selected_action': [org.pk]
     }
     res = self.client.post(self.admin_url, post_data, follow=True)
 
+    self.assertEqual(res.status_code, 200)
     self.assertTemplateUsed(res, 'admin/grants/organization/change_list.html')
     self.assert_message(res, 'Merge can only be done on two organizations. You selected 1.')
 
   def test_start_triple_org(self):
 
-    third = Organization.objects.create_with_user(email='third@third.com', name='third')
+    a = factories.Organization()
+    b = factories.Organization()
+    c = factories.Organization()
 
     post_data = {
       'action': 'merge',
-      '_selected_action': [1, 2, third.pk]
+      '_selected_action': [a.pk, b.pk, c.pk]
     }
     res = self.client.post(self.admin_url, post_data, follow=True)
 
+    self.assertEqual(res.status_code, 200)
     self.assertTemplateUsed(res, 'admin/grants/organization/change_list.html')
     self.assert_message(res, 'Merge can only be done on two organizations. You selected 3.')
 
   def test_start_conflicting_drafts(self):
-    a_pk = 1
-    b_pk = 2
+    a = factories.Organization()
+    b = factories.Organization()
 
-    # a has no apps - rules out conflict over apps
-    self.assert_count(GrantApplication.objects.filter(organization_id=a_pk), 0)
+    # create drafts for same cycle
+    draft_a = factories.DraftGrantApplication(organization=a)
+    draft_b = factories.DraftGrantApplication(organization=b,
+                                              grant_cycle=draft_a.grant_cycle)
 
-    # b has draft; create draft for same cycle for a
-    self.assert_count(
-      DraftGrantApplication.objects.filter(organization_id=b_pk, grant_cycle_id=2), 1)
-    draft = DraftGrantApplication(organization_id=a_pk, grant_cycle_id=2)
-    draft.save()
-
-    post_data = {
-      'action': 'merge',
-      '_selected_action': [1, 2]
-    }
+    post_data = {'action': 'merge', '_selected_action': [a.pk, b.pk]}
     res = self.client.post(self.admin_url, post_data, follow=True)
 
+    self.assertEqual(res.status_code, 200)
     self.assertTemplateUsed(res, 'admin/grants/organization/change_list.html')
     self.assert_message(res, r'same grant cycle. Cannot be automatically merged.$', regex=True)
 
   def test_start_conflicting_apps(self):
-    a_pk = 1
-    b_pk = 2
+    a = factories.Organization()
+    b = factories.Organization()
 
-    # a has no drafts - rules out conflict over drafts
-    self.assert_count(DraftGrantApplication.objects.filter(organization_id=a_pk), 0)
+    # create apps for same cycle
+    app_a = factories.GrantApplication(organization=a)
+    app_b = factories.GrantApplication(organization=b,
+                                       grant_cycle=app_a.grant_cycle)
 
-    # b has app; create draft for same cycle for a
-    self.assert_count(
-      GrantApplication.objects.filter(organization_id=b_pk, grant_cycle_id=5), 1)
-    app = GrantApplication(organization_id=a_pk, grant_cycle_id=5,
-        founded='1978', budget_last=300, budget_current=600, amount_requested=99)
-    app.save()
-
-    post_data = {
-      'action': 'merge',
-      '_selected_action': [1, 2]
-    }
+    post_data = {'action': 'merge', '_selected_action': [a.pk, b.pk]}
     res = self.client.post(self.admin_url, post_data, follow=True)
 
+    self.assertEqual(res.status_code, 200)
     self.assertTemplateUsed(res, 'admin/grants/organization/change_list.html')
     self.assert_message(res, r'same grant cycle. Cannot be automatically merged.$', regex=True)
 
   def test_start_valid_one_empty(self):
+    a = factories.Organization()
+    b = factories.OrganizationWithProfile()
 
     post_data = {
       'action': 'merge',
-      '_selected_action': [1, 2]
+      '_selected_action': [a.pk, b.pk]
     }
     res = self.client.post(self.admin_url, post_data, follow=True)
 
+    self.assertEqual(res.status_code, 200)
     self.assertTemplateUsed(res, 'admin/grants/merge_orgs.html')
-    org1 = Organization.objects.get(pk=1)
-    org2 = Organization.objects.get(pk=2)
-    self.assertContains(res, org1.name)
-    self.assertContains(res, org2.name)
+    self.assertContains(res, a.name)
+    self.assertContains(res, b.name)
 
   def test_merged_one_sided(self):
-    primary = 1
-    primary_org = Organization.objects.get(pk=primary)
-    sec = 2
-    sec_org = Organization.objects.get(pk=sec)
+    a = factories.Organization()
+    b = factories.Organization()
+    factories.GrantApplication.create_batch(2, organization=b)
+    factories.DraftGrantApplication.create_batch(2, organization=b)
 
-    self.assertIsNotNone(primary_org.user)
-    self.assertIsNotNone(sec_org.user)
-
-    # get draft & app IDs that were associated with secondary org
-    sec_apps = list(sec_org.grantapplication_set.values_list('pk', flat=True))
-    sec_drafts = list(sec_org.draftgrantapplication_set.values_list('pk', flat=True))
-    self.assert_length(sec_apps, 2)
-    self.assert_length(sec_drafts, 2)
-
-    url = reverse('sjfnw.grants.views.merge_orgs', kwargs={'id_a': sec, 'id_b': primary})
-    post_data = {'primary': primary}
+    url = reverse(views.merge_orgs, kwargs={'id_a': a.pk, 'id_b': b.pk})
+    post_data = {'primary': a.pk}
     res = self.client.post(url, post_data, follow=True)
 
     self.assertEqual(res.status_code, 200)
@@ -262,26 +260,28 @@ class MergeOrgs(BaseGrantTestCase):
     self.assert_message(res, 'Merge successful. Redirected to new organization page')
 
     # secondary org & user should have been deleted
-    self.assert_count(Organization.objects.filter(pk=sec), 0)
-    self.assert_count(User.objects.filter(username=sec_org.user.username), 0)
+    self.assert_count(Organization.objects.filter(pk=b.pk), 0)
+    self.assert_count(User.objects.filter(username=b.user.username), 0)
 
-    log = (GrantApplicationLog.objects.filter(organization_id=primary)
+    log = (GrantApplicationLog.objects.filter(organization=a)
                                       .order_by('-date')
                                       .first())
     self.assertIsNotNone(log)
     self.assertRegexpMatches(log.notes, r'^Merged')
 
-    updated_apps = GrantApplication.objects.filter(organization_id=primary, pk__in=sec_apps)
-    updated_drafts = DraftGrantApplication.objects.filter(
-        organization_id=primary, pk__in=sec_drafts)
-    self.assert_length(updated_apps, 2)
-    self.assert_length(updated_drafts, 2)
+    self.assert_count(GrantApplication.objects.filter(organization_id=a.pk), 2)
+    self.assert_count(DraftGrantApplication.objects.filter(organization_id=a.pk), 2)
 
+  @skip('TODO')
   def test_merge_both_have_objs(self):
+    cycles = factories.GrantCycle.create_batch(5)
 
-    primary = 1
-    sec = 2
-    sec_org = Organization.objects.get(pk=sec)
+    a = factories.Organization()
+    factories.GrantApplication.create_batch(2, organization=a)
+    factories.SponsoredProgramGrant(organization=a)
+
+    b = factories.Organization()
+    app = factories.GrantApplication(organization=b)
 
     # get draft & app IDs that were associated with secondary org
     sec_apps = list(sec_org.grantapplication_set.values_list('pk', flat=True))

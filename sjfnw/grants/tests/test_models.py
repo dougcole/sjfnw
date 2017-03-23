@@ -2,8 +2,19 @@ from datetime import timedelta
 from django.test import TestCase
 from django.utils import timezone
 
+from sjfnw.grants.tests import factories
 from sjfnw.grants.tests.base import BaseGrantTestCase
-from sjfnw.grants.models import Organization, GivingProjectGrant, YearEndReport
+from sjfnw.grants.models import Organization, GrantApplication, NarrativeAnswer
+
+class GrantApplication(BaseGrantTestCase):
+
+  def test_get_narrative_answer(self):
+    app = factories.GrantApplication()
+
+    answers = NarrativeAnswer.objects.filter(grant_application=app)
+
+    self.assert_count(answers, 7)
+    self.assertNotEqual(app.get_narrative_answer('describe_mission'), answers.get(cycle_narrative__narrative_question__name='describe_mission'))
 
 class OrganizationGetStaffEntered(TestCase):
 

@@ -25,6 +25,8 @@ class BaseTestCase(TestCase):
 
     Provides login methods and custom assertions """
 
+  longMessage = True
+
   BASE_URL = 'http://testserver'
 
   known_members = {
@@ -36,7 +38,7 @@ class BaseTestCase(TestCase):
     """ Attempt to login using the test client; mark test failed if login fails """
     success = self.client.login(username=username, password=password)
     if not success:
-      self.fail('login failed with username: {}, password: {}'.format(username, password))
+      self.fail('Login failed with username: {}, password: {}'.format(username, password))
 
   def login_as_member(self, name):
     if name not in self.known_members:

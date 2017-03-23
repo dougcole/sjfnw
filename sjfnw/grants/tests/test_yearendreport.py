@@ -182,8 +182,6 @@ class YearEndReportForm(BaseGrantFilesTestCase):
   def _test_start(self, award):
     res = self.client.get(_get_yer_url(award.pk))
 
-    if res.status_code == 302:
-      print(res.url)
     self.assertEqual(res.status_code, 200)
     self.assertTemplateUsed(res, 'grants/yer_form.html')
 
