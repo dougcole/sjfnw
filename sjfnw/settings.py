@@ -23,18 +23,8 @@ INSTALLED_APPS = [
 DEBUG = False
 STAGING = False
 
-if os.getenv('CURRENT_VERSION_ID', '').startswith('staging'):
-  STAGING = True
-  DATABASES = {
-    'default': {
-      'ENGINE': 'django.db.backends.mysql',
-      'HOST': '/cloudsql/sjf-nw:us-central1:sjfnw-clone',
-      'NAME': 'sjfdb',
-      'USER': 'root',
-      'PASSWORD': os.getenv('CLOUDSQL_PASSWORD')
-    }
-  }
-elif os.getenv('SERVER_SOFTWARE', '').startswith('Google App Engine'):
+# deployed
+if os.getenv('SERVER_SOFTWARE', '').startswith('Google App Engine'):
   DATABASES = {
     'default': {
       'ENGINE': 'django.db.backends.mysql',
@@ -44,38 +34,38 @@ elif os.getenv('SERVER_SOFTWARE', '').startswith('Google App Engine'):
       'PASSWORD': os.getenv('CLOUDSQL_PASSWORD')
     }
   }
-elif os.getenv('SETTINGS_MODE') == 'prod':
-  # locally accessing prod DB
-  DATABASES = {
-    'default': {
-      'ENGINE': 'django.db.backends.mysql',
-      'HOST': os.getenv('CLOUDSQL_IP'),
-      'NAME': 'sjfdb',
-      'USER': 'root',
-      'PASSWORD': os.getenv('CLOUDSQL_PASSWORD')
-    }
-  }
+  if os.getenv('CURRENT_VERSION_ID', '').startswith('staging'):
+    STAGING = True
+    DATABASES['default']['HOST'] += '-clone'
+
+# test
 elif 'test' in sys.argv:
   DATABASES = {
     'default': {
       'ENGINE': 'django.db.backends.sqlite3'
     }
   }
+# local
 else:
   DATABASES = {
     'default': {
       'ENGINE': 'django.db.backends.mysql',
       'USER': 'root',
-      'PASSWORD': 'SJFdb',
-      'HOST': 'localhost',
-      'NAME': 'sjfdb_multi',
     }
   }
-  DEBUG = True
-  INTERNAL_IPS = ['127.0.0.1', '::1']
-  # Uncomment below to enable debugging toolbar
-  # INSTALLED_APPS.append('django.contrib.staticfiles')
-  # INSTALLED_APPS.append('debug_toolbar')
+  if os.getenv('SETTINGS_MODE'):
+    DATABASES['default']['HOST'] = os.getenv('CLOUDSQL_IP')
+    DATABASES['default']['NAME'] = 'sjfdb'
+    DATABASES['default']['PASSWORD'] = os.getenv('CLOUDSQL_PASSWORD')
+  else:
+    DATABASES['default']['HOST'] = 'localhost'
+    DATABASES['default']['NAME'] = 'sjfdb_multi'
+    DATABASES['default']['PASSWORD'] = 'SJFdb'
+    DEBUG = True
+    # Uncomment below to enable debugging toolbar
+    # INTERNAL_IPS = ['127.0.0.1', '::1']
+    # INSTALLED_APPS.append('django.contrib.staticfiles')
+    # INSTALLED_APPS.append('debug_toolbar')
 
 MIDDLEWARE_CLASSES = (
   'django.middleware.common.CommonMiddleware',
