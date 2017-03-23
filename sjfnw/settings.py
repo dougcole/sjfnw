@@ -21,8 +21,20 @@ INSTALLED_APPS = [
 ]
 
 DEBUG = False
+STAGING = False
 
-if os.getenv('SERVER_SOFTWARE', '').startswith('Google App Engine'):
+if os.getenv('CURRENT_VERSION_ID', '').startswith('staging'):
+  STAGING = True
+  DATABASES = {
+    'default': {
+      'ENGINE': 'django.db.backends.mysql',
+      'HOST': '/cloudsql/sjf-nw:us-central1:sjfnw-clone',
+      'NAME': 'sjfdb',
+      'USER': 'root',
+      'PASSWORD': os.getenv('CLOUDSQL_PASSWORD')
+    }
+  }
+elif os.getenv('SERVER_SOFTWARE', '').startswith('Google App Engine'):
   DATABASES = {
     'default': {
       'ENGINE': 'django.db.backends.mysql',
@@ -62,15 +74,15 @@ else:
   DEBUG = True
   INTERNAL_IPS = ['127.0.0.1', '::1']
   # Uncomment below to enable debugging toolbar
-  INSTALLED_APPS.append('django.contrib.staticfiles')
-  INSTALLED_APPS.append('debug_toolbar')
+  # INSTALLED_APPS.append('django.contrib.staticfiles')
+  # INSTALLED_APPS.append('debug_toolbar')
 
 MIDDLEWARE_CLASSES = (
   'django.middleware.common.CommonMiddleware',
   'django.contrib.sessions.middleware.SessionMiddleware',
   'django.contrib.auth.middleware.AuthenticationMiddleware',
   'django.contrib.messages.middleware.MessageMiddleware',
-  'debug_toolbar.middleware.DebugToolbarMiddleware',
+  # 'debug_toolbar.middleware.DebugToolbarMiddleware',
 )
 
 TEMPLATES = [

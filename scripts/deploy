@@ -14,7 +14,7 @@ err="$sep
 ${boldred}X$reset "
 indent="   "
 
-cd "$(dirname "$0")/.."
+cd "$(dirname "$0")/.." || exit 1
 
 echo -ne "
                                   ABOUT
@@ -26,10 +26,13 @@ deployment is started.
 All files in this directory are included except for those that match a
 skip_files pattern from app.yaml.
 
-You may enter a version when prompted. Using the default will update the
-in-use live site at sjf-nw.appspot.com. Using a different version will deploy
-to <version>-dot-sjf-nw.appspot.com. Keep in mind that all versions share the
-same database.$sep
+If you are not on master, this will deploy to staging version with staging env,
+which uses a separate database.
+
+Otherwise, you may enter a version when prompted. Using the default will update
+the in-use live site at sjf-nw.appspot.com. Using a different version will deploy
+to <version>-dot-sjf-nw.appspot.com. Keep in mind that all non-staging versions
+share the same database.$sep
 
 ${bold}1. Prerequisites$reset
 ${indent}libs: "
@@ -52,7 +55,7 @@ else
 fi
 
 echo -ne "\n   clean git status: "
-if [[ `git status --porcelain` ]]; then
+if [[ $(git status --porcelain) ]]; then
   echo -e "${red}fail$reset${err}Local uncommitted changes found. Commit or stash them before deploying.\n"
   exit 1
 else
@@ -60,49 +63,61 @@ else
 fi
 
 echo -e "\n${bold}2. Enter Cloud SQL password$reset (this will set CLOUDSQL_PASSWORD env var in prod)"
-read -p "${indent}CLOUDSQL_PASSWORD: " pw
+read -rp "${indent}CLOUDSQL_PASSWORD: " pw
 
-if [ ! $pw ] ; then
+if [ ! "$pw" ] ; then
   echo -e "${err}Cloud SQL password is required for deployment\n"
   exit 1
 fi
 
-echo -e "\n${bold}3. Enter a version$reset to deploy to. Leave blank to use default version."
-read -p "${indent}Version: " version
+cmd="appcfg.py update --env_variable=CLOUDSQL_PASSWORD:$pw"
 
-if [ ! $version ] ; then
-  versionwarning="You are deploying to the default version which ${yellow}will update the live in-use site.$reset\n\n$indent"
+branch=$(git status | grep -o "On branch \([a-z\-]\+\)")
+if [ "$branch" = "master" ] ; then
+  echo -e "\n${bold}3. Enter a version$reset to deploy to. Leave blank to use default version."
+  read -rp "${indent}Version: " version
+
+  if [ ! "$version" ] ; then
+    versionwarning="You are deploying to the default version which ${yellow}will update the live in-use site.$reset\n\n$indent"
+  else
+    cmd="$cmd --version=$version"
+  fi
 else
-  versiondisplay=" --version=$version"
+  echo -e "\n${bold}3. Not on master - deploying to staging.$reset"
+  version="staging"
+  cmd="$cmd --version=staging"
 fi
+
+# Finalize command with reference to current directory
+cmd="$cmd ."
 
 echo -e "
 ${bold}4. Confirm$reset
 $indent${versionwarning}The following commands will be executed:
 
-$indent${green}appcfg.py update$versiondisplay --env_variable=CLOUDSQL_PASSWORD:$pw .$reset
+$indent${green}$cmd$reset
 "
-if [ ! $version ] ; then
+if [ ! "$version" ] ; then
   echo -e "$indent${green}git tag -a $(date +%Y-%m-%d) -m \"\"$reset (tag name will be incremented if necessary)\n"
 fi
 
-read -p "Deploy? [y/N]: " confirm
+read -rp "Deploy? [y/N]: " confirm
 
-if [ ! $confirm ] ; then
+if [ ! "$confirm" ] ; then
   echo -e "${err}Canceled.\n"
   exit 1
-elif [ $confirm != "y" ] && [ $confirm != "Y" ] ; then
+elif [ "$confirm" != "y" ] && [ "$confirm" != "Y" ] ; then
   echo -e "${err}Canceled.\n"
   exit 1
 fi
 
-appcfg.py update --version=$version --env_variable=CLOUDSQL_PASSWORD:"$pw" . || exit 1
+eval "$cmd" || exit 1
 
 echo "$sep"
 
-if [ ! $version ] ; then
+if [ ! "$version" ] || [ "$version" = "staging" ] ; then
   for i in 0 1 2 3; do
-    tag_name=$(date +%Y-%m-%d)
+    tag_name="$version$(date +%Y-%m-%d)"
     if [ $i -gt 0 ] ; then
       tag_name+=".$i"
     fi

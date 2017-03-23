@@ -1,5 +1,6 @@
 import logging
 
+from django.conf import settings
 from django.contrib import admin, messages
 from django.contrib.auth.admin import UserAdmin
 from django.contrib.auth.models import Group, User
@@ -76,6 +77,10 @@ admin.site.index_template = 'admin/index_custom.html'
 admin.site.site_header = 'Social Justice Fund NW Admin Site'
 admin.site.site_title = 'SJF Admin'
 admin.site.index_title = None
+
+if settings.STAGING:
+  admin.site.site_header += ' (STAGING)'
+  admin.site.site_title += ' (STAGING)'
 
 admin.site.unregister(Group)
 admin.site.unregister(User)
