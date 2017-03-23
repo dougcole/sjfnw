@@ -562,6 +562,7 @@ class NarrativeAnswer(models.Model):
 
     if name == 'timeline':
       timeline = json.loads(self.text)
+      timeline = json.loads(self.text) if self.text else []
       html = ('<table class="timeline_display">'
               '<tr>'
               '<td></td>'
@@ -577,6 +578,21 @@ class NarrativeAnswer(models.Model):
         colC = timeline[i + 2] if len(timeline) > i + 2 else ''
         html += row.format(q, colA, colB, colC)
       html += '</table>'
+      return html
+    elif name.endswith('_references'):
+      # TODO this is very repetetive with widget format_output
+      value = json.loads(self.text) if self.text else []
+      wrapper = '<div class="col col-1of4">{}</div>'
+      row_start = '<div class="row">'
+      row_end = '</div>'
+      html = (row_start + wrapper.format('Name') + wrapper.format('Organization') +
+          wrapper.format('Phone') + wrapper.format('Email') + row_end)
+      for i in [0, 1]:
+        ref = value[i] if len(value) > i else {}
+        html += (row_start + wrapper.format(ref.get('name') or '-') +
+            wrapper.format(ref.get('org') or '-') +
+            wrapper.format(ref.get('phone') or '-') +
+            wrapper.format(ref.get('email') or '-') + row_end)
       return html
 
     return self.text

@@ -132,6 +132,8 @@ class GrantApplicationModelForm(forms.ModelForm):
     for n in narratives:
       if n.name == 'timeline':
         widget = TimelineWidget()
+      elif '_references' in n.name:
+        widget = ReferencesMultiWidget()
       else:
         widget = forms.Textarea(attrs={
           'class': 'wordlimited',
@@ -140,6 +142,32 @@ class GrantApplicationModelForm(forms.ModelForm):
       field = forms.CharField(label=n.text, widget=widget)
       self.fields[n.name] = field
       self._narrative_fields.append(n.name)
+
+  def clean_collaboration_references(self):
+    collab_refs = json.loads(self.cleaned_data.get('collaboration_references'))
+    msg = 'Please include a name, organization, and phone or email for each reference.'
+    for ref in collab_refs:
+      if not ref.get('name') or not ref.get('org'):
+        raise ValidationError(msg)
+      if not ref.get('phone') and not ref.get('email'):
+        raise ValidationError(msg)
+
+    return self.cleaned_data.get('collaboration_references')
+
+  def clean_racial_justice_references(self):
+    rj_refs = json.loads(self.cleaned_data.get('racial_justice_references'))
+    msg = 'Please include a name, organization, and phone or email for each reference you include.'
+    for i in [0, 1]:
+      if len(rj_refs) <= i:
+        return
+      ref = rj_refs[i]
+      name = ref.get('name')
+      org = ref.get('org')
+      phone = ref.get('phone')
+      email = ref.get('email')
+      has_any = name or org or phone or email
+      if has_any and (not name or not org or (not phone and not email)):
+        raise ValidationError(msg)
 
   def clean_timeline(self):
     timeline = json.loads(self.cleaned_data.get('timeline'))
@@ -159,31 +187,6 @@ class GrantApplicationModelForm(forms.ModelForm):
   def clean(self):
     cleaned_data = super(GrantApplicationModelForm, self).clean()
 
-    # collab refs - require phone or email
-    phone = cleaned_data.get('collab_ref1_phone')
-    email = cleaned_data.get('collab_ref1_email')
-    if not phone and not email:
-      self._errors['collab_ref1_phone'] = _form_error('Enter a phone number or email.')
-    phone = cleaned_data.get('collab_ref2_phone')
-    email = cleaned_data.get('collab_ref2_email')
-    if not phone and not email:
-      self._errors['collab_ref2_phone'] = _form_error('Enter a phone number or email.')
-
-    # racial justice refs - require full set if any
-    for i in [1, 2]:
-      base = 'racial_justice_ref{}'.format(i)
-      name = cleaned_data.get(base + '_name')
-      org = cleaned_data.get(base + '_org')
-      phone = cleaned_data.get(base + '_phone')
-      email = cleaned_data.get(base + '_email')
-      if name or org or phone or email:
-        if not name:
-          self._errors[base + '_name'] = _form_error('Enter a contact person.')
-        if not org:
-          self._errors[base + '_org'] = _form_error('Enter the organization name.')
-        if not phone and not email:
-          self._errors[base + '_phone'] = _form_error('Enter a phone number or email.')
-
     # project - require title & budget if type
     support_type = cleaned_data.get('support_type')
     if support_type == 'Project support':
@@ -194,6 +197,11 @@ class GrantApplicationModelForm(forms.ModelForm):
         self._errors['project_title'] = _form_error(
             'This field is required when applying for project support.')
 
+    self._validate_fiscal_info(cleaned_data)
+
+    return cleaned_data
+
+  def _validate_fiscal_info(cleaned_data):
     # fiscal info/file - require all if any
     org = cleaned_data.get('fiscal_org')
     person = cleaned_data.get('fiscal_person')
@@ -224,10 +232,78 @@ class GrantApplicationModelForm(forms.ModelForm):
       if not fiscal_letter:
         self._errors['fiscal_letter'] = _form_error('This field is required.')
 
-    return cleaned_data
-
   def get_narrative_fields(self):
     return [self[n] for n in self._narrative_fields]
+
+
+class ReferencesMultiWidget(forms.widgets.MultiWidget):
+  """ Displays fields for entering 2 references (collab/racial justice)
+   Stored in DB as single JSON string """
+
+  def __init__(self, attrs=None):
+    _widgets = [
+        forms.TextInput(),
+        forms.TextInput(),
+        forms.TextInput(),
+        forms.EmailInput(),
+        forms.TextInput(),
+        forms.TextInput(),
+        forms.TextInput(),
+        forms.EmailInput()
+    ]
+    super(ReferencesMultiWidget, self).__init__(_widgets, attrs)
+
+  def decompress(self, value):
+    """ break single database value up for widget display
+        argument: database value (json string)
+        returns: list of values to be displayed in widgets """
+
+    if value:
+      refs = json.loads(value)
+      vals = []
+      for ref in refs:
+        vals += [ref['name'], ref['org'], ref['phone'], ref['email']]
+      return vals
+    return [None for _ in range(0, 8)]
+
+  def format_output(self, rendered_widgets):
+    """
+    format the widgets for display
+      args: list of rendered widgets
+      returns: a string of HTML for displaying the widgets
+    """
+
+    wrapper = '<div class="col col-1of4">{}</div>'
+    row_start = '<div class="row">'
+    row_end = '</div>'
+    html = (row_start + wrapper.format('Name') + wrapper.format('Organization') +
+        wrapper.format('Phone') + wrapper.format('Email') + row_end)
+    wrapped = [wrapper.format(w) for w in rendered_widgets]
+    for i in [0, 1]:
+      html += row_start
+      for j in range(0, 4):
+        html += wrapper.format(rendered_widgets[j + i * 4])
+      html += row_end
+
+    return html
+
+  def value_from_datadict(self, data, files, name):
+    """ Consolodate widget data into a single value
+        returns:
+          json'd list of values """
+
+    values = []
+
+    for i in range(0, 1):
+      j = i * 4
+      values.append({
+        'name': data.get('{}_{}'.format(name, j)),
+        'org': data.get('{}_{}'.format(name, j + 1)),
+        'phone': data.get('{}_{}'.format(name, j + 2)),
+        'email': data.get('{}_{}'.format(name, j + 3)),
+      })
+
+    return json.dumps(values)
 
 
 class ContactPersonWidget(forms.widgets.MultiWidget):

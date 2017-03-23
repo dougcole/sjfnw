@@ -51,7 +51,7 @@ QUESTIONS = [
     'name': 'racial_justice',
     'version': 'standard',
     'word_limit': 450,
-    'text': 'Social Justice Fund prioritizes groups working on racial justice, especially those making connections between racism, economic injustice, homophobia, and other forms of oppression. Tell us how your organization is working toward racial justice and how you are drawing connections to economic injustice, homophobia, and other forms of oppression. While we believe people of color must lead the struggle for racial justice, we also realize that the demographics of our region make the work of white anti-racist allies critical to achieving racial justice. If your organization\'s <span class="has-more-info" id="nar-6"> leadership body</span> is majority white, also describe how you work as an ally to communities of color. Be as specific as possible, and list at least one organization led by people of color that we can contact as a reference for your racial justice work. Include their name, organization, phone number and email.<p><i>Please make sure you have asked permission to list someone as a racial justice reference before submitting their contact information. Your racial justice reference cannot be a representative from your organization. We define "led by people of color" to mean that more that 51% or more of the organizations leadership body (ie. board of directors or other leadership model) are people of color. If your organization is majority people of color led, leave the references blank.</i></p>'
+    'text': 'Social Justice Fund prioritizes groups working on racial justice, especially those making connections between racism, economic injustice, homophobia, and other forms of oppression. Tell us how your organization is working toward racial justice and how you are drawing connections to economic injustice, homophobia, and other forms of oppression. While we believe people of color must lead the struggle for racial justice, we also realize that the demographics of our region make the work of white anti-racist allies critical to achieving racial justice. If your organization\'s <span class="has-more-info" id="nar-6"> leadership body</span> is majority white, also describe how you work as an ally to communities of color. Be as specific as possible.'
   }, {
     'name': 'racial_justice',
     'version': 'tenants',
@@ -111,6 +111,14 @@ QUESTIONS = [
     'version': 'standard',
     'word_limit': 300,
     'text': 'This grant will provide funding for two years. While we know it can be difficult to predict your work beyond a year, please give us an idea of what the second year might look like.<ul><li>What overall goals and strategies do you forecast in the second year?</li><li>How will the second year of this grant build on your work in the first year?</li></ul>',
+  }, {
+    'name': 'collaboration_references',
+    'version': 'standard',
+    'text': 'Provide names and contact information for two people who are familiar with your organization\'s role in these collaborations so we can contact them for more information.'
+  }, {
+    'name': 'racial_justice_references',
+    'version': 'standard',
+    'text': 'List at least one organization led by people of color that we can contact as a reference for your racial justice work. Include their name, organization, phone number and email.<p><i>Please make sure you have asked permission to list someone as a racial justice reference before submitting their contact information. Your racial justice reference cannot be a representative from your organization. We define "led by people of color" to mean that more that 51% or more of the organizations leadership body (ie. board of directors or other leadership model) are people of color. If your organization is majority people of color led, leave the references blank.</i></p>'
   }
 ]
 

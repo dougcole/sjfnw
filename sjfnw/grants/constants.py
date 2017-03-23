@@ -48,7 +48,9 @@ STANDARD_NARRATIVES = [
   {'name': 'workplan', 'version': 'standard'},
   {'name': 'timeline', 'version': 'five_quarter'},
   {'name': 'racial_justice', 'version': 'standard'},
-  {'name': 'collaboration', 'version': 'standard'}
+  {'name': 'racial_justice_references', 'version': 'standard'},
+  {'name': 'collaboration', 'version': 'standard'},
+  {'name': 'collaboration_references', 'version': 'standard'}
 ];
 
 TWO_YEAR_GRANT_QUESTION = {'name': 'two_year_grant', 'version': 'standard'}
