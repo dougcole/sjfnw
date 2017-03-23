@@ -63,14 +63,18 @@ class OrganizationWithProfile(factory.django.DjangoModelFactory):
 
 
 class GrantCycle(factory.django.DjangoModelFactory):
-  """ Special option: narrative questions can be specified by passing 'questions'
-      kwarg that is a list of dicts with name/version keys """
+  """ Special options:
+    questions: list of name/version dicts (default: STANDARD_NARRATIVES)
+    status: 'open', 'closed', 'upcoming' (default: 'open')
+    two_year_grants: whether to include two_year_grant question (default: False)
+  """
 
   class Meta:
     model = 'grants.GrantCycle'
 
   class Params:
     status = 'open'
+    two_year_grants = False
 
   open = factory.LazyAttribute(lambda o: fake.date_time_between(map_status[o.status][0], map_status[o.status][1]))
   close = factory.LazyAttribute(lambda o: get_close(o))
@@ -82,7 +86,10 @@ class GrantCycle(factory.django.DjangoModelFactory):
     if not create:
       return
 
-    questions = questions or gc.STANDARD_NARRATIVES
+    if not questions:
+      questions = gc.STANDARD_NARRATIVES
+      if self.two_year_grants:
+        questions.append({ name: 'two_year_grant', version: 'standard' })
 
     for i, q in enumerate(questions):
       nq = models.NarrativeQuestion.objects.get(**q)
