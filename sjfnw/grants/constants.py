@@ -51,6 +51,8 @@ STANDARD_NARRATIVES = [
   {'name': 'collaboration', 'version': 'standard'}
 ];
 
+TWO_YEAR_GRANT_QUESTION = {'name': 'two_year_grant', 'version': 'standard'}
+
 NARRATIVE_WORD_LIMITS = {
   'narrative1': 300,
   'narrative2': 200,
