@@ -196,6 +196,9 @@ class GrantCycle(models.Model):
       verbose_name='Private (will not be displayed to orgs, but can be '
       'accessed by anyone who has the direct link)')
 
+  amount_note = models.CharField(blank=True,
+      max_length=255,
+      help_text='Text to display in parenthesis after "Amount Requested" in the grant application form')
   narrative_questions = models.ManyToManyField(NarrativeQuestion, through='CycleNarrative')
 
   class Meta:
