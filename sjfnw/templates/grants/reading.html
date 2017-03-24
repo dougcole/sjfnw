@@ -70,7 +70,6 @@
   <ol class="narratives">
     {% for answer in answers %}
     <li>
-      {{ answer.cycle_narrative.narrative_question.name }}
       <label>{{ answer.cycle_narrative.narrative_question.text }}</label>
       {{ answer.get_display_value|linebreaks }}
     </li>
