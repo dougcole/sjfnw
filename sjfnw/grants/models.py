@@ -428,23 +428,28 @@ class GrantApplication(models.Model):
     validators=[validate_file_extension]
   )
   demographics = BasicFileField(
+    blank=True,
     validators=[validate_file_extension],
     verbose_name='Diversity chart'
   )
   funding_sources = BasicFileField(
+    blank=True,
     validators=[validate_file_extension]
   )
   budget1 = BasicFileField(
+    blank=True,
     help_text='Statement of actual income and expenses for the most recent completed fiscal year. Upload in your own format, but do not send your annual report, tax returns, or entire audited financial statement.',
     validators=[validate_file_extension],
     verbose_name='Annual statement'
   )
   budget2 = BasicFileField(
+    blank=True,
     help_text='Projection of all known and estimated income and expenses for the current fiscal year. You may upload in your own format or use our budget form. NOTE: If your fiscal year will end within three months of this grant application deadline, please also attach your operating budget for the next fiscal year, so that we can get a more accurate sense of your organization\'s situation.',
     validators=[validate_file_extension],
     verbose_name='Annual operating budget'
   )
   budget3 = BasicFileField(
+    blank=True,
     help_text='This is a snapshot of your financial status at the moment: a brief, current statement of your assets, liabilities, and cash on hand. Upload in your own format.',
     validators=[validate_file_extension],
     verbose_name='Balance sheet'
