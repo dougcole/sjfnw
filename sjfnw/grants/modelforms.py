@@ -128,6 +128,9 @@ class GrantApplicationModelForm(forms.ModelForm):
   def __init__(self, cycle, *args, **kwargs):
     super(GrantApplicationModelForm, self).__init__(*args, **kwargs)
 
+    if cycle.amount_note:
+      self.fields['amount_requested'].label += ' ({})'.format(cycle.amount_note)
+
     # TODO hacky
     if cycle.get_type() == 'standard':
       self.fields['status'].choices = self.fields['status'].choices[:-1]

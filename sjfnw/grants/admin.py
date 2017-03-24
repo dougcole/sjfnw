@@ -26,25 +26,29 @@ class CycleTypeFilter(admin.SimpleListFilter):
   title = 'Grant cycle type'
   parameter_name = 'cycle_type'
 
+  def __init__(self, req, params, model, model_admin):
+    self.model = model
+    super(CycleTypeFilter, self).__init__(req, params, model, model_admin)
+
   def lookups(self, request, model_admin):
     titles = (models.GrantCycle.objects.values_list('title', flat=True)
-                                       .distinct().order_by('title'))
-    # group cycles into "types" - criminal justice, economic justice, etc.
-    types = []
+        .distinct()
+        .order_by('title'))
+    cycle_types = []
     for title in titles:
       pos = title.find(' Grant Cycle')
       if pos > 1:
-        cycle_type = title[:pos]
-        if cycle_type not in types:
-          types.append(cycle_type)
-      else: # Grant Cycle not found - just use whole
-        if title not in types:
-          types.append(title)
-    return [(t, t) for t in types]
+        title = title[:pos]
+      if title not in cycle_types:
+        cycle_types.append(title)
+
+    return [(t, t) for t in cycle_types]
 
   def queryset(self, request, queryset):
     if not self.value():
       return queryset
+    elif self.model == models.GrantCycle:
+      return queryset.filter(title__startswith=self.value())
     else:
       return queryset.filter(projectapp__application__grant_cycle__title__startswith=self.value())
 
@@ -54,20 +58,33 @@ class CycleOpenFilter(admin.SimpleListFilter):
 
   def lookups(self, request, model_admin):
     return (
+      (None, 'Open & upcoming (default)'),
       ('open', 'Open'),
+      ('upcoming', 'Upcoming'),
       ('closed', 'Closed'),
-      ('upcoming', 'Upcoming')
+      ('all', 'All')
     )
 
+  def choices(self, cl):
+    for lookup, title in self.lookup_choices:
+      yield {
+        'selected': self.value() == lookup,
+        'query_string': cl.get_query_string({ self.parameter_name: lookup, }, []),
+        'display': title,
+      }
+
   def queryset(self, request, queryset):
+    if self.value() == 'all':
+      return queryset
     now = timezone.now()
     if self.value() == 'open':
       return queryset.filter(open__lte=now, close__gt=now)
-    elif self.value() == 'closed':
-      return queryset.filter(close__lt=now)
     elif self.value() == 'upcoming':
       return queryset.filter(open__gt=now)
-    return queryset
+    elif self.value() == 'closed':
+      return queryset.filter(close__lt=now)
+
+    return queryset.filter(close__gt=now)
 
 
 class MultiYearGrantFilter(admin.SimpleListFilter):
@@ -292,11 +309,11 @@ class YERInline(BaseShowInline):
 
 class GrantCycleA(BaseModelAdmin):
   list_display = ['title', 'open', 'close']
-  list_filter = (CycleOpenFilter,)
+  list_filter = (CycleOpenFilter, CycleTypeFilter)
   fields = [
     ('title', 'open', 'close', 'private'),
-    ('info_page', 'email_signature'),
-    'conflicts'
+    ('info_page', 'amount_note'),
+    ('email_signature', 'conflicts')
   ]
   inlines = [CycleNarrativeI, AppCycleI]
 
