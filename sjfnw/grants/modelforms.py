@@ -93,21 +93,16 @@ class TimelineWidget(forms.widgets.MultiWidget):
     return json.dumps(val_list)
 
 
-def custom_fields(field, **kwargs): # sets phonenumber and money fields
+def custom_fields(field, **kwargs): # sets money fields
   money_fields = ['budget_last', 'budget_current', 'amount_requested', 'project_budget']
-  # disabling this under PhoneNumberField can handle extensions
-  # phone_fields = ['telephone_number', 'fax_number', 'fiscal_telephone',
-  #                 'collab_ref1_phone', 'collab_ref2_phone',
-  #                'racial_justice_ref1_phone', 'racial_justice_ref2_phone']
   kwargs['required'] = not field.blank
   if field.verbose_name:
     kwargs['label'] = capfirst(field.verbose_name)
   if field.name in money_fields:
     return IntegerCommaField(**kwargs)
-  # elif field.name in phone_fields:
-  #   return PhoneNumberField(**kwargs)
   else:
     return field.formfield(**kwargs)
+
 
 class GrantApplicationModelForm(forms.ModelForm):
 
@@ -135,12 +130,11 @@ class GrantApplicationModelForm(forms.ModelForm):
 
     # TODO hacky
     if cycle.get_type() == 'standard':
-      self.fields['status'] = forms.ChoiceField(choices = gc.STATUS_CHOICES[:-1])
-    else:
-      for field in GrantApplication.file_fields():
-        self.fields[field].required = False
-      if cycle.get_type() == 'rapid':
-        self.fields['demographics'].required = True
+      self.fields['status'].choices = self.fields['status'].choices[:-1]
+      for field in ['budget1', 'budget2', 'budget3', 'demographics', 'funding_sources']:
+        self.fields[field].required = True
+    elif cycle.get_type() == 'rapid':
+      self.fields['demographics'].required = True
 
     narratives = cycle.narrative_questions.order_by('cyclenarrative__order')
     self._narrative_fields = []
@@ -201,33 +195,31 @@ class GrantApplicationModelForm(forms.ModelForm):
     return self.cleaned_data.get('timeline')
 
   def clean(self):
-    cleaned_data = super(GrantApplicationModelForm, self).clean()
+    super(GrantApplicationModelForm, self).clean()
 
     # project - require title & budget if type
-    support_type = cleaned_data.get('support_type')
+    support_type = self.cleaned_data.get('support_type')
     if support_type == 'Project support':
-      if not cleaned_data.get('project_budget'):
+      if not self.cleaned_data.get('project_budget'):
         self._errors['project_budget'] = _form_error(
             'This field is required when applying for project support.')
-      if not cleaned_data.get('project_title'):
+      if not self.cleaned_data.get('project_title'):
         self._errors['project_title'] = _form_error(
             'This field is required when applying for project support.')
 
-    self._validate_fiscal_info(cleaned_data)
+    self._validate_fiscal_info()
 
-    return cleaned_data
-
-  def _validate_fiscal_info(self, cleaned_data):
+  def _validate_fiscal_info(self):
     # fiscal info/file - require all if any
-    org = cleaned_data.get('fiscal_org')
-    person = cleaned_data.get('fiscal_person')
-    phone = cleaned_data.get('fiscal_telephone')
-    email = cleaned_data.get('fiscal_email')
-    address = cleaned_data.get('fiscal_address')
-    city = cleaned_data.get('fiscal_city')
-    state = cleaned_data.get('fiscal_state')
-    zipcode = cleaned_data.get('fiscal_zip')
-    fiscal_letter = cleaned_data.get('fiscal_letter')
+    org = self.cleaned_data.get('fiscal_org')
+    person = self.cleaned_data.get('fiscal_person')
+    phone = self.cleaned_data.get('fiscal_telephone')
+    email = self.cleaned_data.get('fiscal_email')
+    address = self.cleaned_data.get('fiscal_address')
+    city = self.cleaned_data.get('fiscal_city')
+    state = self.cleaned_data.get('fiscal_state')
+    zipcode = self.cleaned_data.get('fiscal_zip')
+    fiscal_letter = self.cleaned_data.get('fiscal_letter')
     if org or person or phone or email or address or city or state or zipcode:
       if not org:
         self._errors['fiscal_org'] = _form_error('This field is required.')
@@ -275,6 +267,8 @@ class ReferencesMultiWidget(forms.widgets.MultiWidget):
         returns: list of values to be displayed in widgets """
 
     if value:
+      print('ReferencesMultiWidget')
+      print(value)
       refs = json.loads(value)
       vals = []
       for ref in refs:

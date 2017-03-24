@@ -136,15 +136,6 @@ class GrantApplication(factory.django.DjangoModelFactory):
 
   support_type = 'General support'
 
-  collab_ref1_name = factory.Faker('name')
-  collab_ref1_org = factory.Faker('company')
-  collab_ref1_phone = factory.Faker('phone_number')
-  collab_ref1_email = factory.Faker('email')
-  collab_ref2_name = factory.Faker('name')
-  collab_ref2_org = factory.Faker('company')
-  collab_ref2_phone = factory.Faker('phone_number')
-  collab_ref2_email = factory.Faker('email')
-
   budget = factory.Iterator(FILES)
   demographics = factory.Iterator(FILES)
   funding_sources = factory.Iterator(FILES)
@@ -162,6 +153,18 @@ class GrantApplication(factory.django.DjangoModelFactory):
     for cn in cycle_narratives:
       if cn.narrative_question.name == 'timeline':
         text = json.dumps(['A', 'b', 'c', 'D', 'e', 'f', 'G', 'h', 'i'])
+      elif cn.narrative_question.name.endswith('_references'):
+        text = json.dumps([{
+          'name': fake.name(),
+          'org': fake.company(),
+          'phone': fake.phone_number(),
+          'email': fake.email()
+        }, {
+          'name': fake.name(),
+          'org': fake.company(),
+          'phone': fake.phone_number(),
+          'email': fake.email()
+        }])
       else:
         text = fake.paragraph()
       answer = models.NarrativeAnswer(cycle_narrative=cn, grant_application=self, text=text)

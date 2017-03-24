@@ -137,43 +137,6 @@ class ApplySuccessful(BaseGrantFilesTestCase):
     super(ApplySuccessful, self).setUp()
     self.login_as_org()
 
-  def test_saved_timeline1(self):
-    """ Verify that a timeline with just a complete first row is accepted """
-
-    answers = ['Jan', 'Chillin', 'Not applicable',
-               '', '', '', '', '', '', '', '', '', '', '', '']
-
-    draft = factories.DraftGrantApplication(organization=self.org)
-    alter_draft_timeline(draft, answers)
-
-    res = self.client.post(_get_apply_url(draft.grant_cycle.pk), follow=True)
-
-    self.assertEqual(res.status_code, 200)
-    self.assertTemplateUsed(res, 'grants/submitted.html')
-    app = GrantApplication.objects.get(organization=self.org)
-    self.assertEqual(app.get_narrative_answer('timeline'), json.dumps(answers))
-
-  def test_saved_timeline5(self):
-    """ Verify that a completely filled out timeline is accepted """
-
-    answers = [
-      'Jan', 'Chillin', 'Not applicable',
-      'Feb', 'Petting dogs', '5 dogs',
-      'Mar', 'Planting daffodils', 'Sprouts',
-      'July', 'Walking around Greenlake', '9 times',
-      'August', 'Reading in the shade', 'No sunburns'
-    ]
-
-    draft = factories.DraftGrantApplication(organization=self.org)
-    alter_draft_timeline(draft, answers)
-
-    res = self.client.post(_get_apply_url(draft.grant_cycle.pk), follow=True)
-
-    self.assertEqual(res.status_code, 200)
-    self.assertTemplateUsed(res, 'grants/submitted.html')
-    app = GrantApplication.objects.get(organization=self.org)
-    self.assertEqual(app.get_narrative_answer('timeline'), json.dumps(answers))
-
   def test_mult_budget(self):
     """ scenario: budget1, budget2, budget3
 
@@ -268,32 +231,6 @@ class ApplyValidation(BaseGrantFilesTestCase):
         'This field is required when applying for project support.')
     self.assertFormError(res, 'form', 'project_budget',
         'This field is required when applying for project support.')
-
-  def test_timeline_incomplete(self):
-    answers = ['Jan', 'Chillin', 'Not applicable',
-               'Feb', 'Petting dogs', '5 dogs',
-               'Mar', '', 'Sprouts',
-               'July', '', '',
-               '', 'Reading in the shade', 'No sunburns']
-    alter_draft_timeline(self.draft, answers)
-
-    res = self.client.post(_get_apply_url(self.draft.grant_cycle_id))
-
-    self.assertEqual(res.status_code, 200)
-    self.assertTemplateUsed(res, 'grants/org_app.html')
-    self.assertFormError(res, 'form', 'timeline',
-        'All three columns are required for each '
-        'quarter that you include in your timeline.')
-
-  def test_timeline_empty(self):
-    answers = ['', '', '', '', '', '', '', '', '', '', '', '', '', '', '']
-    alter_draft_timeline(self.draft, answers)
-
-    res = self.client.post(_get_apply_url(self.draft.grant_cycle_id))
-
-    self.assertEqual(res.status_code, 200)
-    self.assertTemplateUsed(res, 'grants/org_app.html')
-    self.assertFormError(res, 'form', 'timeline', 'This field is required.')
 
   def test_narratives_missing(self):
     alter_draft_contents(self.draft, {

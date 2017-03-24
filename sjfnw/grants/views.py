@@ -1177,10 +1177,7 @@ def get_app_results(options):
   if options['report_fiscal']:
     fields += models.GrantApplication.fields_starting_with('fiscal')
     fields.remove('fiscal_letter')
-  if options['report_collab']:
-    fields += models.GrantApplication.fields_starting_with('collab_ref')
-  if options['report_racial_ref']:
-    fields += models.GrantApplication.fields_starting_with('racial')
+  # TODO re-implement references reporting
   if options['report_bonuses']:
     fields.append('scoring_bonus_poc')
     fields.append('scoring_bonus_geo')
