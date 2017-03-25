@@ -179,8 +179,10 @@ class NarrativeQuestion(models.Model):
     unique_together = ('name', 'version')
 
   def __unicode__(self):
-    return u'{} ({})'.format(self.name, self.version)
+    return u'{} ({})'.format(self.pretty_name(), self.version)
 
+  def pretty_name(self):
+    return self.name.replace('_', ' ').title()
 
 
 class GrantCycle(models.Model):

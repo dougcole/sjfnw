@@ -86,6 +86,32 @@ class CycleOpenFilter(admin.SimpleListFilter):
 
     return queryset.filter(close__gt=now)
 
+class IsArchivedFilter(admin.SimpleListFilter):
+  title = 'Archived'
+  parameter_name = 'archived'
+
+  def lookups(self, request, model_admin):
+    return (
+      (None, 'False (default)'),
+      ('true', 'True'),
+      ('all', 'All')
+    )
+
+  def choices(self, cl):
+    for lookup, title in self.lookup_choices:
+      yield {
+        'selected': self.value() == lookup,
+        'query_string': cl.get_query_string({ self.parameter_name: lookup, }, []),
+        'display': title,
+      }
+
+  def queryset(self, request, queryset):
+    if self.value() == 'all':
+      return queryset
+    if self.value() == 'true':
+      return queryset.filter(archived=True)
+    return queryset.filter(archived=False)
+
 
 class MultiYearGrantFilter(admin.SimpleListFilter):
   title = 'Grant length'
@@ -319,9 +345,9 @@ class GrantCycleA(BaseModelAdmin):
 
 
 class NarrativeQuestionA(BaseModelAdmin):
-  list_display = ('name', 'version', 'archived')
+  list_display = ('pretty_name', 'version', 'archived')
   search_fields = ('name', 'version')
-  list_filter = ('name', 'version')
+  list_filter = (IsArchivedFilter, 'name', 'version')
 
 
 class OrganizationA(BaseModelAdmin):
@@ -682,11 +708,50 @@ class LogA(BaseModelAdmin):
     perms['unlisted'] = True
     return perms
 
+class NarrativeAnswerA(BaseModelAdmin):
+  fields = (
+    ('organization', 'question', 'grant_cycle'),
+    'answer'
+  )
+  readonly_fields = ('organization', 'question', 'grant_cycle', 'answer')
+  list_display =  (
+    'question',
+    'organization',
+    'grant_cycle'
+  )
+  search_fields = (
+    'cycle_narrative__narrative_question__name',
+    'cycle_narrative__narrative_question__version',
+    'grant_application__organization__name',
+    'grant_application__grant_cycle__title'
+  )
+
+  def get_queryset(self, request):
+    qs = super(NarrativeAnswerA, self).get_queryset(request)
+    return qs.select_related(
+      'cycle_narrative__narrative_question',
+      'grant_application__organization',
+      'grant_application__grant_cycle'
+    )
+
+  def answer(self, obj):
+    return obj.get_display_value()
+  answer.allow_tags = True
+
+  def question(self, obj):
+    return obj.cycle_narrative.narrative_question
+
+  def organization(self, obj):
+    return obj.grant_application.organization
+
+  def grant_cycle(self, obj):
+    return obj.grant_application.grant_cycle
+
 # -----------------------------------------------------------------------------
 #  REGISTER
 # -----------------------------------------------------------------------------
 
-admin.site.register(models.NarrativeAnswer, BaseModelAdmin)
+admin.site.register(models.NarrativeAnswer, NarrativeAnswerA)
 admin.site.register(models.GrantCycle, GrantCycleA)
 admin.site.register(models.NarrativeQuestion, NarrativeQuestionA)
 admin.site.register(models.Organization, OrganizationA)
