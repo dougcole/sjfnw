@@ -31,10 +31,10 @@ class Migration(migrations.Migration):
                 ('id', models.AutoField(verbose_name='ID', serialize=False, auto_created=True, primary_key=True)),
                 ('created', models.DateTimeField(default=django.utils.timezone.now, blank=True)),
                 ('name', models.CharField(help_text=b'Short description of question topic, e.g. "mission", "racial_justice"', max_length=75)),
-                ('version', models.CharField(help_text=b'Short description of this variation of the question, e.g. "standard" for general SJF use, "rapid" for rapid response cycles.<br>When updating a version without changing the purpose, increment the version number. Example: standard -> standard-v2 -> standard-v3', max_length=40)),
+                ('version', models.CharField(help_text=b'Short description of this variation of the question, e.g. "standard" for general SJF use, "rapid" for rapid response cycles.', max_length=40)),
                 ('text', models.TextField(help_text=b"Text to display, in raw html. Don't include question number - that will be added automatically")),
                 ('word_limit', models.PositiveSmallIntegerField(help_text=b'Word limit for the question. If left blank, no word limit will be enforced', null=True, blank=True)),
-                ('archived', models.BooleanField(default=False, help_text=b"Archived questions remain associated with existing grant cycles but can't be added to new grant cycles.")),
+                ('archived', models.DateField(help_text=b"Archived questions remain associated with existing grant cycles but can't be added to new grant cycles.", null=True, blank=True)),
             ],
         ),
         migrations.AlterField(

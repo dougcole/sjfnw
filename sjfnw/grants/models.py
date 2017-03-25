@@ -161,16 +161,17 @@ class NarrativeQuestion(models.Model):
   name = models.CharField(max_length=75,
     help_text='Short description of question topic, e.g. "mission", "racial_justice"'
   )
-  version = models.CharField(max_length=40, help_text=(
-    'Short description of this variation of the question, e.g. "standard" for '
-    'general SJF use, "rapid" for rapid response cycles.<br>'
-    'When updating a version without changing the purpose, increment the version '
-    'number. Example: standard -> standard-v2 -> standard-v3'
-  ))
-  text = models.TextField(blank=False, help_text='Text to display, in raw html. Don\'t include question number - that will be added automatically')
-  word_limit = models.PositiveSmallIntegerField(null=True, blank=True, help_text='Word limit for the question. If left blank, no word limit will be enforced')
+  version = models.CharField(
+      max_length=40,
+      help_text='Short description of this variation of the question, e.g. "standard" for general SJF use, "rapid" for rapid response cycles.')
+  text = models.TextField(
+      help_text='Text to display, in raw html. Don\'t include question number - that will be added automatically')
+  word_limit = models.PositiveSmallIntegerField(
+      blank=True,
+      null=True,
+      help_text='Word limit for the question. If left blank, no word limit will be enforced')
 
-  archived = models.BooleanField(blank=True, default=False,
+  archived = models.DateField(blank=True, null=True,
       help_text='Archived questions remain associated with existing grant cycles but can\'t be added to new grant cycles.')
 
   class Meta:
@@ -179,6 +180,7 @@ class NarrativeQuestion(models.Model):
 
   def __unicode__(self):
     return u'{} ({})'.format(self.name, self.version)
+
 
 
 class GrantCycle(models.Model):
@@ -543,6 +545,7 @@ class NarrativeAnswer(models.Model):
     return self.cycle_narrative.narrative_question.text
 
   def get_display_value(self):
+    print(self.text)
     name = self.cycle_narrative.narrative_question.name
 
     if name == 'timeline':
@@ -564,22 +567,22 @@ class NarrativeAnswer(models.Model):
       html += '</table>'
       return html
     elif name.endswith('_references'):
-      # TODO this is very repetetive with widget format_output
       value = json.loads(self.text) if self.text else []
-      wrapper = '<div class="col col-1of4">{}</div>'
-      row_start = '<div class="row">'
-      row_end = '</div>'
-      html = (row_start + wrapper.format('Name') + wrapper.format('Organization') +
-          wrapper.format('Phone') + wrapper.format('Email') + row_end)
+      html = '<table><tr><td>Name</td><td>Organization</td><td>Phone</td> <td>Email</td></tr>'
       for i in [0, 1]:
         ref = value[i] if len(value) > i else {}
-        html += (row_start + wrapper.format(ref.get('name') or '-') +
-            wrapper.format(ref.get('org') or '-') +
-            wrapper.format(ref.get('phone') or '-') +
-            wrapper.format(ref.get('email') or '-') + row_end)
-      return html
+        html += '<tr><td>{}</td><td>{}</td><td>{}</td><td>{}</td></tr>'.format(
+          ref.get('name', '-'),
+          ref.get('org', '-'),
+          ref.get('phone', '-'),
+          ref.get('email', '-')
+        )
+      return html + '</table>'
 
     return self.text
+
+  class Meta:
+    unique_together = ('grant_application', 'cycle_narrative')
 
 
 class ProjectApp(models.Model):
