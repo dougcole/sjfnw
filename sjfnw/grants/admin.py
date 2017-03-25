@@ -14,6 +14,17 @@ from sjfnw.grants.modelforms import DraftAdminForm, LogAdminForm, CycleNarrative
 
 logger = logging.getLogger('sjfnw')
 
+# Note: some non-standard fields have been added in order to add text to templates
+# from a centralized location:
+#  - list_help_text: display help text at top of changelist page
+#  - list_action_link: display link at top of changelist page
+# see sjfnw/templates/admin/change_list.html
+
+LOG_IN_AS_ORG = utils.create_link(
+  '/admin/grants/organization/login', # reverse crashes, don't know why
+  'Log in as an organization',
+  new_tab=True
+)
 # -----------------------------------------------------------------------------
 #  CUSTOM FILTERS
 # -----------------------------------------------------------------------------
@@ -109,8 +120,8 @@ class IsArchivedFilter(admin.SimpleListFilter):
     if self.value() == 'all':
       return queryset
     if self.value() == 'true':
-      return queryset.filter(archived=True)
-    return queryset.filter(archived=False)
+      return queryset.filter(archived__isnull=False)
+    return queryset.filter(archived__isnull=True)
 
 
 class MultiYearGrantFilter(admin.SimpleListFilter):
@@ -233,7 +244,7 @@ class CycleNarrativeI(admin.TabularInline):
   formset = CycleNarrativeFormset
 
   def formfield_for_manytomany(self, db_field, request, **kwargs):
-    kwargs['queryset'] = CycleNarrative.objects.exclude(archived=True)
+    kwargs['queryset'] = CycleNarrative.objects.filter(archived__isnull=True)
     return super(CycleNarrativeI, self).formfield_for_manytomany(db_field, request, **kwargs)
 
 class GrantApplicationI(BaseShowInline):
@@ -352,6 +363,7 @@ class NarrativeQuestionA(BaseModelAdmin):
 
 class OrganizationA(BaseModelAdmin):
   list_display = ['name', 'user']
+  list_action_link = LOG_IN_AS_ORG
   search_fields = ['name', 'user__username']
   list_filter = (OrgRegisteredFilter,)
 
@@ -411,6 +423,7 @@ class OrganizationA(BaseModelAdmin):
 class GrantApplicationA(BaseModelAdmin):
   list_display = ['organization', 'grant_cycle', 'submission_time', 'read']
   list_filter = ['grant_cycle']
+  list_action_link = utils.create_link('/admin/grants/search', 'Run a report', new_tab=True)
   search_fields = ['organization__name']
 
   fieldsets = [
@@ -494,6 +507,7 @@ class DraftGrantApplicationA(BaseModelAdmin):
   list_display = ['organization', 'grant_cycle', 'modified', 'overdue',
                   'extended_deadline']
   list_filter = ['grant_cycle']
+  list_action_link = LOG_IN_AS_ORG
   fields = [('organization', 'grant_cycle', 'modified'),
             ('extended_deadline'),
             ('edit')]
@@ -524,6 +538,11 @@ class GivingProjectGrantA(BaseModelAdmin):
                    'projectapp__giving_project__title']
   list_filter = [CycleTypeFilter, GPGYearFilter, MultiYearGrantFilter]
   list_select_related = True
+
+  list_help_text = (
+    '<p>To enter a new grant, Find the corresponding <a href="/admin/grants/grantapplication/">grant application</a> and use the "Enter an award" link.  This page is for viewing and updating awards.</p>'
+    '<p><a href="yer-status">Year-end reports status</a>: View YER due dates and completion status for all grants.</p>'
+  )
 
   fieldsets = (
     ('', {

@@ -60,8 +60,12 @@
 
 {% block content %}
   <div id="content-main">
-    {# extra content area below title for help text #}
-    <div id="top_help_text">{% block help_text %}{% endblock %}</div>
+    {# display help text if given #}
+    {% if cl.model_admin.list_help_text %}
+      <div class="changelist_help_text">
+        {{ cl.model_admin.list_help_text|safe }}
+      </div>
+    {% endif %}
     {% block object-tools %}
       {% if has_add_permission %}
         <ul class="object-tools">
@@ -83,8 +87,10 @@
         {{ cl.formset.non_form_errors }}
     {% endif %}
     <div class="module{% if cl.has_filters %} filtered{% endif %}" id="changelist">
-      {# area for prominent extra admin actions like "Log in as organization" #}
-      <h3 class="extra-action">{% block extra_action %}{% endblock %}</h3>
+      {# prominent extra admin actions like "Log in as organization" #}
+      {% if cl.model_admin.list_action_link %}
+        <h3 class="extra-action">{{ cl.model_admin.list_action_link|safe }}</h3>
+      {% endif %}
       {% block search %}{% search_form cl %}{% endblock %}
       {% block date_hierarchy %}{% date_hierarchy cl %}{% endblock %}
 

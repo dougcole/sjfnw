@@ -245,6 +245,7 @@ class GivingProjectA(BaseModelAdmin):
 
 class ResourceA(BaseModelAdmin):
   list_display = ['title', 'created']
+  list_help_text = '<p>NOTE: This page is for viewing all of the resources that have been stored.  To add resources to a giving project, edit that project and use the Project Resources section at the bottom.</p>'
   fields = ['title', 'summary', 'link']
 
 
@@ -317,7 +318,10 @@ class DonorA(BaseModelAdmin):
   list_filter = ['asked', PromisedFilter, ReceivedBooleanFilter, DonorLikelyToJoinFilter,
                  'membership__giving_project']
   list_select_related = ['membership__giving_project', 'membership__member']
-
+  list_help_text = (
+    '<p>The years in the "Received" columns are relative to the year listed in the "Membership" column. When exporting donor data, the years for each amount will be listed explicitly.</p>'
+    '<p>Enter received numbers as dollar amounts without commas. (I.e. 5000 not <i>5,000</i> or <i>5000.00</i>)</p>'
+  )
   fields = [
     'membership',
     ('firstname', 'lastname'),
