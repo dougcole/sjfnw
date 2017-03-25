@@ -36,7 +36,7 @@ if os.getenv('SERVER_SOFTWARE', '').startswith('Google App Engine'):
   }
   if os.getenv('CURRENT_VERSION_ID', '').startswith('staging'):
     STAGING = True
-    DATABASES['default']['HOST'] += '-clone'
+    DATABASES['default']['HOST'] += '-clone-2'
 
 # test
 elif 'test' in sys.argv:
