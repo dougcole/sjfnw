@@ -11,6 +11,8 @@ class Migration(migrations.Migration):
         ('grants', '0021_data_rapid_seed_questions'),
     ]
 
+    reversible = False # collaboration fields will be lost
+
     operations = [
         migrations.AlterModelOptions(
             name='narrativequestion',
