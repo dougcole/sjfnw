@@ -4,13 +4,14 @@ import logging
 from django import forms
 from django.forms import ValidationError, ModelForm
 from django.db.models import PositiveIntegerField
+from django.utils import timezone
 from django.utils.safestring import mark_safe
 from django.utils.text import capfirst
 
 from sjfnw.forms import IntegerCommaField, PhoneNumberField
 from sjfnw.grants import constants as gc
 from sjfnw.grants.models import (Organization, GrantApplication, DraftGrantApplication,
-    YearEndReport, CycleNarrative)
+    YearEndReport, NarrativeQuestion, CycleNarrative)
 
 logger = logging.getLogger('sjfnw')
 
@@ -18,6 +19,56 @@ logger = logging.getLogger('sjfnw')
 def _form_error(text):
   """ Match the format used by django """
   return '<ul class="errorlist"><li>%s</li></ul>' % text
+
+
+class NarrativeQuestionForm(forms.ModelForm):
+
+  archived = forms.BooleanField(
+    required=False,
+    help_text='Archived questions remain associated with existing grant cycles but can\'t be used in new grant cycles.'
+  )
+
+  class Meta:
+    model = NarrativeQuestion
+    fields = ('name', 'version', 'archived', 'text', 'word_limit')
+
+  def __init__(self, *args, **kwargs):
+    # convert date field to boolean display
+    print('__init__')
+    print(kwargs)
+    # instance may be missing or None
+    if kwargs.get('instance', None) and kwargs['instance'].archived:
+      kwargs['initial'] = {'archived': True}
+    super(NarrativeQuestionForm, self).__init__(*args, **kwargs)
+
+
+  def clean(self, *args, **kwargs):
+    archive = self.cleaned_data.get('archived')
+    was_archived = self.instance.archived
+
+    # convert boolean input to date field
+    if archive and not was_archived:
+      self.cleaned_data['archived'] = unicode(timezone.now().date())
+    elif not archive and was_archived:
+      self.cleaned_data['archived'] = None
+    else: # no change
+      self.cleaned_data['archived'] = was_archived
+    super(NarrativeQuestionForm, self).clean(*args, **kwargs)
+    print(self.cleaned_data)
+
+    # disallow unarchived question with same name/version as another
+    name = self.cleaned_data.get('name')
+    version = self.cleaned_data.get('version')
+    if name and version and not self.cleaned_data.get('archived'):
+      conflict = NarrativeQuestion.objects.filter(
+        name=self.cleaned_data.get('name'),
+        version=self.cleaned_data.get('version'),
+        archived__isnull=True
+      )
+      if self.instance.pk:
+        conflict = conflict.exclude(pk=self.instance.pk)
+      if conflict.exists():
+        raise ValidationError('Cannot have two active questions with the same name and version. Use a different version or archive the other question')
 
 
 class OrgProfile(ModelForm):

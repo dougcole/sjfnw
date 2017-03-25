@@ -171,18 +171,17 @@ class NarrativeQuestion(models.Model):
       null=True,
       help_text='Word limit for the question. If left blank, no word limit will be enforced')
 
-  archived = models.DateField(blank=True, null=True,
-      help_text='Archived questions remain associated with existing grant cycles but can\'t be added to new grant cycles.')
+  archived = models.DateField(blank=True, null=True)
 
   class Meta:
     ordering = ('name', 'version')
-    unique_together = ('name', 'version')
 
   def __unicode__(self):
     return u'{} ({})'.format(self.pretty_name(), self.version)
 
   def pretty_name(self):
     return self.name.replace('_', ' ').title()
+
 
 
 class GrantCycle(models.Model):

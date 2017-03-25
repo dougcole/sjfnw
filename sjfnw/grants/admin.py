@@ -10,7 +10,8 @@ from django.utils.safestring import mark_safe
 from sjfnw import utils
 from sjfnw.admin import BaseModelAdmin, BaseShowInline, YearFilter
 from sjfnw.grants import models
-from sjfnw.grants.modelforms import DraftAdminForm, LogAdminForm, CycleNarrativeFormset
+from sjfnw.grants.modelforms import (DraftAdminForm, LogAdminForm,
+    CycleNarrativeFormset, NarrativeQuestionForm)
 
 logger = logging.getLogger('sjfnw')
 
@@ -356,10 +357,16 @@ class GrantCycleA(BaseModelAdmin):
 
 
 class NarrativeQuestionA(BaseModelAdmin):
-  list_display = ('pretty_name', 'version', 'archived')
-  search_fields = ('name', 'version')
+  list_display = ('pretty_name', 'version', 'archived_display')
   list_filter = (IsArchivedFilter, 'name', 'version')
+  search_fields = ('name', 'version')
+  form = NarrativeQuestionForm
+  fields = ('name', 'version', 'text', 'word_limit', 'archived')
 
+  # TODO replace/remove in django 1.9
+  # https://docs.djangoproject.com/en/1.9/releases/1.9/#django-contrib-admin
+  def archived_display(self, obj):
+    return obj.archived or ''
 
 class OrganizationA(BaseModelAdmin):
   list_display = ['name', 'user']
