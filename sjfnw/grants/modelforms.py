@@ -141,6 +141,7 @@ class TimelineWidget(forms.widgets.MultiWidget):
     val_list = []
     for i, widget in enumerate(self.widgets):
       val_list.append(widget.value_from_datadict(data, files, '{}_{}'.format(name, i)))
+    print('Timeline value is ', json.dumps(val_list))
     return json.dumps(val_list)
 
 
@@ -337,9 +338,9 @@ class ReferencesMultiWidget(forms.widgets.MultiWidget):
       returns: a string of HTML for displaying the widgets
     """
 
-    wrapper = '<div class="col col-1of4">{}</div>'
-    row_start = '<div class="row">'
-    row_end = '</div>'
+    wrapper = u'<div class="col col-1of4">{}</div>'
+    row_start = u'<div class="row">'
+    row_end = u'</div>'
     html = (row_start + wrapper.format('Name') + wrapper.format('Organization') +
         wrapper.format('Phone') + wrapper.format('Email') + row_end)
     wrapped = [wrapper.format(w) for w in rendered_widgets]
@@ -361,12 +362,13 @@ class ReferencesMultiWidget(forms.widgets.MultiWidget):
     for i in range(0, 1):
       j = i * 4
       values.append({
-        'name': data.get('{}_{}'.format(name, j)),
-        'org': data.get('{}_{}'.format(name, j + 1)),
-        'phone': data.get('{}_{}'.format(name, j + 2)),
-        'email': data.get('{}_{}'.format(name, j + 3)),
+        'name': data.get(u'{}_{}'.format(name, j)),
+        'org': data.get(u'{}_{}'.format(name, j + 1)),
+        'phone': data.get(u'{}_{}'.format(name, j + 2)),
+        'email': data.get(u'{}_{}'.format(name, j + 3)),
       })
 
+    print(u'ReferencesMultiWidget value is', json.dumps(values))
     return json.dumps(values)
 
 

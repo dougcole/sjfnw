@@ -546,12 +546,11 @@ class NarrativeAnswer(models.Model):
     return self.cycle_narrative.narrative_question.text
 
   def get_display_value(self):
-    print(self.text)
     name = self.cycle_narrative.narrative_question.name
 
     if name == 'timeline':
       timeline = json.loads(self.text) if self.text else []
-      html = ('<table class="timeline_display">'
+      html = (u'<table class="timeline_display">'
               '<tr>'
               '<td></td>'
               '<td>date range</td>'
@@ -569,7 +568,7 @@ class NarrativeAnswer(models.Model):
       return html
     elif name.endswith('_references'):
       value = json.loads(self.text) if self.text else []
-      html = '<table><tr><td>Name</td><td>Organization</td><td>Phone</td> <td>Email</td></tr>'
+      html = u'<table><tr><td>Name</td><td>Organization</td><td>Phone</td> <td>Email</td></tr>'
       for i in [0, 1]:
         ref = value[i] if len(value) > i else {}
         html += '<tr><td>{}</td><td>{}</td><td>{}</td><td>{}</td></tr>'.format(
