@@ -133,6 +133,15 @@ class GrantApplicationModelForm(forms.ModelForm):
   def __init__(self, cycle, *args, **kwargs):
     super(GrantApplicationModelForm, self).__init__(*args, **kwargs)
 
+    # TODO hacky
+    if cycle.get_type() == 'standard':
+      self.fields['status'] = forms.ChoiceField(choices = gc.STATUS_CHOICES[:-1])
+    else:
+      for field in GrantApplication.file_fields():
+        self.fields[field].required = False
+      if cycle.get_type() == 'rapid':
+        self.fields['demographics'].required = True
+
     narratives = cycle.narrative_questions.order_by('cyclenarrative__order')
     self._narrative_fields = []
 
@@ -208,7 +217,7 @@ class GrantApplicationModelForm(forms.ModelForm):
 
     return cleaned_data
 
-  def _validate_fiscal_info(cleaned_data):
+  def _validate_fiscal_info(self, cleaned_data):
     # fiscal info/file - require all if any
     org = cleaned_data.get('fiscal_org')
     person = cleaned_data.get('fiscal_person')

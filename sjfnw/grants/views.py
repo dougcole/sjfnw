@@ -345,8 +345,8 @@ def grant_application(request, organization, cycle_id):
       return redirect('/apply/submitted')
 
     else: # INVALID SUBMISSION
-      logger.info('Application form invalid')
-      logger.info(form.errors)
+      logger.info('Application form invalid. Errors for fields: %s',
+          ', '.join(form.errors.keys()))
 
   else: # GET
     if not cycle.is_open():

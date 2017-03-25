@@ -240,14 +240,21 @@ $(document).ready(function() {
   <p><a href="/apply/info/{{ cycle.pk }}" target="_blank">Download templates here.</a></p>
   <p>Templates for budgets, funding sources and diversity chart can be downloaded above. For budget documents, you may use your own format if preferred.</p>
 
-  <div class="row">1. Budget documents</div>
-  {% include 'grants/includes/file_upload.html' with field_id='budget1' %}
-  {% include 'grants/includes/file_upload.html' with field_id='budget2' %}
-  {% include 'grants/includes/file_upload.html' with field_id='budget3' %}
-  {% include 'grants/includes/file_upload.html' with field_id='project_budget_file' %}
-  {% include 'grants/includes/file_upload.html' with field_id='demographics' number=2 %}
-  {% include 'grants/includes/file_upload.html' with field_id='funding_sources' number=3 %}
-  {% include 'grants/includes/file_upload.html' with field_id='fiscal_letter' number=4 %}
+  {% if cycle.get_type == 'standard' %}
+    <div class="row">1. Budget documents</div>
+    {% include 'grants/includes/file_upload.html' with field_id='budget1' %}
+    {% include 'grants/includes/file_upload.html' with field_id='budget2' %}
+    {% include 'grants/includes/file_upload.html' with field_id='budget3' %}
+    {% include 'grants/includes/file_upload.html' with field_id='project_budget_file' %}
+    {% include 'grants/includes/file_upload.html' with field_id='demographics' number=2 %}
+    {% include 'grants/includes/file_upload.html' with field_id='funding_sources' number=3 %}
+    {% include 'grants/includes/file_upload.html' with field_id='fiscal_letter' number=4 %}
+  {% elif cycle.get_type == 'rapid' %}
+    {% include 'grants/includes/file_upload.html' with field_id='demographics' number=1 %}
+    {% include 'grants/includes/file_upload.html' with field_id='fiscal_letter' number=2 %}
+  {% else %}
+    {% include 'grants/includes/file_upload.html' with field_id='fiscal_letter' number=1 %}
+  {% endif %}
 
   {% endautoescape %}
 

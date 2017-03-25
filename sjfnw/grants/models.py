@@ -13,6 +13,13 @@ from sjfnw.grants import constants as gc, utils
 
 logger = logging.getLogger('sjfnw')
 
+class BasicFileField(models.FileField):
+  """ Sets standard defaults """
+
+  def __init__(self, **kwargs):
+    defaults = {'upload_to': '/', 'max_length': 255}
+    defaults.update(kwargs)
+    return super(BasicFileField, self).__init__(**defaults)
 
 class OrganizationManager(models.Manager):
 
@@ -102,7 +109,7 @@ class Organization(models.Model):
   fiscal_state = models.CharField(verbose_name='State', max_length=2,
                                   choices=gc.STATE_CHOICES, blank=True)
   fiscal_zip = models.CharField(verbose_name='ZIP', max_length=50, blank=True)
-  fiscal_letter = models.FileField(upload_to='/', null=True, blank=True, max_length=255)
+  fiscal_letter = BasicFileField(null=True, blank=True)
 
   class Meta:
     ordering = ['name']
@@ -175,6 +182,7 @@ class NarrativeQuestion(models.Model):
 
 
 class GrantCycle(models.Model):
+
   title = models.CharField(max_length=100)
   open = models.DateTimeField()
   close = models.DateTimeField()
@@ -208,6 +216,13 @@ class GrantCycle(models.Model):
       return 'upcoming'
     else:
       return 'open'
+
+  def get_type(self):
+    if 'Rapid Response' in self.title:
+      return 'rapid'
+    elif 'Seed ' in self.title:
+      return 'seed'
+    return 'standard'
 
 
 class CycleNarrative(models.Model):
@@ -286,17 +301,13 @@ class DraftGrantApplication(models.Model):
 
   contents = models.TextField(default='{}') # json'd dictionary of form contents
 
-  demographics = models.FileField(upload_to='/', max_length=255)
-  funding_sources = models.FileField(upload_to='/', max_length=255)
-  budget1 = models.FileField(upload_to='/', max_length=255,
-                             verbose_name='Annual statement')
-  budget2 = models.FileField(upload_to='/', max_length=255,
-                             verbose_name='Annual operating budget')
-  budget3 = models.FileField(upload_to='/', max_length=255,
-                             verbose_name='Balance sheet')
-  project_budget_file = models.FileField(upload_to='/', max_length=255,
-                                         verbose_name='Project budget')
-  fiscal_letter = models.FileField(upload_to='/', max_length=255)
+  demographics = BasicFileField()
+  funding_sources = BasicFileField()
+  budget1 = BasicFileField(verbose_name='Annual statement')
+  budget2 = BasicFileField(verbose_name='Annual operating budget')
+  budget3 = BasicFileField(verbose_name='Balance sheet')
+  project_budget_file = BasicFileField(verbose_name='Project budget')
+  fiscal_letter = BasicFileField()
 
   extended_deadline = models.DateTimeField(blank=True, null=True,
       help_text='Allows this draft to be edited/submitted past the grant cycle close.')
@@ -306,7 +317,7 @@ class DraftGrantApplication(models.Model):
 
   @classmethod
   def file_fields(cls):
-    return [f.name for f in cls._meta.fields if isinstance(f, models.FileField)]
+    return [f.name for f in cls._meta.fields if isinstance(f, BasicFileField)]
 
   def __unicode__(self):
     return u'DRAFT: ' + self.organization.name + ' - ' + self.grant_cycle.title
@@ -411,79 +422,45 @@ class GrantApplication(models.Model):
 
   narratives = models.ManyToManyField(CycleNarrative, through='NarrativeAnswer', blank=True)
 
-  # collab references (after narrative 5)
-  collab_ref1_name = models.CharField(verbose_name='Name', max_length=150,
-      help_text=('Provide names and contact information for two people who '
-                 'are familiar with your organization\'s role in these '
-                 'collaborations so we can contact them for more information.'))
-  collab_ref1_org = models.CharField(verbose_name='Organization',
-                                     max_length=150)
-  collab_ref1_phone = models.CharField(verbose_name='Phone number',
-                                       max_length=20, blank=True)
-  collab_ref1_email = models.EmailField(max_length=100, verbose_name='Email',
-                                        blank=True)
-
-  collab_ref2_name = models.CharField(verbose_name='Name', max_length=150)
-  collab_ref2_org = models.CharField(verbose_name='Organization',
-                                     max_length=150)
-  collab_ref2_phone = models.CharField(verbose_name='Phone number',
-                                       max_length=20, blank=True)
-  collab_ref2_email = models.EmailField(max_length=100, verbose_name='Email',
-                                        blank=True)
-
-  # racial justice references (after narrative 6)
-  racial_justice_ref1_name = models.CharField(verbose_name='Name', max_length=150, blank=True)
-  racial_justice_ref1_org = models.CharField(verbose_name='Organization', max_length=150, blank=True)
-  racial_justice_ref1_phone = models.CharField(verbose_name='Phone number', max_length=20, blank=True)
-  racial_justice_ref1_email = models.EmailField(verbose_name='Email', max_length=100, blank=True)
-
-  racial_justice_ref2_name = models.CharField(verbose_name='Name', max_length=150, blank=True)
-  racial_justice_ref2_org = models.CharField(verbose_name='Organization', max_length=150, blank=True)
-  racial_justice_ref2_phone = models.CharField(verbose_name='Phone number', max_length=20, blank=True)
-  racial_justice_ref2_email = models.EmailField(verbose_name='Email', max_length=100, blank=True)
-
   # files
-  budget = models.FileField( # no longer shown, but field holds file from early apps
-      upload_to='/', max_length=255, validators=[validate_file_extension], blank=True)
-  demographics = models.FileField(
-      verbose_name='Diversity chart', upload_to='/', max_length=255,
-      validators=[validate_file_extension])
-  funding_sources = models.FileField(upload_to='/', max_length=255,
-      validators=[validate_file_extension])
-  budget1 = models.FileField(
-      verbose_name='Annual statement', upload_to='/', max_length=255,
-      validators=[validate_file_extension],
-      help_text=('This is the statement of actual income and expenses for '
-                   'the most recent completed fiscal year. Upload in your own '
-                   'format, but do not send your annual report, tax returns, '
-                   'or entire audited financial statement.'))
-  budget2 = models.FileField(
-      verbose_name='Annual operating budget', upload_to='/', max_length=255,
-      validators=[validate_file_extension],
-      help_text=('This is a projection of all known and estimated income and '
-                   'expenses for the current fiscal year. You may upload in '
-                   'your own format or use our budget form. NOTE: If your '
-                   'fiscal year will end within three months of this grant '
-                   'application deadline, please also attach your operating '
-                   'budget for the next fiscal year, so that we can get a more '
-                   'accurate sense of your organization\'s situation.'))
-  budget3 = models.FileField(
-      verbose_name='Balance sheet', upload_to='/', max_length=255,
-      validators=[validate_file_extension],
-      help_text=('This is a snapshot of your financial status at the moment: '
-                   'a brief, current statement of your assets, liabilities, '
-                   'and cash on hand. Upload in your own format.'))
-  project_budget_file = models.FileField(
-      verbose_name='Project budget (if applicable)', upload_to='/',
-      max_length=255, validators=[validate_file_extension], blank=True,
-      help_text=('This is required only if you are requesting '
-                   'project-specific funds. Otherwise, it is optional. You '
-                   'may upload in your own format or use our budget form.'))
-  fiscal_letter = models.FileField(
-      upload_to='/', blank=True, verbose_name='Fiscal sponsor letter',
-      help_text=('Letter from the sponsor stating that it agrees to act as your '
-                 'fiscal sponsor and supports Social Justice Fund\'s mission.'),
-      max_length=255, validators=[validate_file_extension])
+  budget = BasicFileField( # no longer shown, but field holds file from early apps
+    blank=True,
+    validators=[validate_file_extension]
+  )
+  demographics = BasicFileField(
+    validators=[validate_file_extension],
+    verbose_name='Diversity chart'
+  )
+  funding_sources = BasicFileField(
+    validators=[validate_file_extension]
+  )
+  budget1 = BasicFileField(
+    help_text='Statement of actual income and expenses for the most recent completed fiscal year. Upload in your own format, but do not send your annual report, tax returns, or entire audited financial statement.',
+    validators=[validate_file_extension],
+    verbose_name='Annual statement'
+  )
+  budget2 = BasicFileField(
+    help_text='Projection of all known and estimated income and expenses for the current fiscal year. You may upload in your own format or use our budget form. NOTE: If your fiscal year will end within three months of this grant application deadline, please also attach your operating budget for the next fiscal year, so that we can get a more accurate sense of your organization\'s situation.',
+    validators=[validate_file_extension],
+    verbose_name='Annual operating budget'
+  )
+  budget3 = BasicFileField(
+    help_text='This is a snapshot of your financial status at the moment: a brief, current statement of your assets, liabilities, and cash on hand. Upload in your own format.',
+    validators=[validate_file_extension],
+    verbose_name='Balance sheet'
+  )
+  project_budget_file = BasicFileField(
+    blank=True,
+    help_text='This is required only if you are requesting project-specific funds. Otherwise, it is optional. You may upload in your own format or use our budget form.',
+    validators=[validate_file_extension],
+    verbose_name='Project budget (if applicable)'
+  )
+  fiscal_letter = BasicFileField(
+    blank=True,
+    help_text='Letter from the sponsor stating that it agrees to act as your fiscal sponsor and supports Social Justice Fund\'s mission.',
+    validators=[validate_file_extension],
+    verbose_name='Fiscal sponsor letter'
+  )
 
   # admin fields
   pre_screening_status = models.IntegerField(choices=gc.PRE_SCREENING, default=10)
@@ -561,7 +538,6 @@ class NarrativeAnswer(models.Model):
     name = self.cycle_narrative.narrative_question.name
 
     if name == 'timeline':
-      timeline = json.loads(self.text)
       timeline = json.loads(self.text) if self.text else []
       html = ('<table class="timeline_display">'
               '<tr>'
@@ -845,12 +821,12 @@ class YERDraft(models.Model):
   modified = models.DateTimeField(default=timezone.now)
   contents = models.TextField(default='{}')
 
-  photo1 = models.FileField(upload_to='/', blank=True, max_length=255)
-  photo2 = models.FileField(upload_to='/', blank=True, max_length=255)
-  photo3 = models.FileField(upload_to='/', blank=True, max_length=255)
-  photo4 = models.FileField(upload_to='/', blank=True, max_length=255)
+  photo1 = BasicFileField(blank=True)
+  photo2 = BasicFileField(blank=True)
+  photo3 = BasicFileField(blank=True)
+  photo4 = BasicFileField(blank=True)
 
-  photo_release = models.FileField(upload_to='/', max_length=255)
+  photo_release = BasicFileField()
 
   class Meta:
     verbose_name = 'Draft year-end report'

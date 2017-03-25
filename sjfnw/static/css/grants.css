@@ -85,17 +85,8 @@ label {
   text-align:center;
 }
 
-ul.errorlist {
-  margin-top: 10px;
-}
-
-#file-uploads ul.errorlist {
+.narratives .errorlist {
   display: block;
-}
-
-div.form_error {
-  font-style: italic;
-  color: red;
 }
 
 #autofilled {
