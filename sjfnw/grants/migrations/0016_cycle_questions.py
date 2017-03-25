@@ -52,7 +52,7 @@ def set_cycle_questions(apps, schema_editor):
       if cycle.two_year_question != standard_two_year.text:
         question = NarrativeQuestion(
           name=TWO_YEAR_GRANT_QUESTION['name'], version=str(cycle.pk),
-          text=cycle.two_year_question, archived=cycle.close.date
+          text=cycle.two_year_question, archived=cycle.close.date()
         )
         question.save()
 
@@ -62,7 +62,7 @@ def set_cycle_questions(apps, schema_editor):
     if cycle.extra_question:
       question = NarrativeQuestion(
         name='cycle_question', version=str(cycle.pk),
-        text=cycle.extra_question, archived=cycle.close.date
+        text=cycle.extra_question, archived=cycle.close.date()
       )
       question.save()
       order = len(questions) + (1 if cycle.two_year_grants else 0)
