@@ -1,0 +1,7 @@
+{% load dict_key %}
+{% if file_urls|key:field %}
+  <li>
+    <a href="{{file_urls|key:field}}" target="reading_frame">{{ display_name }}</a>
+    <a href="{{print_urls|key:field}}" target="_blank"><img class="print" title="Open in new tab for printing" src="/static/images/print.png"></a>
+  </li>
+  {% endif %}

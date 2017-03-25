@@ -3,27 +3,25 @@
 {% block script %}
 {{ block.super }}
 <script type="text/javascript">
-  var main_div;
-  var frame;
   var first = true;
+
   function showMain() {
-    main_div.style.display = '';
-    frame.style.display = 'none';
+    console.log('showMain');
+    $('#grant_reading').show();
+    $('#reading_frame').hide();
   }
 
   function showAttachment(){
+    console.log('showAttachment');
     if (first) {
+      console.log('first');
       first = false;
-    } else if (frame) {
-      frame.style.display = '';
-      main_div.style.display = 'none';
+    } else {
+      console.log('not first');
+      $('#reading_frame').show();
+      $('#grant_reading').hide();
     }
   }
-
-  $(document).ready(function() {
-    main_div = document.getElementById('main_content');
-    frame = document.getElementById('reading_frame');
-  });
 </script>
 {% endblock script %}
 
@@ -44,47 +42,14 @@
     <br><br>
     Uploaded files:
     <ol class="contents">
-    {% if app.fiscal_letter and perm > 1 %}
-      <li>
-        <a href="{{file_urls.fiscal_letter}}" target="reading_frame">Fiscal letter</a>
-        <a href="{{print_urls.fiscal_letter}}" target="_blank"><img class="print" title="Open in new tab for printing" src="/static/images/print.png"></a>
-      </li>
-    {% endif %}
-    {% if app.budget %}
-      <li>
-        <a href="{{file_urls.budget}}" target="reading_frame">Budget</a>
-        <a href="{{print_urls.budget}}" target="_blank"><img class="print" title="Open in new tab for printing" src="/static/images/print.png"></a>
-      </li>
-    {% else %}
-      <li>
-        <a href="{{file_urls.budget1}}" target="reading_frame">Annual statement</a>
-        <a href="{{print_urls.budget1}}" target="_blank"><img class="print" title="Open in new tab for printing" src="/static/images/print.png"></a>
-      </li>
-      <li>
-        <a href="{{file_urls.budget2}}" target="reading_frame">Annual operating budget</a>
-        <a href="{{print_urls.budget2}}" target="_blank"><img class="print" title="Open in new tab for printing" src="/static/images/print.png"></a>
-      </li>
-      {% if app.budget3 %}
-        <li>
-          <a href="{{file_urls.budget3}}" target="reading_frame">Balance sheet</a>
-          <a href="{{print_urls.budget3}}" target="_blank"><img class="print" title="Open in new tab for printing" src="/static/images/print.png"></a>
-        </li>
-      {% endif %}
-      {% if app.project_budget_file %}
-        <li>
-          <a href="{{file_urls.project_budget_file}}" target="reading_frame">Project budget</a>
-          <a href="{{print_urls.project_budget_file}}" target="_blank"><img class="print" title="Open in new tab for printing" src="/static/images/print.png"></a>
-        </li>
-      {% endif %}
-    {% endif %}{# if app.budget #}
-      <li>
-        <a href="{{file_urls.funding_sources}}" target="reading_frame">Funding sources</a>
-        <a href="{{print_urls.funding_sources}}" target="_blank"><img class="print" title="Open in new tab for printing" src="/static/images/print.png"></a>
-      </li>
-      <li>
-        <a href="{{file_urls.demographics}}" target="reading_frame">Diversity chart</a>
-        <a href="{{print_urls.demographics}}" target="_blank"><img class="print" title="Open in new tab for printing" src="/static/images/print.png"></a>
-      </li>
+      {% include 'grants/includes/reading_sidebar_file.html' with field='fiscal_letter' display_name='Fiscal letter' %}
+      {% include 'grants/includes/reading_sidebar_file.html' with field='budget' display_name='Budget' %}
+      {% include 'grants/includes/reading_sidebar_file.html' with field='budget1' display_name='Annual statement' %}
+      {% include 'grants/includes/reading_sidebar_file.html' with field='budget2' display_name='Annual operating budget' %}
+      {% include 'grants/includes/reading_sidebar_file.html' with field='budget3' display_name='Balance sheet' %}
+      {% include 'grants/includes/reading_sidebar_file.html' with field='project_budget_file' display_name='Project budget' %}
+      {% include 'grants/includes/reading_sidebar_file.html' with field='funding_sources' display_name='Funding sources' %}
+      {% include 'grants/includes/reading_sidebar_file.html' with field='demographics' display_name='Diversity chart' %}
     </ol>
   </div>
 
