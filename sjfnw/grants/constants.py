@@ -18,7 +18,8 @@ STATUS_CHOICES = [
   ('Tribal government', 'Federally recognized American Indian tribal government'),
   ('501c3', '501(c)3 organization as recognized by the IRS'),
   ('501c4', '501(c)4 organization as recognized by the IRS'),
-  ('Sponsored', 'Sponsored by a 501(c)3, 501(c)4, or federally recognized tribal government')
+  ('Sponsored', 'Sponsored by a 501(c)3, 501(c)4, or federally recognized tribal government'),
+  ('Other', 'Organized group of people without 501(c)3 or (c)4 status (you MUST call us before applying)')
 ]
 
 PRE_SCREENING = (
@@ -56,6 +57,7 @@ STANDARD_NARRATIVES = [
 TWO_YEAR_GRANT_QUESTION = {'name': 'two_year_grant', 'version': 'standard'}
 
 RAPID_RESPONSE_NARRATIVES = [
+  {'name': 'expedited', 'version': 'rapid'},
   {'name': 'describe_mission', 'version': 'standard' },
   {'name': 'most_impacted', 'version': 'rapid' },
   {'name': 'workplan', 'version': 'rapid' },
