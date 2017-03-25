@@ -255,7 +255,7 @@ $(document).ready(function() {
     {% include 'grants/includes/file_upload.html' with field_id='demographics' number=1 %}
     {% include 'grants/includes/file_upload.html' with field_id='fiscal_letter' number=2 %}
   {% else %}
-    <p>Please attach a Diversity Chart and a Fiscal Sponsorship letter if your organization has a Fiscal Sponsor.</p>
+    <p>Please attach a Fiscal Sponsorship letter if your organization has a Fiscal Sponsor.</p>
     {% include 'grants/includes/file_upload.html' with field_id='fiscal_letter' number=1 %}
   {% endif %}
 
