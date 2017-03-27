@@ -298,16 +298,19 @@ class RapidResponseApplicationForm(GrantApplicationModelForm):
 
   class Meta(GrantApplicationModelForm.Meta):
     exclude = GrantApplicationModelForm.Meta.exclude + [
-      'support_type', 'budget1', 'budget2', 'budget3', 'funding_sources',
+      'budget1', 'budget2', 'budget3', 'funding_sources',
       'project_budget_file'
     ]
+    widgets = {
+      'support_type': forms.HiddenInput()
+    }
 
   def __init__(self, *args, **kwargs):
+    kwargs.setdefault('initial', {})
+    kwargs['initial'].setdefault('support_type', 'Project support')
     super(RapidResponseApplicationForm, self).__init__(*args, **kwargs)
     self.fields['demographics'].required = True
-    self.fields['support_type'].readonly = True
-    kwargs.setdefault(['initial'], {})
-    kwargs['initial'].setdefault('support_type', 'Project support')
+    self.fields['support_type'].widget.attrs['readonly'] = True
 
 class StandardApplicationForm(GrantApplicationModelForm):
 

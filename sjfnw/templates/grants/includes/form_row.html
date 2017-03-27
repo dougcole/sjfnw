@@ -6,6 +6,6 @@
 </div>
 {% endif %}
 <div class="row">
-  <div class="col col-1of2">{{ left.label_tag }}{{ left }}</div>
-  <div class="col col-1of2">{{ right.label_tag }}{{ right }}</div>
+  <div class="col col-1of2">{% if not left.is_hidden %}{{ left.label_tag }}{% endif %}{{ left }}</div>
+  <div class="col col-1of2">{% if not right.is_hidden %}{{ right.label_tag }}{% endif %}{{ right }}</div>
 </div>
