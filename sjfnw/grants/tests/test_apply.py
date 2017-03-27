@@ -144,6 +144,9 @@ class ApplySuccessful(BaseGrantFilesTestCase):
 
     res = self.client.post(_get_apply_url(draft.grant_cycle.pk), follow=True)
 
+    if 'form' in res.context:
+      print(res.context['form'].errors)
+    self.assertEqual(res.status_code, 200)
     self.assertTemplateUsed(res, 'grants/submitted.html')
     self.assert_count(DraftGrantApplication.objects.filter(organization=self.org), 0)
     app = GrantApplication.objects.get(organization=self.org, grant_cycle=draft.grant_cycle)
@@ -267,6 +270,33 @@ class StartApplication(BaseGrantTestCase):
     res = self._load_application_form(cycle.pk)
 
     self.assertNotContains(res, 'Pre-filled')
+    self.assertNotContains(res, gc.STATUS_CHOICES[4][1])
+    self.assertContains(res, 'support_type')
+    self.assertContains(res, 'Project title')
+    self.assertContains(res, 'Project budget')
+
+  def test_load_first_app_rapid(self):
+    self.login_as_org()
+
+    cycle = factories.GrantCycle(status='open', title='Rapid Response')
+    res = self._load_application_form(cycle.pk)
+
+    self.assertNotContains(res, 'Pre-filled')
+    self.assertContains(res, gc.STATUS_CHOICES[4][1])
+    self.assertContains(res, 'Project title')
+    self.assertContains(res, 'Project budget')
+
+  def test_load_first_app_seed(self):
+    self.login_as_org()
+
+    cycle = factories.GrantCycle(status='open', title='Seed')
+    res = self._load_application_form(cycle.pk)
+
+    self.assertNotContains(res, 'Pre-filled')
+    self.assertContains(res, gc.STATUS_CHOICES[4][1])
+    self.assertNotContains(res, 'support_type')
+    self.assertNotContains(res, 'Project title')
+    self.assertNotContains(res, 'Project budget')
 
   def test_load_second_app(self):
     self.login_as_org(with_profile=True)

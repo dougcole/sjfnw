@@ -175,8 +175,6 @@ def org_home(request, org):
     submitted_cycles.append(app.grant_cycle.pk)
     submitted_by_id[app.pk] = app
 
-  print('submitted_cycles', submitted_cycles)
-
   awards = (models.GivingProjectGrant.objects
       .filter(projectapp__application__in=submitted)
       .select_related('projectapp')
@@ -195,9 +193,7 @@ def org_home(request, org):
 
   closed, current, upcoming = [], [], []
   for cycle in cycles:
-    print('checking', cycle)
     if cycle.pk in submitted_cycles:
-      print('found one', cycle)
       cycle.applied = True
 
     status = cycle.get_status()

@@ -5,7 +5,7 @@ from django.forms.utils import ErrorList
 
 from sjfnw.grants import constants as gc
 from sjfnw.grants.modelforms import (StandardApplicationForm,
-    SeedApplicationForm, RapidResponseApplicationForm)
+    SeedApplicationForm, RapidResponseApplicationForm, get_form_for_cycle)
 from sjfnw.grants.tests import factories
 from sjfnw.grants.tests.base import BaseGrantTestCase
 

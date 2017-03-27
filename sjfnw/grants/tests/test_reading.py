@@ -27,6 +27,7 @@ class GrantReading(BaseGrantTestCase):
   def test_author(self):
     self.login_as_org()
     app = factories.GrantApplication(organization=self.org)
+    yer = factories.YearEndReport(award__projectapp__application=app)
 
     res = self.client.get(self._get_url(app.pk))
 
@@ -38,6 +39,7 @@ class GrantReading(BaseGrantTestCase):
   def test_other_org(self):
     self.login_as_org()
     app = factories.GrantApplication()
+    yer = factories.YearEndReport(award__projectapp__application=app)
 
     res = self.client.get(self._get_url(app.pk))
 
