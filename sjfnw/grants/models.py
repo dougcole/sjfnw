@@ -408,8 +408,7 @@ class GrantApplication(models.Model):
   amount_requested = models.PositiveIntegerField()
 
   SUPPORT_CHOICES = [('General support', 'General'), ('Project support', 'Project')]
-  support_type = models.CharField(
-      max_length=50, choices=SUPPORT_CHOICES, default='General support')
+  support_type = models.CharField(max_length=50, choices=SUPPORT_CHOICES, blank=True)
   project_title = models.CharField(
       max_length=250, blank=True, verbose_name='Project title (if applicable)')
   project_budget = models.PositiveIntegerField(
