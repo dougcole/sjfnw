@@ -144,30 +144,12 @@ class ApplySuccessful(BaseGrantFilesTestCase):
 
     res = self.client.post(_get_apply_url(draft.grant_cycle.pk), follow=True)
 
-    if 'form' in res.context:
-      print(res.context['form'].errors)
     self.assertEqual(res.status_code, 200)
     self.assertTemplateUsed(res, 'grants/submitted.html')
     self.assert_count(DraftGrantApplication.objects.filter(organization=self.org), 0)
     app = GrantApplication.objects.get(organization=self.org, grant_cycle=draft.grant_cycle)
     self.assertEqual(app.budget1, files[2])
     self.assertEqual(app.budget2, files[3])
-
-  def test_profile_updated(self):
-    """ Verify that org profile is updated when application is submitted
-    Just checks mission field """
-
-    draft = factories.DraftGrantApplication(organization=self.org)
-    draft_contents = json.loads(draft.contents)
-
-    self.assertNotEqual(draft_contents['mission'], self.org.mission)
-
-    res = self.client.post(_get_apply_url(draft.grant_cycle.pk), follow=True)
-
-    self.org.refresh_from_db()
-    self.assertEqual(res.status_code, 200)
-    self.assertTemplateUsed(res, 'grants/submitted.html')
-    self.assertEqual(draft_contents['mission'], self.org.mission)
 
 class ApplyBlocked(BaseGrantTestCase):
 
@@ -178,9 +160,6 @@ class ApplyBlocked(BaseGrantTestCase):
   def test_closed_cycle(self):
     cycle = factories.GrantCycle(status='closed')
     res = self.client.get(_get_apply_url(cycle.pk))
-    print(res.status_code)
-    if res.status_code == 302:
-      print(res.url)
     self.assertEqual(res.status_code, 200)
     self.assertTemplateUsed(res, 'grants/closed.html')
 

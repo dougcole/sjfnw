@@ -1,4 +1,6 @@
 from datetime import timedelta
+from unittest import skip
+
 from django.test import TestCase
 from django.utils import timezone
 
@@ -17,6 +19,14 @@ class GrantApplication(BaseGrantTestCase):
 
     self.assert_count(answers, len(gc.STANDARD_NARRATIVES))
     self.assertNotEqual(app.get_narrative_answer('describe_mission'), answers.get(cycle_narrative__narrative_question__name='describe_mission'))
+
+  @skip('TODO')
+  def test_updates_profile(self):
+    pass
+
+  @skip('TODO')
+  def test_doesnt_update_profile(self):
+    pass
 
 class OrganizationGetStaffEntered(TestCase):
 

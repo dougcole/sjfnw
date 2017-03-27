@@ -316,8 +316,6 @@ def grant_application(request, organization, cycle_id):
 
       for cn in models.CycleNarrative.objects.filter(grant_cycle=cycle).select_related('narrative_question'):
         text = form.cleaned_data.get(cn.narrative_question.name)
-        if not text:
-          print('MISSING ' + cn.narrative_question.name)
         answer = models.NarrativeAnswer(cycle_narrative=cn, grant_application=application, text=text)
         answer.save()
 

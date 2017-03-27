@@ -81,21 +81,6 @@ class YearEndReportHomeLinks(BaseGrantTestCase):
     self._assert_link(res, award)
     self.assertContains(res, 'Year end report</a> submitted', count=1)
 
-  def test_no_second_home_link(self):
-
-    # make award be two-year
-    award = factories.GivingProjectGrant(
-      projectapp__application__organization=self.org,
-      amount=8000,
-      second_amount=4000,
-      first_yer_due=timezone.now() - timedelta(days=200)
-    )
-
-    # verify that only first due date/link shows
-    res = self.client.get(self.url)
-    self._assert_link(res, award)
-    self.assertContains(res, 'due {:%-m/%-d/%y}'.format(award.first_yer_due), count=1)
-
   def test_two_completed(self):
     # two year award with both YER submitted
     award = factories.GivingProjectGrant(
@@ -188,11 +173,12 @@ class YearEndReportForm(BaseGrantFilesTestCase):
     form = res.context['form']
     application = award.projectapp.application
 
-    # assert website autofilled from app
-    self.assertEqual(form['website'].value(), application.website)
     expected_title = 'Year-end Report for {:%b %d, %Y} - {:%b %d, %Y}'.format(
         award.first_yer_due.replace(year=award.first_yer_due.year - 1), award.first_yer_due)
     self.assertContains(res, expected_title)
+
+    # assert website autofilled from app
+    self.assertEqual(form['website'].value(), application.website)
 
   def setUp(self):
     super(YearEndReportForm, self).setUp()
@@ -205,7 +191,7 @@ class YearEndReportForm(BaseGrantFilesTestCase):
   def test_start_late(self):
     """ Run the start draft test but with a YER that is overdue """
     award = factories.GivingProjectGrant(
-      first_yer_due=timezone.now() - timedelta(days=30),
+      first_yer_due=timezone.now().date() - timedelta(days=30),
       projectapp__application__organization=self.org
     )
     self._test_start(award)
@@ -263,14 +249,14 @@ class YearEndReportForm(BaseGrantFilesTestCase):
   def test_valid(self):
     award = factories.GivingProjectGrant(
       projectapp__application__organization=self.org,
-      first_yer_due=timezone.now() + timedelta(days=10)
+      first_yer_due=timezone.now().date() + timedelta(days=10)
     )
     self._test_valid_submit(award)
 
   def test_valid_late(self):
     award = factories.GivingProjectGrant(
       projectapp__application__organization=self.org,
-      first_yer_due=timezone.now() - timedelta(days=10)
+      first_yer_due=timezone.now().date() - timedelta(days=10)
     )
     self._test_valid_submit(award)
 
@@ -287,7 +273,8 @@ class YearEndReportReminders(BaseGrantTestCase):
     """ Verify reminder is not sent 2 months before report is due """
 
     # create award where yer is due in 60 days
-    award = factories.GivingProjectGrant(first_yer_due=timezone.now() + timedelta(days=60))
+    award = factories.GivingProjectGrant(
+        first_yer_due=timezone.now().date() + timedelta(days=60))
 
     # verify that email is not sent
     self.assert_length(mail.outbox, 0)
@@ -299,7 +286,8 @@ class YearEndReportReminders(BaseGrantTestCase):
     """ Verify that reminder email gets sent 30 days prior to due date """
 
     # create award where yer is due in 30 days
-    award = factories.GivingProjectGrant(first_yer_due=timezone.now() + timedelta(days=30))
+    award = factories.GivingProjectGrant(
+        first_yer_due=timezone.now().date() + timedelta(days=30))
 
     # verify that email is not sent
     self.assert_length(mail.outbox, 0)
@@ -311,7 +299,8 @@ class YearEndReportReminders(BaseGrantTestCase):
     """ Verify that no email is sent 15 days prior to due date """
 
     # create award where yer is due in 15 days
-    award = factories.GivingProjectGrant(first_yer_due=timezone.now() + timedelta(days=15))
+    award = factories.GivingProjectGrant(
+        first_yer_due=timezone.now().date() + timedelta(days=15))
 
     # verify that email is not sent
     self.assert_length(mail.outbox, 0)
@@ -323,7 +312,8 @@ class YearEndReportReminders(BaseGrantTestCase):
     """ Verify that a reminder email goes out 7 days prior to due date """
 
     # create award where yer is due in 7 days
-    award = factories.GivingProjectGrant(first_yer_due=timezone.now() + timedelta(days=7))
+    award = factories.GivingProjectGrant(
+        first_yer_due=timezone.now().date() + timedelta(days=7))
 
     # verify that email is sent
     self.assert_length(mail.outbox, 0)
@@ -335,7 +325,8 @@ class YearEndReportReminders(BaseGrantTestCase):
     """ Verify that an email is not sent if a year-end report has been completed """
 
     # create award where yer is due in 7 days, with YER completed
-    award = factories.GivingProjectGrant(first_yer_due=timezone.now() + timedelta(days=7))
+    award = factories.GivingProjectGrant(
+        first_yer_due=timezone.now().date() + timedelta(days=7))
     yer = factories.YearEndReport(award=award)
 
     # verify that no more are due
@@ -350,7 +341,7 @@ class YearEndReportReminders(BaseGrantTestCase):
   def test_second_yer_reminder(self):
     """ Verify that reminder email is sent if second year end report due"""
 
-    today = timezone.now()
+    today = timezone.now().date()
 
     award = factories.GivingProjectGrant(
       first_yer_due=(today + timedelta(days=7)).replace(year=today.year - 1),

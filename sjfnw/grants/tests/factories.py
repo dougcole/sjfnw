@@ -260,7 +260,7 @@ class GivingProjectGrant(factory.django.DjangoModelFactory):
 
   amount = factory.LazyFunction(lambda: random.randrange(5000, 20000))
 
-  first_yer_due = factory.LazyFunction(lambda: fake.date_time_this_year(after_now=True))
+  first_yer_due = factory.LazyFunction(lambda: fake.date_time_this_year(after_now=True).date())
 
 
 class YearEndReport(factory.django.DjangoModelFactory):

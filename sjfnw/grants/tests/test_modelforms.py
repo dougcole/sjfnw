@@ -16,13 +16,13 @@ class GrantApplicationTypes(BaseGrantTestCase):
   
   def test_get_form(self):
     cycle = factories.GrantCycle()
-    self.assertEqual(get_form_for_cycle(cycle), 'standard')
+    self.assertEqual(get_form_for_cycle(cycle), StandardApplicationForm)
 
     cycle = factories.GrantCycle(title='Rapid Response Cycle')
-    self.assertEqual(get_form_for_cycle(cycle), 'rapid')
+    self.assertEqual(get_form_for_cycle(cycle), RapidResponseApplicationForm)
 
     cycle = factories.GrantCycle(title='Seed Grants')
-    self.assertEqual(get_form_for_cycle(cycle), 'seed')
+    self.assertEqual(get_form_for_cycle(cycle), SeedApplicationForm)
 
   def test_standard_requirements(self):
     cycle = factories.GrantCycle()

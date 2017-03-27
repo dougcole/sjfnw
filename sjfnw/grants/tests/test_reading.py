@@ -57,7 +57,6 @@ class GrantReading(BaseGrantTestCase):
     self.assertEqual(res.status_code, 200)
     self.assertTemplateUsed(res, 'grants/reading.html')
     self.assertEqual(2, res.context['perm'])
-    self.assertContains(res, 'year end report')
 
   @skip('TODO fund factories')
   def test_valid_member_not_visible(self):
