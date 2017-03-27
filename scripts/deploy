@@ -72,7 +72,7 @@ fi
 
 cmd="appcfg.py update --env_variable=CLOUDSQL_PASSWORD:$pw"
 
-branch=$(git status | grep -o "On branch \([a-z\-]\+\)")
+branch=$(git status | grep -o "On branch \([a-z\-]\+\)" | grep -o "[a-z_/\-]\+$")
 if [ "$branch" = "master" ] ; then
   echo -e "\n${bold}3. Enter a version$reset to deploy to. Leave blank to use default version."
   read -rp "${indent}Version: " version
