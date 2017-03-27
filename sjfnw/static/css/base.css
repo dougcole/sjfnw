@@ -182,14 +182,18 @@ footer {
   width: 36.5%;
 }
 
+.empty:before {
+  content: "\00A0"; /* space */
+}
+
 /*---------------------------- Generic classes ------------------------------*/
 
 .main-link, .due {
   font-weight: bold;
 }
 
-.subtle-button {
-  background-color: #efefef;
+.text-button {
+  background-color: inherit;
   border: 1px #333;
   border-radius: 1px;
   color: #8B0E04;
