@@ -97,7 +97,6 @@ class CycleInfo(BaseGrantTestCase):
     self.assertEqual(res.status_code, 200)
     self.assertTemplateUsed(res, 'grants/cycle_info.html')
     self.assertContains(res, self.error_message)
-    self.assertContains(res, 'You can still continue')
     self.assertNotContains(res, 'facebook')
 
   def test_invalid_url(self):
@@ -138,10 +137,6 @@ class ApplySuccessful(BaseGrantFilesTestCase):
     self.login_as_org()
 
   def test_mult_budget(self):
-    """ scenario: budget1, budget2, budget3
-
-        verify: successful submission & files match  """
-
     draft = factories.DraftGrantApplication(organization=self.org)
     files = ['funding_sources.docx', 'diversity.doc', 'budget1.docx',
              'budget2.txt', 'budget3.png', '', '']
@@ -171,7 +166,6 @@ class ApplySuccessful(BaseGrantFilesTestCase):
     self.assertTemplateUsed(res, 'grants/submitted.html')
     self.assertEqual(draft_contents['mission'], self.org.mission)
 
-
 class ApplyBlocked(BaseGrantTestCase):
 
   def setUp(self):
@@ -181,7 +175,10 @@ class ApplyBlocked(BaseGrantTestCase):
   def test_closed_cycle(self):
     cycle = factories.GrantCycle(status='closed')
     res = self.client.get(_get_apply_url(cycle.pk))
-    self.assertEqual(200, res.status_code)
+    print(res.status_code)
+    if res.status_code == 302:
+      print(res.url)
+    self.assertEqual(res.status_code, 200)
     self.assertTemplateUsed(res, 'grants/closed.html')
 
   def test_upcoming(self):

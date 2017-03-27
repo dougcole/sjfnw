@@ -4,7 +4,8 @@ from django.forms import ValidationError
 from django.forms.utils import ErrorList
 
 from sjfnw.grants import constants as gc
-from sjfnw.grants.modelforms import GrantApplicationModelForm
+from sjfnw.grants.modelforms import (StandardApplicationForm,
+    SeedApplicationForm, RapidResponseApplicationForm)
 from sjfnw.grants.tests import factories
 from sjfnw.grants.tests.base import BaseGrantTestCase
 
@@ -12,10 +13,20 @@ ERR_REQUIRED = 'This field is required.'
 FULL_CHOICES_LENGTH = len(gc.STATUS_CHOICES) + 1 # 1 empty
 
 class GrantApplicationTypes(BaseGrantTestCase):
+  
+  def test_get_form(self):
+    cycle = factories.GrantCycle()
+    self.assertEqual(get_form_for_cycle(cycle), 'standard')
+
+    cycle = factories.GrantCycle(title='Rapid Response Cycle')
+    self.assertEqual(get_form_for_cycle(cycle), 'rapid')
+
+    cycle = factories.GrantCycle(title='Seed Grants')
+    self.assertEqual(get_form_for_cycle(cycle), 'seed')
 
   def test_standard_requirements(self):
     cycle = factories.GrantCycle()
-    form = GrantApplicationModelForm(cycle, {})
+    form = StandardApplicationForm(cycle, {})
 
     self.assert_length(form.fields['status'].choices, FULL_CHOICES_LENGTH - 1)
 
@@ -28,7 +39,7 @@ class GrantApplicationTypes(BaseGrantTestCase):
 
   def test_rapid(self):
     cycle = factories.GrantCycle(title='Rapid Response')
-    form = GrantApplicationModelForm(cycle, {})
+    form = RapidResponseApplicationForm(cycle, {})
 
     self.assert_length(form.fields['status'].choices, FULL_CHOICES_LENGTH)
 
@@ -38,9 +49,9 @@ class GrantApplicationTypes(BaseGrantTestCase):
     for field in ['budget1', 'budget2', 'budget3', 'funding_sources']:
       self.assertNotIn(field, form.errors)
 
-  def test_rapid(self):
+  def test_seed(self):
     cycle = factories.GrantCycle(title='Seed Cycle')
-    form = GrantApplicationModelForm(cycle, {})
+    form = SeedApplicationForm(cycle, {})
 
     self.assert_length(form.fields['status'].choices, FULL_CHOICES_LENGTH)
 
@@ -52,10 +63,9 @@ class GrantApplicationTimeline(BaseGrantTestCase):
 
   def setUp(self):
     cycle = factories.GrantCycle()
-    self.form = GrantApplicationModelForm(cycle)
+    self.form = StandardApplicationForm(cycle)
 
   def test_invalid_empty(self):
-
     timeline = ['', '', '', '', '', '', '', '', '', '', '', '', '', '', '']
     self.form.cleaned_data = {'timeline': json.dumps(timeline)}
 
@@ -99,7 +109,7 @@ class GrantApplicationCollabRefs(BaseGrantTestCase):
 
   def setUp(self):
     cycle = factories.GrantCycle()
-    self.form = GrantApplicationModelForm(cycle)
+    self.form = StandardApplicationForm(cycle)
 
   def test_valid(self):
     collab_refs = [
@@ -127,7 +137,7 @@ class GrantApplicationRJRefs(BaseGrantTestCase):
 
   def setUp(self):
     cycle = factories.GrantCycle()
-    self.form = GrantApplicationModelForm(cycle)
+    self.form = StandardApplicationForm(cycle)
 
   def test_invalid_partial(self):
     rj_refs = [

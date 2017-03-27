@@ -8,7 +8,7 @@ import factory
 from faker import Faker
 
 from sjfnw.fund.tests import factories as fund_factories
-from sjfnw.grants import constants as gc, models
+from sjfnw.grants import constants as gc, models, utils
 from sjfnw.tests.factories import User as UserFactory
 
 fake = Faker()
@@ -87,7 +87,7 @@ class GrantCycle(factory.django.DjangoModelFactory):
       return
 
     questions = questions or gc.STANDARD_NARRATIVES
-    if kwargs.get('add'):
+    if 'add' in kwargs:
       questions += kwargs['add']
 
     for i, q in enumerate(questions):
@@ -151,22 +151,7 @@ class GrantApplication(factory.django.DjangoModelFactory):
 
     cycle_narratives = models.CycleNarrative.objects.filter(grant_cycle=self.grant_cycle)
     for cn in cycle_narratives:
-      if cn.narrative_question.name == 'timeline':
-        text = json.dumps(['A', 'b', 'c', 'D', 'e', 'f', 'G', 'h', 'i'])
-      elif cn.narrative_question.name.endswith('_references'):
-        text = json.dumps([{
-          'name': fake.name(),
-          'org': fake.company(),
-          'phone': fake.phone_number(),
-          'email': fake.email()
-        }, {
-          'name': fake.name(),
-          'org': fake.company(),
-          'phone': fake.phone_number(),
-          'email': fake.email()
-        }])
-      else:
-        text = fake.paragraph()
+      text = json.dumps(generate_narrative_answer(cn.narrative_question.name))
       answer = models.NarrativeAnswer(cycle_narrative=cn, grant_application=self, text=text)
       answer.save()
 
@@ -196,6 +181,32 @@ class CycleNarrative(factory.django.DjangoModelFactory):
   class Meta:
     model = 'grants.CycleNarrative'
 
+
+def generate_narrative_answer(question_name, for_draft=False):
+  ls = None
+  if question_name == 'timeline':
+    ls = ['A', 'b', 'c', 'D', 'e', 'f', 'G', 'h', 'i']
+  elif question_name.endswith('_references'):
+    ls =  [{
+      'name': fake.name(),
+      'org': fake.company(),
+      'phone': fake.phone_number(),
+      'email': fake.email()
+      }, {
+      'name': fake.name(),
+      'org': fake.company(),
+      'phone': fake.phone_number(),
+      'email': fake.email()
+    }]
+    if for_draft:
+      ls = utils.flatten_references(ls)
+  if ls and for_draft:
+    result = {}
+    for i, item in enumerate(ls):
+      result['{}_{}'.format(question_name, i)] = item
+    return result
+  return ls or fake.paragraph()
+
 class DraftGrantApplication(factory.django.DjangoModelFactory):
 
   class Meta:
@@ -222,12 +233,12 @@ class DraftGrantApplication(factory.django.DjangoModelFactory):
     contents = model_to_dict(app, exclude=fields_to_exclude)
     qs = self.grant_cycle.narrative_questions.all()
     for q in qs:
-      if q.name == 'timeline':
-        tl = ['A', 'b', 'c', 'D', 'e', 'f', 'G', 'h', 'i', 'J', 'k', 'l']
-        for i in range(0, 12):
-          contents['timeline_{}'.format(i)] = tl[i]
+      result = generate_narrative_answer(q.name, for_draft=True)
+      if isinstance(result, (unicode, str)):
+        contents[q.name] = result
       else:
-        contents[q.name] = fake.paragraph()
+        contents.update(result)
+
     return json.dumps(contents)
 
 class ProjectApp(factory.django.DjangoModelFactory):

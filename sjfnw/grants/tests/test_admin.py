@@ -179,7 +179,7 @@ class MergeOrgs(BaseGrantTestCase):
     res = self.client.post(self.admin_url, post_data, follow=True)
 
     self.assertEqual(res.status_code, 200)
-    self.assertTemplateUsed(res, 'admin/grants/organization/change_list.html')
+    self.assertTemplateUsed(res, 'admin/change_list.html')
     self.assert_message(res, 'Merge can only be done on two organizations. You selected 1.')
 
   def test_start_triple_org(self):
@@ -195,7 +195,7 @@ class MergeOrgs(BaseGrantTestCase):
     res = self.client.post(self.admin_url, post_data, follow=True)
 
     self.assertEqual(res.status_code, 200)
-    self.assertTemplateUsed(res, 'admin/grants/organization/change_list.html')
+    self.assertTemplateUsed(res, 'admin/change_list.html')
     self.assert_message(res, 'Merge can only be done on two organizations. You selected 3.')
 
   def test_start_conflicting_drafts(self):
@@ -211,7 +211,7 @@ class MergeOrgs(BaseGrantTestCase):
     res = self.client.post(self.admin_url, post_data, follow=True)
 
     self.assertEqual(res.status_code, 200)
-    self.assertTemplateUsed(res, 'admin/grants/organization/change_list.html')
+    self.assertTemplateUsed(res, 'admin/change_list.html')
     self.assert_message(res, r'same grant cycle. Cannot be automatically merged.$', regex=True)
 
   def test_start_conflicting_apps(self):
@@ -227,7 +227,7 @@ class MergeOrgs(BaseGrantTestCase):
     res = self.client.post(self.admin_url, post_data, follow=True)
 
     self.assertEqual(res.status_code, 200)
-    self.assertTemplateUsed(res, 'admin/grants/organization/change_list.html')
+    self.assertTemplateUsed(res, 'admin/change_list.html')
     self.assert_message(res, r'same grant cycle. Cannot be automatically merged.$', regex=True)
 
   def test_start_valid_one_empty(self):

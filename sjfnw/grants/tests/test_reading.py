@@ -61,17 +61,18 @@ class GrantReading(BaseGrantTestCase):
   def test_valid_member_not_visible(self):
     self.login_as_member('first')
 
-    res = self.client.get(self.reading_url, follow=True)
+    res = self.client.get(self._get_url(1), follow=True)
 
     self.assertEqual(res.status_code, 200)
     self.assertTemplateUsed(res, 'grants/reading.html')
     self.assertEqual(1, res.context['perm'])
     self.assertNotContains(res, 'year end report')
 
+  @skip('TODO fund factories')
   def test_invalid_member_not_visible(self):
     self.login_as_member('blank')
 
-    res = self.client.get(self.reading_url, follow=True)
+    res = self.client.get(self._get_url(1), follow=True)
 
     self.assertEqual(res.status_code, 200)
     self.assertTemplateUsed(res, 'grants/reading.html')

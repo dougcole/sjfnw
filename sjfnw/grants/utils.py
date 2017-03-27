@@ -65,3 +65,9 @@ def delete_blob(file_field):
     return HttpResponse('deleted')
   else:
     return HttpResponse('nothing deleted')
+
+def flatten_references(refs):
+  result = []
+  for ref in refs:
+    result += [ref['name'], ref['org'], ref['phone'], ref['email']]
+  return result
