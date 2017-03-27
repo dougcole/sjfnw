@@ -40,30 +40,6 @@
   z-index: 1;
 }
 
-#changelist-wrapper {
-  width: 200px;
-  float: right;
-  position: absolute;
-  right: 0;
-  background-color: #eeeeee;
-  border: 1px solid #aaaaaa;
-}
-
-#changelist-filter {
-  display: none;
-  position: relative !important;
-}
-
-#filter-header {
-  padding: 7px 2px;
-  font-size: 12px;
-}
-
-#filter-toggle {
-  color: #fff;
-  float: right;
-}
-
 /* Columns with nested tables */
 .nested-column td {
   padding: 1px;
