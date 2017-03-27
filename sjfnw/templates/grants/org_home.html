@@ -33,143 +33,15 @@
 
   <h4>Saved drafts</h4>
 
-    <table class="org">
-      <tbody>
-
-      {% for draft in drafts %}
-        <tr>
-        {% if draft.editable %}
-          <td class="bullet">
-            {{ draft.grant_cycle }}
-          </td>
-          <td>
-            {% if draft.grant_cycle.info_page %}
-              <a href="/apply/info/{{ draft.grant_cycle.pk }}" target="_blank">Cycle info</a>
-            {% endif %}
-          </td>
-          <td>
-            <a href="/apply/{{ draft.grant_cycle.pk }}{{ user_override|default:'' }}"><b>Edit draft</b></a>
-          </td>
-          <td>
-            Last modified {{ draft.modified|date:"n/j" }}
-          </td>
-          <td class="due">
-            Due
-            {% if draft.extended_deadline %}
-              {{ draft.extended_deadline|date:"n/j g:iA"|lower }}
-            {% else %}
-              {{ draft.grant_cycle.close|date:"n/j g:iA"|lower }}
-            {% endif %}
-          </td>
-
-        {% else %}{# not editable #}
-          <td class="inactive bullet">
-            {{ draft.grant_cycle }}
-          </td>
-          <td colspan="4" class="inactive">
-            Closed {{ draft.grant_cycle.close|date:"n/j" }}
-          </td>
-        {% endif %}
-
-        <td>
-          [<a title="discard draft" onclick="confirmation('{{ draft.pk }}', '{{ draft.grant_cycle }}')">Discard</a>]
-        </td>
-
-      </tr>
-      {% endfor %}
-
-      {% for draft in ydrafts %}
-      <tr>
-        <td class="bullet">
-          Year end report - {{ draft.award.projectapp.giving_project }}
-        </td>
-        <td></td>
-        <td>
-          <b><a href="/report/{{ draft.award_id }}{{ user_override|default:'' }}">Edit draft</a></b>
-        </td>
-        <td>
-          Last modified {{ draft.modified|date:"n/j" }}
-        </td>
-        {% if draft.award.next_yer_due %}
-          <td class="due">
-          {% if draft.is_overdue %}
-            <span style="color:red">Past due</span>
-          {% else %}
-            Due
-          {% endif %}
-          {{ draft.award.next_yer_due|date:"n/j/y" }}
-          </td>
-        {% endif %}
-        <td></td>
-      </tr>
-      {% endfor %}
-
-      {% if not drafts and not ydrafts %}
-        No saved drafts found
-      {% endif %}
-    </tbody>
-  </table>
+  {% include 'grants/includes/list_drafts.html' %}
+  {% include 'grants/includes/list_yer_drafts.html' %}
+  {% if not drafts and not ydrafts %}
+    <p>No saved drafts found</p>
+  {% endif %}
 
   <h4>Submitted applications</h4>
 
-  {% if submitted %}
-    <table class="org">
-    {% for sub in submitted %}
-      <tr>
-        <td class="bullet">
-          {{ sub.grant_cycle }}
-        </td>
-        <td>
-          <a href="/grants/view/{{ sub.pk }}">View submitted application</a>
-        </td>
-        <td>
-          Submitted {{ sub.submission_time|date:"n/j/y" }}
-        </td>
-      </tr>
-
-      {% for award in sub.awards %}
-      <tr>
-        <td></td>
-        <td>{{ award }}</td>
-        <td>
-          {% if award.agreement_mailed %}
-            Agreement mailed {{ award.agreement_mailed|date:"n/j/y" }},
-            {% if award.agreement_returned %}
-              returned {{ award.agreement_returned|date:"n/j/y" }}.
-            {% else %}
-              <span class="due">due {{ award.agreement_due|date:"n/j/y" }}</span>.
-            {% endif %}
-          {% endif %}
-        </td>
-      </tr>
-      <tr>
-        <td></td>
-        <td>
-          {% for yer in award.yearendreport_set.all %}
-            {% if forloop.counter > 1 %}<br>{% endif %}
-            <a href="{% url 'sjfnw.grants.views.view_yer' report_id=yer.pk %}">Year end report</a> submitted {{ yer.submitted|date:"n/j/y" }}.
-          {% endfor %}
-
-	  {% now "Y-m-d" as todays_date %}
-	  {% for single_yer_due in award.yers_due %}
-	    {% if forloop.first %}
-	      <div class="due"> <a href="/report/{{ award.pk }}{{ user_override|default:'' }}">Year end report</a>
-	    {% else %}
-	      <div>Year end report
-	    {% endif %}
-	    {% if todays_date > single_yer_due|date:"Y-m-d" %}
-	      <span style="color:red">past</span>
-	    {% endif %}
-	    due {{ single_yer_due|date:"n/j/y" }}</div>
-          {% endfor %}
-        </td>
-      </tr>
-    {% endfor %}{# awards #}
-  {% endfor %}{# submitted #}
-  </table>
-  {% else %}{# no submitted #}
-    None found
-  {% endif %}
+  {% include 'grants/includes/list_submitted.html' %}
 
   <h4>Tools</h4>
   <ul>
@@ -185,53 +57,13 @@
 
   <h4>Currently accepting applications</h4>
 
-  {% if open or applied %}
-    <table class="org">
-    {% for ope in open %}
-      <tr><td>{{ ope }}</td>
-      <td>{% if ope.info_page %}<a href="/apply/info/{{ ope.pk }}" target="_blank">Cycle info</a>{% endif %}</td>
-      <td><b><a href="/apply/{{ ope.pk }}{{ user_override|default:'' }}">Apply</a></b></td>
-      <td>Closes {{ ope.close|date:"n/j/y" }}</a></td>
-      </tr>
-    {% endfor %}
-    {% for appl in applied %}
-      <tr><td>{{ appl }}</td>
-      <td>{% if appl.info_page %}<a href="/apply/info/{{ appl.pk }}" target="_blank">Cycle info</a>{% endif %}</td>
-      <td>Application submitted</td>
-      <td>Closes {{ appl.close|date:"n/j/y" }}</td>
-      </tr>
-    {% endfor %}
-    </table>
-  {% else %}
-    No grants are being accepted at this time.
-  {% endif %}
+  {% include 'grants/includes/list_cycles.html' with cycles=open status='open' empty_text='No grants are being accepted at this time.' %}
 
   <h4>Upcoming grant cycles</h4>
-  <table class="org">
-  {%for up in upcoming%}
-    <tr>
-      <td>{% if up.info_page %}<a href="/apply/info/{{ up.pk }}" target="_blank">{{ up }}</a>{% else %}{{ up }}{% endif %}</td>
-    <td>Open {{ up.open|date:"n/j/y" }} to {{ up.close|date:"n/j/y" }}</td>
-    </tr>
-  {% empty %}
-    <tr><td>No upcoming grant cycles.</td></tr>
-  {% endfor %}
-  </table>
+  {% include 'grants/includes/list_cycles.html' with cycles=upcoming status='upcoming' empty_text='No upcoming grant cycles found.' %}
 
   <h4>Recently closed grant cycles</h4>
-  <table class="org">
-  {%for cl in closed%}
-    <tr>
-      <td>{{ cl }}</td>
-      <td>open {{ cl.open|date:"n/j/y" }} to {{ cl.close|date:"n/j/y" }}</td>
-    </tr>
-  {% empty %}
-    <tr>
-      <td>No grant cycles closed in the last 6 months.</td>
-    </tr>
-  {% endfor %}
-  </table>
+  {% include 'grants/includes/list_cycles.html' with cycles=closed status='closed' empty_text='No grant cycles closed in the last 6 months.' %}
 </div>
 
-{% include 'grants/includes/home_eligibility.html' %}
 {% endblock content %}

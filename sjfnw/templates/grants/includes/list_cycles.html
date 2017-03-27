@@ -1,0 +1,25 @@
+{% for cycle in cycles %}
+  <div class="row">
+    <div class="col col-1of2">
+      <a href="/apply/info/{{ cycle.pk }}" target="_blank">{{ cycle }}</a>
+    </div>
+    <div class="col col-1of4">
+      {% if cycle.applied %}
+        <i>Application submitted</i>
+      {% elif status == 'open' %}
+        <b><a href="/apply/{{ cycle.pk }}{{ user_override|default:'' }}">Apply</a></b>
+      {% else %}
+        &nbsp;
+      {% endif %}
+    </div>
+    <div class="col col-1of4">
+      {% if status == 'open' %}
+        {{ cycle.get_close_display }}
+      {% else %}
+        {{ cycle.get_open_display }}
+      {% endif %}
+    </div>
+  </div>
+{% empty %}
+  {{ empty_text }}
+{% endfor %}

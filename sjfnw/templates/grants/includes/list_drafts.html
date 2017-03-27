@@ -1,0 +1,29 @@
+{% for draft in drafts %}
+  <div class="row{% if not draft.editable %} inactive{% endif %}">
+    <div class="col col-3of8 main">
+       <a href="/apply/info/{{ draft.grant_cycle.pk }}" target="_blank">
+         {{ draft.grant_cycle }}
+       </a>
+    </div>
+    {% if draft.editable %}
+      <div class="col col-1of8">
+        <b><a href="/apply/{{ draft.grant_cycle.pk }}{{ user_override|default:'' }}">Edit draft</a></b>
+      </div>
+      <div class="col col-1of8">Updated {{ draft.modified|date:"n/j" }}</div>
+      <div class="col col-1of4">
+        {% if draft.extended_deadline %}
+          <b>Due {{ draft.extended_deadline|date:"n/j g:iA"|lower }}</b>
+        {% else %}
+          {{ draft.grant_cycle.get_close_display|safe }}
+        {% endif %}
+      </div>
+    {% else %}
+      <div class="col col-1of2">
+        Cycle closed {{ draft.grant_cycle.close|date:"n/j" }}
+      </div>
+    {% endif %}
+    <div class="col col-1of8">
+      <button class="subtle-button" title="discard draft" onclick="confirmation('{{ draft.pk }}', '{{ draft.grant_cycle }}')">Discard</button>
+    </div>
+  </div>
+{% endfor %}

@@ -3,19 +3,23 @@
 {% block title %}Grant cycle information | {{block.super}}{% endblock %}
 
 {% block content %}
-<h2 class="text-center">Please review the information below before beginning the application</h2>
-
+<div class="text-center">
+<h2>{{ cycle.title }}</h2>
+<p class="subheading"><i>{{ cycle.get_open_display }}</i></p>
 {% if cycle.is_open %}
-  {% include 'grants/includes/continue_to_application.html' %}
-  <hr>
+  <h4>
+    Please review the information below before beginning the application
+  </h4>
 {% endif %}
+</div>
 
+<hr>
 <div id="cycle-info">
   {{ content|safe }}
 </div>
+<hr>
 
 {% if cycle.is_open %}
-  <hr>
   {% include 'grants/includes/continue_to_application.html' %}
 {% endif %}
 

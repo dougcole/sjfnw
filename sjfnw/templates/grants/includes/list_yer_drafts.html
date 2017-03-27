@@ -1,0 +1,26 @@
+{% for draft in ydrafts %}
+  <div class="row">
+    <div class="col col-3of8 main">
+      Year-end report - {{ draft.award.projectapp.giving_project }}
+    </div>
+    <div class="col col-1of8">
+      <b><a href="/report/{{ draft.award.pk }}{{ user_override|default:'' }}">Edit draft</a></b>
+    </div>
+    <div class="col col-1of8">Updated {{ draft.modified|date:"n/j" }}</div>
+    <div class="col col-1of4">
+      {% if draft.extended_deadline %}
+        <b>Due {{ draft.extended_deadline|date:"n/j g:iA"|lower }}</b>
+      {% else %}
+        {{ draft.grant_cycle.get_close_display|safe }}
+      {% endif %}
+    </div>
+    {% if draft.award.next_yer_due %}
+      <div class="col col-1of4">
+        {{ draft.is_overdue|yesno:'Past due,Due' }} {{ draft.award.next_yer_due|date:"n/j/y" }}
+      </div>
+    {% endif %}
+    <div class="col col-1of8">
+      <button class="subtle-button" title="discard draft" onclick="confirmation('{{ draft.pk }}', '{{ draft.grant_cycle }}')">Discard</button>
+    </div>
+  </div>
+{% endfor %}

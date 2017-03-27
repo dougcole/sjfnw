@@ -226,9 +226,21 @@ class GrantCycle(models.Model):
   def get_type(self):
     if 'Rapid Response' in self.title:
       return 'rapid'
-    elif 'Seed ' in self.title:
+    elif 'Seed' in self.title:
       return 'seed'
     return 'standard'
+
+  def get_open_display(self):
+    if self.get_type() == 'standard':
+      return 'Open {:%m/%d/%y} to {:%m/%d/%y}'.format(self.open, self.close)
+    return self.get_close_display()
+
+  def get_close_display(self):
+    cycle_type = self.get_type()
+    if cycle_type == 'standard':
+      return 'Closes {:%b %d %I:%M %p}'.format(self.close)
+    else:
+      return 'Next review cutoff: {:%b %d}'.format(self.close)
 
 
 class CycleNarrative(models.Model):

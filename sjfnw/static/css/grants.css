@@ -53,10 +53,6 @@ table.org td {
   background: white;
 }
 
-.due {
-  font-weight: bold;
-}
-
 .bullet::before {
   content: ' • ';
 }

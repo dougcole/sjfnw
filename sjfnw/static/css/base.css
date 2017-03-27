@@ -96,6 +96,10 @@ a:hover, a:focus {
   text-decoration: underline;
 }
 
+button {
+  cursor: pointer;
+}
+
 footer {
   padding: .5em .5em 1em .5em;
 }
@@ -170,7 +174,26 @@ footer {
   width: 15.3%;
 }
 
+.col-1of8 {
+  width: 11.1%;
+}
+
+.col-3of8 {
+  width: 36.5%;
+}
+
 /*---------------------------- Generic classes ------------------------------*/
+
+.main-link, .due {
+  font-weight: bold;
+}
+
+.subtle-button {
+  background-color: #efefef;
+  border: 1px #333;
+  border-radius: 1px;
+  color: #8B0E04;
+}
 
 .center {
   margin-left: auto;
@@ -211,6 +234,9 @@ footer {
   padding: 3px;
 }
 
+.subheading {
+  margin-top: -10px;
+}
 /*---------------------- Shared specific classes/ids ------------------------*/
 
 .input-s {

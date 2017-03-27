@@ -112,8 +112,7 @@ def org_support(request):
 
 def _fetch_cycle_info(url):
   if not re.search(r'https?://(www.)?socialjusticefund.org', url):
-    return ('<h4>Grant cycle information page could not be loaded</h4>'
-            '<p>You can still continue to the application form.</p>')
+    return ('<h4>Grant cycle information page could not be loaded</h4>')
   try:
     info_page = urllib2.urlopen(url)
   except (urllib2.URLError, ValueError) as err:
@@ -166,52 +165,48 @@ def not_registered(request):
 @login_required(login_url=LOGIN_URL)
 @registered_org()
 def org_home(request, org):
+  """ Home page shows overview of grant cycles and org's apps and drafts """
 
-  # get submitted & draft grant applications
   submitted = org.grantapplication_set.order_by('-submission_time')
-  submitted_cycles = submitted.values_list('grant_cycle', flat=True)
-  submitted_ids = submitted.values_list('id', flat=True)
+  submitted_by_id = {}
+  submitted_cycles = []
+  for app in submitted:
+    app.awards = []
+    submitted_cycles.append(app.grant_cycle.pk)
+    submitted_by_id[app.pk] = app
+
+  print('submitted_cycles', submitted_cycles)
+
+  awards = (models.GivingProjectGrant.objects
+      .filter(projectapp__application__in=submitted)
+      .select_related('projectapp')
+      .prefetch_related('yearendreport_set', 'yerdraft_set'))
+  ydrafts = []
+  for award in awards:
+    submitted_by_id[award.projectapp.application_id].awards.append(award)
+    ydrafts += award.yerdraft_set.all()
+
   drafts = org.draftgrantapplication_set.select_related('grant_cycle')
 
-  # get grant cycles and group by status
   cycles = (models.GrantCycle.objects
       .exclude(private=True)
       .filter(close__gt=timezone.now() - timedelta(days=180))
-      .order_by('open'))
+      .order_by('close'))
 
-  closed, current, applied, upcoming = [], [], [], []
+  closed, current, upcoming = [], [], []
   for cycle in cycles:
+    print('checking', cycle)
+    if cycle.pk in submitted_cycles:
+      print('found one', cycle)
+      cycle.applied = True
+
     status = cycle.get_status()
     if status == 'open':
-      if cycle.pk in submitted_cycles:
-        applied.append(cycle)
-      else:
-        current.append(cycle)
+      current.append(cycle)
     elif status == 'closed':
       closed.append(cycle)
     elif status == 'upcoming':
       upcoming.append(cycle)
-
-  # get awards
-  awards = (models.GivingProjectGrant.objects
-      .filter(projectapp__application_id__in=submitted_ids)
-      .select_related('projectapp')
-      .prefetch_related('yearendreport_set', 'yerdraft_set'))
-
-  # organize awards by app; get list of YER drafts
-  ydrafts = []
-  award_set = {}
-  for award in awards:
-    app_id = int(award.projectapp.application_id)
-    ydrafts += award.yerdraft_set.all()
-    if app_id in award_set:
-      award_set[app_id].append(award)
-    else:
-      award_set[app_id] = [award]
-
-  for sub in submitted:
-    if sub.pk in award_set:
-      sub.awards = award_set[sub.pk]
 
   return render(request, 'grants/org_home.html', {
     'organization': org,
@@ -222,7 +217,6 @@ def org_home(request, org):
     'closed': closed,
     'open': current,
     'upcoming': upcoming,
-    'applied': applied,
     'user_override': get_user_override(request)
   })
 
@@ -326,6 +320,8 @@ def grant_application(request, organization, cycle_id):
 
       for cn in models.CycleNarrative.objects.filter(grant_cycle=cycle).select_related('narrative_question'):
         text = form.cleaned_data.get(cn.narrative_question.name)
+        if not text:
+          print('MISSING ' + cn.narrative_question.name)
         answer = models.NarrativeAnswer(cycle_narrative=cn, grant_application=application, text=text)
         answer.save()
 
