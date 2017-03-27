@@ -26,7 +26,7 @@ from sjfnw.grants.decorators import registered_org
 from sjfnw.grants.forms import (AdminRolloverForm, LoginAsOrgForm, LoginForm,
    AppReportForm, SponsoredAwardReportForm, GPGrantReportForm, OrgReportForm,
    RegisterForm, RolloverForm, RolloverYERForm, OrgMergeForm)
-from sjfnw.grants.modelforms import GrantApplicationModelForm, YearEndReportForm
+from sjfnw.grants.modelforms import get_form_for_cycle, YearEndReportForm
 from sjfnw.grants.utils import local_date_str, find_blobinfo, get_user_override
 
 logger = logging.getLogger('sjfnw')
@@ -317,7 +317,7 @@ def grant_application(request, organization, cycle_id):
     draft_data['organization'] = organization.pk
     draft_data['grant_cycle'] = cycle.pk
 
-    form = GrantApplicationModelForm(cycle, draft_data, files_data)
+    form = get_form_for_cycle(cycle)(cycle, draft_data, files_data)
 
     if form.is_valid():
       logger.info('Application form valid')
@@ -367,7 +367,7 @@ def grant_application(request, organization, cycle_id):
       profiled = _autofill_draft(draft)
 
     org_dict = _load_draft(draft)
-    form = GrantApplicationModelForm(cycle, initial=org_dict)
+    form = get_form_for_cycle(cycle)(cycle, initial=org_dict)
 
   # get draft files
   file_urls = get_file_urls(request, draft)
@@ -775,7 +775,7 @@ def view_application(request, app_id):
     perm = _view_permission(request.user, app)
   logger.info('perm is ' + str(perm))
 
-  form = GrantApplicationModelForm(app.grant_cycle)
+  form = get_form_for_cycle(app.grant_cycle)(app.grant_cycle)
 
   form_only = request.GET.get('form')
   if form_only:

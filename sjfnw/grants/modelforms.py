@@ -9,7 +9,7 @@ from django.utils.safestring import mark_safe
 from django.utils.text import capfirst
 
 from sjfnw.forms import IntegerCommaField, PhoneNumberField
-from sjfnw.grants import constants as gc
+from sjfnw.grants import constants as gc, utils
 from sjfnw.grants.models import (Organization, GrantApplication, DraftGrantApplication,
     YearEndReport, NarrativeQuestion, CycleNarrative)
 
@@ -34,8 +34,6 @@ class NarrativeQuestionForm(forms.ModelForm):
 
   def __init__(self, *args, **kwargs):
     # convert date field to boolean display
-    print('__init__')
-    print(kwargs)
     # instance may be missing or None
     if kwargs.get('instance', None) and kwargs['instance'].archived:
       kwargs['initial'] = {'archived': True}
@@ -54,7 +52,6 @@ class NarrativeQuestionForm(forms.ModelForm):
     else: # no change
       self.cleaned_data['archived'] = was_archived
     super(NarrativeQuestionForm, self).clean(*args, **kwargs)
-    print(self.cleaned_data)
 
     # disallow unarchived question with same name/version as another
     name = self.cleaned_data.get('name')
@@ -141,7 +138,6 @@ class TimelineWidget(forms.widgets.MultiWidget):
     val_list = []
     for i, widget in enumerate(self.widgets):
       val_list.append(widget.value_from_datadict(data, files, '{}_{}'.format(name, i)))
-    print('Timeline value is ', json.dumps(val_list))
     return json.dumps(val_list)
 
 
@@ -183,14 +179,6 @@ class GrantApplicationModelForm(forms.ModelForm):
     if cycle.amount_note:
       self.fields['amount_requested'].label += ' ({})'.format(cycle.amount_note)
 
-    # TODO hacky
-    if cycle.get_type() == 'standard':
-      self.fields['status'].choices = self.fields['status'].choices[:-1]
-      for field in ['budget1', 'budget2', 'budget3', 'demographics', 'funding_sources']:
-        self.fields[field].required = True
-    elif cycle.get_type() == 'rapid':
-      self.fields['demographics'].required = True
-
     narratives = cycle.narrative_questions.order_by('cyclenarrative__order')
     self._narrative_fields = []
 
@@ -204,7 +192,7 @@ class GrantApplicationModelForm(forms.ModelForm):
           'class': 'wordlimited',
           'data-limit': n.word_limit
         })
-      field = forms.CharField(label=n.text, widget=widget)
+      field = forms.CharField(label=n.text, widget=widget, required=True)
       self.fields[n.name] = field
       self._narrative_fields.append(n.name)
 
@@ -222,17 +210,16 @@ class GrantApplicationModelForm(forms.ModelForm):
   def clean_racial_justice_references(self):
     rj_refs = json.loads(self.cleaned_data.get('racial_justice_references'))
     msg = 'Please include a name, organization, and phone or email for each reference you include.'
-    for i in [0, 1]:
-      if len(rj_refs) <= i:
-        return
-      ref = rj_refs[i]
+    for ref in rj_refs:
       name = ref.get('name')
       org = ref.get('org')
       phone = ref.get('phone')
       email = ref.get('email')
       has_any = name or org or phone or email
-      if has_any and (not name or not org or (not phone and not email)):
+      if has_any and not (name and org and (phone or email)):
         raise ValidationError(msg)
+
+    return self.cleaned_data.get('racial_justice_references')
 
   def clean_timeline(self):
     timeline = json.loads(self.cleaned_data.get('timeline'))
@@ -253,8 +240,7 @@ class GrantApplicationModelForm(forms.ModelForm):
     super(GrantApplicationModelForm, self).clean()
 
     # project - require title & budget if type
-    support_type = self.cleaned_data.get('support_type')
-    if support_type == 'Project support':
+    if self.cleaned_data.get('support_type', '') == 'Project support':
       if not self.cleaned_data.get('project_budget'):
         self._errors['project_budget'] = _form_error(
             'This field is required when applying for project support.')
@@ -299,6 +285,50 @@ class GrantApplicationModelForm(forms.ModelForm):
     return [self[n] for n in self._narrative_fields]
 
 
+class SeedApplicationForm(GrantApplicationModelForm):
+
+  class Meta(GrantApplicationModelForm.Meta):
+    exclude = GrantApplicationModelForm.Meta.exclude + [
+      'support_type', 'budget1', 'budget2', 'budget3',
+      'demographics', 'funding_sources', 'project_title', 'project_budget',
+      'project_budget_file'
+    ]
+
+class RapidResponseApplicationForm(GrantApplicationModelForm):
+
+  class Meta(GrantApplicationModelForm.Meta):
+    exclude = GrantApplicationModelForm.Meta.exclude + [
+      'support_type', 'budget1', 'budget2', 'budget3', 'funding_sources',
+      'project_budget_file'
+    ]
+
+  def __init__(self, *args, **kwargs):
+    super(RapidResponseApplicationForm, self).__init__(*args, **kwargs)
+    self.fields['demographics'].required = True
+    self.fields['support_type'].readonly = True
+    kwargs.setdefault(['initial'], {})
+    kwargs['initial'].setdefault('support_type', 'Project support')
+
+class StandardApplicationForm(GrantApplicationModelForm):
+
+  def __init__(self, *args, **kwargs):
+    super(StandardApplicationForm, self).__init__(*args, **kwargs)
+    self.fields['status'].choices = self.fields['status'].choices[:-1]
+    for field in ['support_type', 'budget1', 'budget2', 'budget3', 'demographics', 'funding_sources']:
+      self.fields[field].required = True
+    kwargs.setdefault('initial', {})
+    kwargs['initial'].setdefault('support_type', 'General support')
+
+def get_form_for_cycle(cycle):
+  cycle_type = cycle.get_type()
+  if cycle_type == 'standard':
+    return StandardApplicationForm
+  elif cycle_type == 'rapid':
+    return RapidResponseApplicationForm
+  else:
+    return SeedApplicationForm
+
+
 class ReferencesMultiWidget(forms.widgets.MultiWidget):
   """ Displays fields for entering 2 references (collab/racial justice)
    Stored in DB as single JSON string """
@@ -322,13 +352,7 @@ class ReferencesMultiWidget(forms.widgets.MultiWidget):
         returns: list of values to be displayed in widgets """
 
     if value:
-      print('ReferencesMultiWidget')
-      print(value)
-      refs = json.loads(value)
-      vals = []
-      for ref in refs:
-        vals += [ref['name'], ref['org'], ref['phone'], ref['email']]
-      return vals
+      vals = utils.flatten_references(json.loads(value))
     return [None for _ in range(0, 8)]
 
   def format_output(self, rendered_widgets):
@@ -368,7 +392,6 @@ class ReferencesMultiWidget(forms.widgets.MultiWidget):
         'email': data.get(u'{}_{}'.format(name, j + 3)),
       })
 
-    print(u'ReferencesMultiWidget value is', json.dumps(values))
     return json.dumps(values)
 
 
