@@ -110,8 +110,8 @@ FILE_UPLOAD_HANDLERS = ('sjfnw.grants.storage.BlobstoreFileUploadHandler',)
 TEST_RUNNER = 'sjfnw.tests.base.ColorTestSuiteRunner'
 
 # Determines whether site is in maintenance mode. See urls.py
-MAINTENANCE = False
+MAINTENANCE = True
 # Date and/or time when site is expected to be out of maintenance mode.
 # For display only (does not automatically end maintenance mode)
 # See maintenance.html. Example: 'Sunday February 5 at 9:45am PST'
-MAINTENANCE_END_DISPLAY = ''
+MAINTENANCE_END_DISPLAY = 'March 26th by 11pm'
