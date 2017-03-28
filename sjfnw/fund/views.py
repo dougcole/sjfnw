@@ -1033,6 +1033,7 @@ def _get_block_content(membership, get_steps=True):
   gp_apps = (ProjectApp.objects
       .filter(giving_project=membership.giving_project)
       .exclude(application__pre_screening_status=45) # subcommittee screened out
+      .exclude(application__pre_screening_status=130) # closed
       .select_related('giving_project', 'application__organization')
       .order_by('application__organization__name'))
   if membership.giving_project.site_visits == 1:
