@@ -290,7 +290,7 @@ class SeedApplicationForm(GrantApplicationModelForm):
   class Meta(GrantApplicationModelForm.Meta):
     exclude = GrantApplicationModelForm.Meta.exclude + [
       'support_type', 'budget1', 'budget2', 'budget3',
-      'demographics', 'funding_sources', 'project_title', 'project_budget',
+      'funding_sources', 'project_title', 'project_budget',
       'project_budget_file'
     ]
 
@@ -309,7 +309,6 @@ class RapidResponseApplicationForm(GrantApplicationModelForm):
     kwargs.setdefault('initial', {})
     kwargs['initial'].setdefault('support_type', 'Project support')
     super(RapidResponseApplicationForm, self).__init__(*args, **kwargs)
-    self.fields['demographics'].required = True
     self.fields['support_type'].widget.attrs['readonly'] = True
 
 class StandardApplicationForm(GrantApplicationModelForm):

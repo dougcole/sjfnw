@@ -445,7 +445,6 @@ class GrantApplication(models.Model):
     validators=[validate_file_extension]
   )
   demographics = BasicFileField(
-    blank=True,
     validators=[validate_file_extension],
     verbose_name='Diversity chart'
   )
