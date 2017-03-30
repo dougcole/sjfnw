@@ -5,134 +5,88 @@
 <script type="text/javascript" src="/static/js/forms.js"></script>
 <script type="text/javascript" src="//ajax.googleapis.com/ajax/libs/jqueryui/1.10.3/jquery-ui.min.js"></script>
 <script type="text/javascript">
+  $(document).ready(function() {
 
-var user_id = '';
-
-function setUserID() {
-  var chars = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
-  var result = '';
-  for (var i = 16; i > 0; --i){
-    result += chars[Math.round(Math.random() * (chars.length - 1))];
-  }
-  user_id = result;
-  return user_id;
-}
-
-/**
- * Show modal with conflict warning.
- *
- * @param {number} trigger - what is triggering the warning
- *   determines which dialog to show. valid options: 'open', 'autosave'
- */
-function showConflictWarning(trigger){
-  if (trigger !== 'open' && trigger !== 'autosave') {
-    return;
-  }
-  // scroll to top so they don't miss the modal
-  window.scrollTo(0, 0);
-
-  const elId = '#override_dialog_' + trigger;
-
-  $(elId).dialog({
-    title: 'Warning: simultaneous editing',
-    modal: true,
-    buttons: [
-      {
-        text:'Proceed anyway',
-        click: function(){
-          $(elId).dialog("close");
-          autoSave.save(false, true);
-          autoSave.resume();
-        }
-      },{
-        text:'Cancel',
-        click: function (){
-          location.href = '/apply/';
-        }
+    function createUserId() {
+      var chars = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
+      var result = '';
+      for (var i = 16; i > 0; --i){
+        result += chars[Math.round(Math.random() * (chars.length - 1))];
       }
-    ],
-    closeOnEscape: false,
-    resizable: false,
-    position: {my: 'top', at: 'top', of: '#org-wrapper'},
-    width: 400
+      return result;
+    }
+
+    function showConflictWarning() {
+      // scroll to top so they don't miss the modal
+      window.scrollTo(0, 0);
+
+      $('#override-dialog').dialog({
+        title: 'Warning: simultaneous editing',
+        modal: true,
+        buttons: [
+          {
+            text: 'Proceed anyway',
+            click: function() {
+              $(this).dialog('close');
+              autoSave.save({ force: true });
+              autoSave.resume();
+            }
+          }, {
+            text: 'Cancel',
+            click: function () {
+              location.href = '/apply/';
+            }
+          }
+        ],
+        closeOnEscape: false,
+        resizable: false,
+        position: {my: 'top', at: 'top', of: '#org-wrapper'},
+        width: 400
+      });
+    }
+
+    function setInfoClicks(){
+      console.log('setInfoClicks');
+      $('.has-more-info').each(function () {
+          if (this.id) {
+            this.onclick = function() {
+              $('#' + this.id + '-info').show();
+            };
+          }
+      });
+      $('.more-info').each(function () {
+        this.innerHTML = this.innerHTML + '<div class="more-info-hide">click to hide</div>';
+        this.onclick = function () {
+          $(this).hide();
+        };
+      });
+    }
+
+    formUtils.init('apply', {{ draft.pk }}, {{ cycle.pk }}, createUserId(), '{{ user_override|default:"" }}');
+
+    var word_limited = $('textarea.wordlimited');
+    word_limited.on('keyup', updateWordCount)
+    word_limited.keyup();
+
+    //check whether it was edited recently -- show override confirmation
+    if ('{{ flag }}' == 'True'){
+      autoSave.pause();
+      showConflictWarning('open');
+    }
+    // more info toggles
+    setInfoClicks();
   });
-}
-
-
-function showMoreInfo(show_id) {
-  div = show_id + '-info';
-  console.log('showing ' + div);
-  div = document.getElementById(div);
-  if (div) {
-    console.log(div);
-    div.style.display = 'block';
-  } else {
-    console.error('info to show not found');
-  }
-}
-
-function hide(id) {
-  div = document.getElementById(id);
-  if (div) {
-    div.style.display = 'none';
-  } else {
-    console.error('Div to hide not found');
-  }
-}
-
-function setInfoClicks(){
-  console.log('setInfoClicks');
-  $('.has-more-info').each(function(index) {
-      if (this.id) {
-        this.onclick = function(){ showMoreInfo(this.id); };
-        console.log('Linked ' + this.id);
-      } else {
-        console.log('Error - has-more-info without an id');
-      }
-  });
-  $('.more-info').each(function(i) {
-      this.innerHTML = this.innerHTML + '<div class="more-info-hide">click to hide</div>';
-      this.onclick = function() { hide(this.id); };
-  });
-}
-
-$(document).ready(function() {
-  formUtils.init('apply', {{ draft.pk }}, {{ cycle.pk }}, setUserID(), '{{ user_override|default:"" }}');
-
-  var word_limited = $('textarea.wordlimited');
-  word_limited.on('keyup', updateWordCount)
-  word_limited.keyup();
-
-  //check whether it was edited recently -- show override confirmation
-  if ('{{ flag }}' == 'True'){
-    autoSave.pause();
-    showOverrideWarning(1);
-  }
-  // more info toggles
-  setInfoClicks();
-});
-
 </script>
 {% endblock script %}
 
 {% block content %}
 {% load tz %}
 
-<div id="override_dialog_open" style="display:none;">
+<div id="override-dialog hidden">
   <input type="hidden" autofocus="autofocus" />
   You may be seeing this message because:
   <ul>
     <li>You just refreshed this page or closed and re-opened it</li>
-    <li>You have this page open in another tab or window</li>
-    <li>Someone else has this application form open</li>
-  </ul>
-  Only one person should work on an application at a time.  If you proceed, your saves will overwrite any other changes that are being made from other sources.
-</div>
-
-<div id="override_dialog_autosave" style="display:none;">
-  <input type="hidden" autofocus="autofocus" />
-  The last autosave did not complete due to a potential conflict.  You may be seeing this if:
-  <ul>
     <li>You have this application open in another tab or window</li>
     <li>Someone else in your org has started editing this application</li>
   </ul>
@@ -261,7 +215,7 @@ $(document).ready(function() {
   <div align="center">
     <img class="ajax-loading" src="/static/images/ajaxloader.gif" style="display:none;">
     <br>
-    <button class="submit" onclick="autoSave.save(true);">Submit application</button>
+    <button class="submit" onclick="autoSave.save({ submit: true });">Submit application</button>
     {% include 'grants/includes/last_saved.html' with interval=60 %}
   </div>
 </div>

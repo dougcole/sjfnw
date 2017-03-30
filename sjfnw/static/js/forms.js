@@ -171,48 +171,57 @@ autoSave.resume = function (firstTime) {
   }
 };
 
-autoSave.save = function (submit, force) {
-  if (formUtils.staffUser) { // TODO use querystring function
-    force = '&force=' + force || 'false';
-  } else {
-    force = '?force=' + force || 'false';
+/**
+ * Save the current draft by sending form data to server.
+ *
+ * @param {Object} options
+ *   @param {boolean} options.force (optional) - override conflict warning
+ *   @param {boolean} options.submit (optional) - whether submit button was clicked
+ */
+autoSave.save = function (options) {
+  options = options || {};
+  options.force = options.force || options.submit; // use force when submitting
+
+  var qs = '';
+
+  if (options.force) {
+    qs += formUtils.staffUser ? '&' : '?'; // TODO use querystring function
+    qs += 'force=' + options.force;
   }
 
   formUtils.log('Autosaving');
 
   $.ajax({
-    url: autoSave.saveUrl + force,
+    url: autoSave.saveUrl + qs,
     type: 'POST',
     data: $('form').serialize() + '&user_id=' + autoSave.userId,
-    success: function(data, textStatus, jqXHR) {
+    success: function (data, textStatus, jqXHR) {
       if (jqXHR.status === 200) {
-        if (submit) {
+        if (options.submit) {
           // button click - trigger the hidden submit button
           var submitAll = document.getElementById('hidden_submit_app');
           submitAll.click();
         } else {
-          // autosave - update 'last saved'
           $('.autosaved').html(formUtils.currentTimeDisplay());
         }
       } else { // unexpected status code
         $('.autosaved').html('Unknown error<br>If you are seeing errors repeatedly please <a href="/apply/support#contact">contact us</a>');
       }
     },
-    error: function(jqXHR, textStatus) {
-      var errortext = '';
+    error: function (jqXHR, textStatus) {
       if (jqXHR.status === 409)  {
         // conflict - pause autosave and confirm force
         window.clearInterval(autoSave.saveTimer);
-        showConflictWarning('autosave'); // method defined in org_app.html
+        showConflictWarning();
+      } else if(jqXHR.status === 401) {
+        location.href = jqXHR.responseText + '?next=' + location.href;
       } else {
-        if(jqXHR.status === 401) {
-          location.href = jqXHR.responseText + '?next=' + location.href;
-        } else if (formUtils.statusTexts[jqXHR.status]) {
+        var errortext = 'Unknown error';
+
+        if (formUtils.statusTexts[jqXHR.status]) {
           errortext = formUtils.statusTexts[jqXHR.status];
         } else if (textStatus === 'timeout') {
           errortext = 'Request timeout';
-        } else {
-          errortext = 'Unknown error';
         }
         $('.autosaved').html('Error: ' + errortext + '<br>If you are seeing errors repeatedly please <a href="/apply/support#contact">contact us</a>');
       }

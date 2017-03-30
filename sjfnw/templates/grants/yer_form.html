@@ -214,7 +214,7 @@
 
   <div class="text-center">
     <img class="ajax-loading" src="/static/images/ajaxloader.gif" style="display:none;"><br>
-    <button class="submit" onclick="autoSave.save(true);">Submit</button>
+    <button class="submit" onclick="autoSave.save({ submit: true });">Submit</button>
     {% include 'grants/includes/last_saved.html' with interval=30 %}
   </div>
 </div>
