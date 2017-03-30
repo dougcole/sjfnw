@@ -580,15 +580,16 @@ class NarrativeAnswer(models.Model):
     elif name.endswith('_references'):
       value = json.loads(self.text) if self.text else []
       html = u'<table><tr><td>Name</td><td>Organization</td><td>Phone</td> <td>Email</td></tr>'
+      empty = u'-'
       for i in [0, 1]:
         ref = value[i] if len(value) > i else {}
-        html += '<tr><td>{}</td><td>{}</td><td>{}</td><td>{}</td></tr>'.format(
-          ref.get('name', '-'),
-          ref.get('org', '-'),
-          ref.get('phone', '-'),
-          ref.get('email', '-')
+        html += u'<tr><td>{}</td><td>{}</td><td>{}</td><td>{}</td></tr>'.format(
+          ref.get('name', empty),
+          ref.get('org', empty),
+          ref.get('phone', empty),
+          ref.get('email', empty)
         )
-      return html + '</table>'
+      return html + u'</table>'
 
     return self.text
 
