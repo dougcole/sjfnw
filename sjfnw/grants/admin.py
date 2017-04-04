@@ -34,6 +34,13 @@ class GPGYearFilter(YearFilter):
   filter_model = models.GivingProjectGrant
   field = 'created'
 
+class GrantApplicationYearFilter(YearFilter):
+  filter_model = models.GrantApplication
+  field = 'submission_time'
+
+  def lookups(self, request, model_admin):
+    return [(y, y) for y in range(2013, timezone.now().date().year)]
+
 class CycleTypeFilter(admin.SimpleListFilter):
   title = 'Grant cycle type'
   parameter_name = 'cycle_type'
@@ -429,9 +436,10 @@ class OrganizationA(BaseModelAdmin):
 
 class GrantApplicationA(BaseModelAdmin):
   list_display = ['organization', 'grant_cycle', 'submission_time', 'read']
-  list_filter = ['grant_cycle']
+  list_filter = (GrantApplicationYearFilter, 'pre_screening_status')
   list_action_link = utils.create_link('/admin/grants/search', 'Run a report', new_tab=True)
-  search_fields = ['organization__name']
+  search_fields = ['organization__name', 'grant_cycle__title']
+  ordering = ('-submission_time')
 
   fieldsets = [
     ('Application', {
