@@ -13,7 +13,7 @@ ERR_REQUIRED = 'This field is required.'
 FULL_CHOICES_LENGTH = len(gc.STATUS_CHOICES) + 1 # 1 empty
 
 class GrantApplicationTypes(BaseGrantTestCase):
-  
+
   def test_get_form(self):
     cycle = factories.GrantCycle()
     self.assertEqual(get_form_for_cycle(cycle), StandardApplicationForm)
@@ -56,7 +56,7 @@ class GrantApplicationTypes(BaseGrantTestCase):
     self.assert_length(form.fields['status'].choices, FULL_CHOICES_LENGTH)
 
     self.assertFalse(form.is_valid())
-    for field in ['budget1', 'budget2', 'budget3', 'funding_sources', 'demographics']:
+    for field in ['budget1', 'budget2', 'budget3', 'funding_sources']:
       self.assertNotIn(field, form.errors)
 
 class GrantApplicationTimeline(BaseGrantTestCase):

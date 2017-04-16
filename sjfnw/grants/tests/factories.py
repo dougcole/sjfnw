@@ -20,6 +20,12 @@ fake = Faker()
   is passed in - except for Organization, which creates its own User
 """
 
+DEFAULT_QUESTIONS = {
+  'seed': gc.SEED_NARRATIVES,
+  'rapid': gc.RAPID_RESPONSE_NARRATIVES,
+  'standard': gc.STANDARD_NARRATIVES
+}
+
 FILES = os.listdir('sjfnw/grants/tests/media/')
 
 class OrgUser(UserFactory):
@@ -86,7 +92,7 @@ class GrantCycle(factory.django.DjangoModelFactory):
     if not create:
       return
 
-    questions = questions or gc.STANDARD_NARRATIVES
+    questions = questions or DEFAULT_QUESTIONS[self.get_type()]
     if 'add' in kwargs:
       questions += kwargs['add']
 
