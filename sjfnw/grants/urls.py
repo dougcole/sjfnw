@@ -1,72 +1,67 @@
-from django.conf.urls import patterns
+from django.conf.urls import url
 from django.views.generic.base import TemplateView
-from sjfnw import constants
 
-apply_urls = patterns('',
-  (r'^submitted/?', TemplateView.as_view(template_name='grants/submitted.html')),
-)
+from sjfnw.constants import GRANT_EMAIL
+from sjfnw.grants import views
 
-apply_urls += patterns('sjfnw.grants.views',
+apply_urls = [
+  url(r'^submitted/?', TemplateView.as_view(template_name='grants/submitted.html')),
 
   # login, logout, registration
-  (r'^login/?$', 'org_login'),
-  (r'^register/?$', 'org_register'),
-  (r'^nr', 'not_registered'),
+  url(r'^login/?$', views.org_login, name='login'),
+  url(r'^register/?$', views.org_register, name='register'),
+  url(r'^nr', views.not_registered, name='not_registered'),
 
   # home page
-  (r'^$', 'org_home'),
-  (r'^draft/(?P<draft_id>\d+)/?$', 'discard_draft'),
-  (r'^copy/?$', 'copy_app'),
-  (r'^support/?', 'org_support'),
+  url(r'^$', views.org_home, name='home'),
+  url(r'^draft/(?P<draft_id>\d+)/?$', views.discard_draft, name='discard_draft'),
+  url(r'^copy/?$', views.copy_app, name='copy_app'),
+  url(r'^support/?', views.org_support, name='support'),
 
   # application
-  (r'^(?P<cycle_id>\d+)/?$', 'grant_application'),
-  (r'^info/(?P<cycle_id>\d+)/?$', 'cycle_info'),
+  url(r'^(\d+)/?$', views.grant_application, name='grant_application'),
+  url(r'^info/(\d+)/?$', views.cycle_info, name='cycle_info'),
 
   # application ajax
-  (r'^(?P<cycle_id>\d+)/autosave/?$', 'autosave_app')
-)
+  url(r'^(\d+)/autosave/?$', views.autosave_app, name='autosave_app')
 
-root_urls = patterns('sjfnw.grants.views',
-  (r'^(?P<draft_type>.*)/(?P<draft_id>\d+)/add-file/?$', 'add_file'),
-  (r'^(?P<draft_type>.*)/(?P<draft_id>\d+)/remove/(?P<file_field>.*)/?$', 'remove_file')
-)
-
-report_urls = patterns('sjfnw.grants.views',
-  # year-end report
-  (r'^(?P<award_id>\d+)/?$', 'year_end_report'),
-  (r'^(?P<award_id>\d+)/autosave/?$', 'autosave_yer'),
-  (r'^view/(?P<report_id>\d+)/?$', 'view_yer'),
-  (r'^rollover/?$', 'rollover_yer'),
-)
-
-report_urls += patterns('',
-  (r'^submitted/?', TemplateView.as_view(template_name='grants/yer_submitted.html')),
-)
-
-apply_urls += patterns('',
   # password reset
-  (r'^reset/?$', 'django.contrib.auth.views.password_reset', {
+  url(r'^reset/?$', 'django.contrib.auth.views.password_reset', {
     'template_name': 'grants/reset.html',
-    'from_email': constants.GRANT_EMAIL,
+    'from_email': GRANT_EMAIL,
     'email_template_name': 'grants/password_reset_email.html',
     'post_reset_redirect': '/apply/reset-sent'
   }),
-  (r'^reset-sent/?$', 'django.contrib.auth.views.password_reset_done', {
+  url(r'^reset-sent/?$', 'django.contrib.auth.views.password_reset_done', {
     'template_name': 'grants/password_reset_done.html'
   }),
-  (r'^reset/(?P<uidb64>[0-9A-Za-z_\-]+)/(?P<token>.+)/?$',
+  url(r'^reset/(?P<uidb64>[0-9A-Za-z_\-]+)/(?P<token>.+)/?$',
     'django.contrib.auth.views.password_reset_confirm', {
       'template_name': 'grants/password_reset_confirm.html',
       'post_reset_redirect': '/apply/reset-complete'
     }, 'org-reset'),
-  (r'^reset-complete/?', 'django.contrib.auth.views.password_reset_complete', {
+  url(r'^reset-complete/?', 'django.contrib.auth.views.password_reset_complete', {
       'template_name': 'grants/password_reset_complete.html'
   }),
-)
+]
 
-grants_urls = patterns('sjfnw.grants.views',
+root_urls = [
+  url(r'^(.*)/(\d+)/add-file/?$', views.add_file, name='add_file'),
+  url(r'^(.*)/(\d+)/remove/(.*)/?$', views.remove_file, name='remove_file'),
+  url(r'^get-upload-url/?', views.get_upload_url, name='get_upload_url'),
+]
+
+report_urls = [
+  # year-end report
+  url(r'^(\d+)/?$', views.year_end_report, name='year_end_report'),
+  url(r'^(\d+)/autosave/?$', views.autosave_yer, name='autosave_yer'),
+  url(r'^view/(\d+)/?$', views.view_yer, name='view_yer'),
+  url(r'^rollover/?$', views.rollover_yer, name='rollover_yer'),
+  url(r'^submitted/?', TemplateView.as_view(template_name='grants/yer_submitted.html')),
+]
+
+grants_urls = [
   # reading
-  (r'^view/(?P<app_id>\d+)/?$', 'view_application'),
-  (r'^(?P<obj_type>.*)-file/(?P<obj_id>\d+)-(?P<field_name>.*)', 'view_file'),
-)
+  url(r'^view/(?P<app_id>\d+)/?$', 'view_application'),
+  url(r'^(?P<obj_type>.*)-file/(?P<obj_id>\d+)-(?P<field_name>.*)', 'view_file'),
+]

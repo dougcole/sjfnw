@@ -1,5 +1,5 @@
 from django.conf import settings
-from django.conf.urls import patterns, include
+from django.conf.urls import include, url
 from django.contrib import admin
 from django.contrib.staticfiles.urls import staticfiles_urlpatterns
 from django.views.generic.base import RedirectView, TemplateView
@@ -10,63 +10,60 @@ handler404 = 'sjfnw.views.page_not_found'
 handler500 = 'sjfnw.views.server_error'
 
 if settings.MAINTENANCE:
-  urlpatterns = patterns('',
-    (r'^maintenance$', 'sjfnw.views.maintenance'),
-    (r'', RedirectView.as_view(url='/maintenance')),
-  )
+  urlpatterns = [
+    url(r'^maintenance$', 'sjfnw.views.maintenance'),
+    url(r'', RedirectView.as_view(url='/maintenance')),
+  ]
 else:
   admin.autodiscover() # load admin.py from all apps
 
-  urlpatterns = patterns('',
-    (r'^/?$', TemplateView.as_view(template_name='home.html')),
+  urlpatterns = [
+    url(r'^/?$', TemplateView.as_view(template_name='home.html'), name='index'),
 
     # project central
-    (r'^fund$', 'sjfnw.fund.views.home'),
-    (r'^fund/', include('sjfnw.fund.urls')),
-    (r'^fund/logout/?$', 'django.contrib.auth.views.logout', {'next_page': '/fund'}),
+    url(r'^fund/', include('sjfnw.fund.urls', app_name='fund')),
+    url(r'^fund$', RedirectView.as_view(url='/fund/')),
 
     # grants
-    (r'^apply$', 'sjfnw.grants.views.org_home'),
-    (r'^apply/', include(apply_urls)),
-    (r'^grants/', include(grants_urls)),
-    (r'^report/', include(report_urls)),
-    (r'^', include(root_urls)),
-    (r'^org/?$', RedirectView.as_view(url='/apply/')),
-    (r'^logout/?$', 'django.contrib.auth.views.logout', {'next_page': '/apply'}),
-    (r'^get-upload-url/?', 'sjfnw.grants.views.get_upload_url'),
+    url(r'^apply/', include(apply_urls, app_name='grants')),
+    url(r'^apply$', RedirectView.as_view(url='/apply/')),
+    url(r'^org/?$', RedirectView.as_view(url='/apply/')),
+    url(r'^grants/', include(grants_urls, app_name='grants')),
+    url(r'^report/', include(report_urls, app_name='grants')),
+    url(r'^', include(root_urls, app_name='grants')),
 
     # admin
-    (r'^admin/', include(admin.site.urls)),
-    (r'^admin$', RedirectView.as_view(url='/admin/')),
-    (r'^admin/grants/grantapplication/(?P<app_id>\d+)/revert',
+    url(r'^admin/', include(admin.site.urls)),
+    url(r'^admin$', RedirectView.as_view(url='/admin/')),
+    url(r'^admin/grants/grantapplication/(?P<app_id>\d+)/revert',
       'sjfnw.grants.views.revert_app_to_draft'),
-    (r'^admin/grants/grantapplication/(?P<app_id>\d+)/rollover',
+    url(r'^admin/grants/grantapplication/(?P<app_id>\d+)/rollover',
       'sjfnw.grants.views.admin_rollover'),
-    (r'^admin/grants/organization/login', 'sjfnw.grants.views.login_as_org'),
-    (r'^admin/grants/givingprojectgrant/yer-status', 'sjfnw.grants.views.show_yer_statuses'),
+    url(r'^admin/grants/organization/login', 'sjfnw.grants.views.login_as_org'),
+    url(r'^admin/grants/givingprojectgrant/yer-status', 'sjfnw.grants.views.show_yer_statuses'),
 
-    (r'^admin/grants/organizations/merge/(?P<id_a>\d+)/(?P<id_b>\d+)',
+    url(r'^admin/grants/organizations/merge/(?P<id_a>\d+)/(?P<id_b>\d+)',
       'sjfnw.grants.views.merge_orgs'),
 
     # reporting
-    (r'^admin/grants/search/?', 'sjfnw.grants.views.grants_report'),
+    url(r'^admin/grants/search/?', 'sjfnw.grants.views.grants_report'),
 
     # cron emails
-    (r'^mail/overdue-step', 'sjfnw.fund.cron.email_overdue'),
-    (r'^mail/new-accounts', 'sjfnw.fund.cron.new_accounts'),
-    (r'^mail/gifts', 'sjfnw.fund.cron.gift_notify'),
-    (r'^mail/drafts/?', 'sjfnw.grants.cron.draft_app_warning'),
-    (r'^mail/yer/?', 'sjfnw.grants.cron.yer_reminder_email'),
+    url(r'^mail/overdue-step', 'sjfnw.fund.cron.email_overdue'),
+    url(r'^mail/new-accounts', 'sjfnw.fund.cron.new_accounts'),
+    url(r'^mail/gifts', 'sjfnw.fund.cron.gift_notify'),
+    url(r'^mail/drafts/?', 'sjfnw.grants.cron.draft_app_warning'),
+    url(r'^mail/yer/?', 'sjfnw.grants.cron.yer_reminder_email'),
 
     # dev
-    (r'^dev/jslog/?', 'sjfnw.views.log_javascript')
-  )
+    url(r'^dev/jslog/?', 'sjfnw.views.log_javascript')
+  ]
 
   # for dev_appserver
   urlpatterns += staticfiles_urlpatterns()
 
   # uncomment to support django debug toolbar
   # import debug_toolbar
-  # urlpatterns += patterns('',
+  # urlpatterns += [
   #   (r'^__debug__/', include(debug_toolbar.urls)),
-  # )
+  # ]
