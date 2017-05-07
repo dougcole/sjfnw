@@ -56,7 +56,7 @@ class OrganizationWithProfile(factory.django.DjangoModelFactory):
   contact_person = factory.Faker('name')
   contact_person_title = factory.Faker('job')
 
-  status = factory.LazyAttribute(lambda o: random.choice(gc.STATUS_CHOICES)[0])
+  status = factory.LazyAttribute(lambda o: random.choice(gc.STATUS_CHOICES[:3])[0])
   ein = factory.Faker('ean8')
   founded = factory.LazyAttribute(lambda o: random.randrange(1999, 2016))
   mission = factory.Faker('text')
@@ -201,10 +201,7 @@ def generate_narrative_answer(question_name, for_draft=False):
     if for_draft:
       ls = utils.flatten_references(ls)
   if ls and for_draft:
-    result = {}
-    for i, item in enumerate(ls):
-      result['{}_{}'.format(question_name, i)] = item
-    return result
+    return utils.multiwidget_list_to_dict(ls, question_name)
   return ls or fake.paragraph()
 
 class DraftGrantApplication(factory.django.DjangoModelFactory):
