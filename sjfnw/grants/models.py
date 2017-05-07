@@ -260,9 +260,10 @@ class CycleNarrative(models.Model):
 
 class DraftManager(models.Manager):
 
-  def create_from_submitted_app(self, app, save=True):
+  def create_from_submitted_app(self, app):
     """ Creates a new draft using contents of given GrantApplication
-      Saves the new draft by default.
+      Args: app - GrantApplication instance
+      Returns: DraftGrantApplication instance (not saved to db)
     """
     if not isinstance(app, GrantApplication):
       raise ValueError('create_from_submitted_app must be called with GrantApplication instance')
@@ -279,7 +280,16 @@ class DraftManager(models.Manager):
     answers = (NarrativeAnswer.objects.filter(grant_application=app)
                   .select_related('cycle_narrative__narrative_question'))
     for answer in answers:
-      contents[answer.cycle_narrative.narrative_question.name] = answer.text
+      name = answer.cycle_narrative.narrative_question.name
+      text = answer.text
+      if name == 'timeline' or name.endswith('_references'):
+        text = json.loads(answer.text)
+        if name.endswith('_references'):
+          text = utils.flatten_references(text)
+        contents.update(utils.multiwidget_list_to_dict(text, name))
+      else:
+        contents[name] = text
+
     draft.contents = json.dumps(contents)
 
     for field in app.file_fields():
@@ -287,8 +297,6 @@ class DraftManager(models.Manager):
         setattr(draft, field, getattr(app, field))
 
     draft.modified = timezone.now()
-    if save:
-      draft.save()
     return draft
 
   def copy(self, draft, cycle_id):

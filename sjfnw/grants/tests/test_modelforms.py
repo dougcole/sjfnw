@@ -56,7 +56,8 @@ class GrantApplicationTypes(BaseGrantTestCase):
     self.assert_length(form.fields['status'].choices, FULL_CHOICES_LENGTH)
 
     self.assertFalse(form.is_valid())
-    for field in ['budget1', 'budget2', 'budget3', 'funding_sources', 'demographics']:
+    self.assertRegexpMatches(form.errors['demographics'].as_text(), ERR_REQUIRED)
+    for field in ['budget1', 'budget2', 'budget3', 'funding_sources']:
       self.assertNotIn(field, form.errors)
 
 class GrantApplicationTimeline(BaseGrantTestCase):

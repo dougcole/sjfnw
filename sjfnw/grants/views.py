@@ -5,7 +5,6 @@ from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth import authenticate, login
 from django.contrib.auth.decorators import login_required
-from django.contrib.auth.models import User
 from django.core.urlresolvers import reverse
 from django.forms.models import model_to_dict
 from django.http import HttpResponse, Http404, HttpResponseBadRequest
@@ -27,7 +26,8 @@ from sjfnw.grants.forms import (AdminRolloverForm, LoginAsOrgForm, LoginForm,
    AppReportForm, SponsoredAwardReportForm, GPGrantReportForm, OrgReportForm,
    RegisterForm, RolloverForm, RolloverYERForm, OrgMergeForm)
 from sjfnw.grants.modelforms import get_form_for_cycle, YearEndReportForm
-from sjfnw.grants.utils import local_date_str, find_blobinfo, get_user_override
+from sjfnw.grants.utils import (local_date_str, find_blobinfo,
+    get_user_override, format_draft_contents)
 
 logger = logging.getLogger('sjfnw')
 
@@ -220,15 +220,6 @@ def org_home(request, org):
 #  Grant application & Year-end report
 # -----------------------------------------------------------------------------
 
-def _load_draft(draft):
-  org_dict = json.loads(draft.contents)
-  timeline = []
-  for i in range(15): # covering both timeline formats
-    if 'timeline_' + str(i) in org_dict:
-      timeline.append(org_dict['timeline_' + str(i)])
-  org_dict['timeline'] = json.dumps(timeline)
-  return org_dict
-
 def _autofill_draft(draft):
   """ If org has profile information, use it to autofill draft fields
     Returns: indicator of whether draft was updated. """
@@ -356,8 +347,9 @@ def grant_application(request, organization, cycle_id):
     elif draft.contents == '{}': # if draft was created via admin site
       profiled = _autofill_draft(draft)
 
-    org_dict = _load_draft(draft)
-    form = get_form_for_cycle(cycle)(cycle, initial=org_dict)
+    draft_contents = json.loads(draft.contents)
+    format_draft_contents(draft_contents)
+    form = get_form_for_cycle(cycle)(cycle, initial=draft_contents)
 
   # get draft files
   file_urls = get_file_urls(request, draft)
@@ -587,7 +579,7 @@ def copy_app(request, organization):
       if app_id:
         try:
           application = models.GrantApplication.objects.get(pk=int(app_id))
-          draft = models.DraftGrantApplication.objects.create_from_submitted_app(application, save=False)
+          draft = models.DraftGrantApplication.objects.create_from_submitted_app(application)
           draft.grant_cycle = cycle
           draft.save()
         except models.GrantApplication.DoesNotExist:
@@ -856,14 +848,12 @@ def revert_app_to_draft(request, app_id):
   """
 
   submitted_app = get_object_or_404(models.GrantApplication, pk=app_id)
-  organization = submitted_app.organization
-  grant_cycle = submitted_app.grant_cycle
 
   if request.method == 'POST':
     draft = models.DraftGrantApplication.objects.create_from_submitted_app(submitted_app)
-    logger.info('Reverted to draft, draft id %s', draft.pk)
-
     submitted_app.delete()
+    draft.save()
+    logger.info('Reverted to draft, draft id %s', draft.pk)
 
     return redirect('/admin/grants/draftgrantapplication/' + str(draft.pk) + '/')
 

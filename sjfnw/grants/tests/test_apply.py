@@ -191,7 +191,7 @@ class ApplyValidation(BaseGrantFilesTestCase):
     self.login_as_org()
     # take a valid grant application to use as draft
     app = factories.GrantApplication()
-    self.draft = DraftGrantApplication.objects.create_from_submitted_app(app, save=False)
+    self.draft = DraftGrantApplication.objects.create_from_submitted_app(app)
     self.draft.organization = self.org
     self.draft.grant_cycle = factories.GrantCycle(status='open')
 

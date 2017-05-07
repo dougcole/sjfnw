@@ -118,7 +118,7 @@ class GrantApplication(factory.django.DjangoModelFactory):
   contact_person = factory.Faker('name')
   contact_person_title = factory.Faker('job')
 
-  status = factory.LazyAttribute(lambda o: random.choice(gc.STATUS_CHOICES)[0])
+  status = factory.LazyAttribute(lambda o: random.choice(gc.STATUS_CHOICES[:3])[0])
   ein = factory.Faker('ean8')
   founded = factory.LazyAttribute(lambda o: random.randrange(1999, 2016))
   mission = factory.Faker('text')

@@ -1,11 +1,5 @@
-from datetime import timedelta
 import json
 
-from django.forms.models import model_to_dict
-from django.contrib.auth.models import User
-from django.utils import timezone
-
-from sjfnw.fund.tests import factories as fund_factories
 from sjfnw.grants import models
 from sjfnw.grants.tests import factories
 from sjfnw.tests.base import BaseTestCase
@@ -27,11 +21,13 @@ class BaseGrantTestCase(BaseTestCase):
     for field, value in draft_contents.iteritems():
       if hasattr(app, field):
         self.assertEqual(unicode(value), unicode(getattr(app, field)))
+      elif field.startswith('timeline') or '_references' in field:
+        print('Skipping assertion for json field')
       elif app_narratives:
         self.assertEqual(value, app_narratives[field])
       else:
         self.assertEqual(value, app.get_narrative_answer(field),
-            msg='Draft narrative answer for "{}" did not match app'.format(field))
+          msg='Draft narrative answer for "{}" did not match app'.format(field))
     for field in models.GrantApplication.file_fields():
       if hasattr(draft, field):
         self.assertEqual(getattr(draft, field), getattr(app, field))

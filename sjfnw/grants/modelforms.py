@@ -349,7 +349,7 @@ class ReferencesMultiWidget(forms.widgets.MultiWidget):
     super(ReferencesMultiWidget, self).__init__(_widgets, attrs)
 
   def decompress(self, value):
-    """ break single database value up for widget display
+    """ Break single database value (json value) up for widget display
         argument: database value (json string)
         returns: list of values to be displayed in widgets """
 
@@ -358,10 +358,9 @@ class ReferencesMultiWidget(forms.widgets.MultiWidget):
     return [None for _ in range(0, 8)]
 
   def format_output(self, rendered_widgets):
-    """
-    format the widgets for display
-      args: list of rendered widgets
-      returns: a string of HTML for displaying the widgets
+    """ Format the widgets for display
+      Args: rendered_widgets - list of rendered widgets (html strings)
+      Returns: string of HTML for displaying the widgets
     """
 
     wrapper = u'<div class="col col-1of4">{}</div>'
@@ -379,22 +378,10 @@ class ReferencesMultiWidget(forms.widgets.MultiWidget):
     return html
 
   def value_from_datadict(self, data, files, name):
-    """ Consolodate widget data into a single value
-        returns:
-          json'd list of values """
-
-    values = []
-
-    for i in range(0, 1):
-      j = i * 4
-      values.append({
-        'name': data.get(u'{}_{}'.format(name, j)),
-        'org': data.get(u'{}_{}'.format(name, j + 1)),
-        'phone': data.get(u'{}_{}'.format(name, j + 2)),
-        'email': data.get(u'{}_{}'.format(name, j + 3)),
-      })
-
-    return json.dumps(values)
+    """ Consolodate widget data into a single value to store in db
+      Returns: json string of field data
+    """
+    return json.dumps(utils.format_references(data, name))
 
 
 class ContactPersonWidget(forms.widgets.MultiWidget):
