@@ -32,6 +32,16 @@
 })(django.jQuery);
 </script>
 {% endif %}{% endif %}
+<script type="text/javascript">
+(function ($) {
+  $(document).ready(function () {
+    $('#filter-header').click(function () {
+      $('#changelist-filter').toggle();
+      $('#filter-header>span').toggleClass('toggle-expanded toggle-collapsed');
+    });
+  });
+})(django.jQuery);
+</script>
 {% endblock %}
 
 {% block bodyclass %}{{ block.super }} app-{{ opts.app_label }} model-{{ opts.model_name }} change-list{% endblock %}
@@ -86,9 +96,14 @@
 
       {% block filters %}
         {% if cl.has_filters %}
-          <div id="changelist-filter">
-            <h2>{% trans 'Filter' %}</h2>
-            {% for spec in cl.filter_specs %}{% admin_list_filter cl spec %}{% endfor %}
+          {# wrapper and toggle element for filters #}
+          <div id="changelist-wrapper">
+            <h2 id="filter-header">
+              {% trans 'Filter' %}<span class="toggle-collapsed"></span>
+            </h2>
+            <div id="changelist-filter">
+              {% for spec in cl.filter_specs %}{% admin_list_filter cl spec %}{% endfor %}
+            </div>
           </div>
         {% endif %}
       {% endblock %}

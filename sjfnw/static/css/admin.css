@@ -40,6 +40,50 @@
   z-index: 1;
 }
 
+#changelist-wrapper {
+  width: 200px;
+  float: right;
+  position: absolute;
+  right: 0;
+  background-color: #eeeeee;
+  border: 1px solid #aaaaaa;
+}
+
+#changelist #toolbar,
+#changelist .actions,
+#changelist .paginator,
+#changelist .results {
+  /* override the reserved space for default filter column */
+  margin-right: 0 !important;
+}
+
+#changelist.filtered {
+  min-height: inherit;
+}
+
+#changelist-filter {
+  display: none;
+  position: relative !important;
+}
+
+#filter-header {
+  padding: 7px 2px;
+  font-size: 12px;
+}
+
+#filter-header>span{
+  color: #fff;
+  float: right;
+}
+
+.toggle-collapsed::after {
+  content: '\25b2';
+}
+
+.toggle-expanded::after {
+  content: '\25bc';
+}
+
 /* Columns with nested tables */
 .nested-column td {
   padding: 1px;
