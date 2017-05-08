@@ -39,7 +39,7 @@ class GrantApplicationYearFilter(YearFilter):
   field = 'submission_time'
 
   def lookups(self, request, model_admin):
-    return [(y, y) for y in range(2013, timezone.now().date().year)]
+    return [(y, y) for y in range(2013, timezone.now().date().year + 1)]
 
 class CycleTypeFilter(admin.SimpleListFilter):
   title = 'Grant cycle type'
