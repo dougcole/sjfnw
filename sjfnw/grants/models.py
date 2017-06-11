@@ -31,8 +31,8 @@ class OrganizationManager(models.Manager):
 
     name_match = self.filter(name=name, user__isnull=True).first()
     if name_match:
-      # Matches existing Organization without User. Register, but flag inactive
-      # pending admin approval
+      # Given name matches an existing Organization without User.
+      # Register, but flag inactive pending admin approval
       name_match.user = User.objects.create_user(
         email, email, password, first_name=name[:29], last_name='(Organization)'
       )
@@ -147,6 +147,13 @@ class Organization(models.Model):
       self.staff_contact_person, self.staff_contact_person_title,
       self.staff_contact_phone, self.staff_contact_email
     ] if val])
+
+  def has_app_or_draft(self, cycle_id):
+    filters = {'organization_id': self.pk, 'grant_cycle_id': cycle_id}
+    if DraftGrantApplication.objects.filter(**filters).exists():
+      return True
+    else:
+      return GrantApplication.objects.filter(**filters).exists()
 
   def update_profile(self, app):
     for field in self.get_profile_fields():

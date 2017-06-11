@@ -551,6 +551,10 @@ def get_upload_url(request):
 #  Org home page tools
 # -----------------------------------------------------------------------------
 
+def _is_valid_rollover_target(source, target_cycle):
+  return source.grant_cycle.get_type() == target_cycle.get_type()
+
+
 @login_required(login_url=LOGIN_URL)
 @registered_org()
 def copy_app(request, organization):
@@ -559,7 +563,7 @@ def copy_app(request, organization):
     form = RolloverForm(organization, request.POST)
     if form.is_valid():
       cycle_id = form.cleaned_data.get('cycle')
-      draft = form.cleaned_data.get('draft')
+      draft_id = form.cleaned_data.get('draft')
       app_id = form.cleaned_data.get('application')
 
       # get cycle
@@ -570,46 +574,53 @@ def copy_app(request, organization):
         return render(request, 'grants/copy_app_error.html')
 
       # make sure the combo does not exist already
-      if models.DraftGrantApplication.objects.filter(
-          organization=organization, grant_cycle=cycle).exists():
-        logger.warning('copy_app the combo already exists!?')
+      if organization.has_app_or_draft(cycle.pk):
+        logger.warning('Org already has draft or app for selected cycle')
         return render(request, 'grants/copy_app_error.html')
 
       # get app/draft and its contents (json format for draft)
       if app_id:
         try:
-          application = models.GrantApplication.objects.get(pk=int(app_id))
-          draft = models.DraftGrantApplication.objects.create_from_submitted_app(application)
-          draft.grant_cycle = cycle
-          draft.save()
+          source = models.GrantApplication.objects.get(pk=int(app_id))
         except models.GrantApplication.DoesNotExist:
-          logger.warning('copy_app - submitted app %s not found', app_id)
-      elif draft:
+          logger.warning('Application %s not found', app_id)
+          return render(request, 'grants/copy_app_error.html')
+      elif draft_id:
         try:
-          draft = models.DraftGrantApplication.objects.get(pk=int(draft))
-          models.DraftGrantApplication.objects.copy(draft, cycle.pk)
+          source = models.DraftGrantApplication.objects.get(pk=int(draft_id))
         except models.DraftGrantApplication.DoesNotExist:
-          logger.warning('copy_app - draft %s not found', draft)
+          logger.warning('Draft %s not found', draft_id)
+          return render(request, 'grants/copy_app_error.html')
       else:
-        logger.warning('copy_app no draft or app...')
+        logger.warning('No source draft or app selected for rollover')
         return render(request, 'grants/copy_app_error.html')
+
+      if not _is_valid_rollover_target(source, cycle):
+        logger.warning('Cannot rollover into different cycle type')
+        return render(request, 'grants/copy_app_error.html')
+
+      if app_id:
+        draft = models.DraftGrantApplication.objects.create_from_submitted_app(source, save=False)
+        draft.grant_cycle = cycle
+        draft.save()
+      elif draft_id:
+        models.DraftGrantApplication.objects.copy(draft, cycle.pk)
 
       return redirect('/apply/' + cycle_id + get_user_override(request))
 
     else: # INVALID FORM
       logger.info('Invalid form: %s', form.errors)
-      cycle_count = str(form['cycle']).count('<option value') - 1
-      apps_count = (str(form['application']).count('<option value') +
-                    str(form['draft']).count('<option value') - 2)
 
   else: # GET
     form = RolloverForm(organization)
-    cycle_count = str(form['cycle']).count('<option value') - 1
-    apps_count = (str(form['application']).count('<option value') +
-                  str(form['draft']).count('<option value') - 2)
 
-  return render(request, 'grants/org_app_copy.html',
-                {'form': form, 'cycle_count': cycle_count, 'apps_count': apps_count})
+  cycle_count = str(form['cycle']).count('<option value') - 1
+  apps_count = (str(form['application']).count('<option value') +
+                str(form['draft']).count('<option value') - 2)
+
+  return render(request, 'grants/org_app_copy.html', {
+    'form': form, 'cycle_count': cycle_count, 'apps_count': apps_count
+  })
 
 @require_http_methods(['DELETE'])
 @registered_org()
