@@ -12,7 +12,7 @@ ignore-paths:
 
 requirements:
   - requirements.txt
-  - requirements-lint.txt
+  - requirements-dev.txt
 
 uses:
   - django

@@ -6,10 +6,10 @@ if [ $(expr "$pip_version" : '.*not found') -gt 0 ] ; then
   exit 1
 fi
 
-echo "Installing prospector and forked pylint_django..."
+echo "Installing libs for dev env..."
 
-pip install -r requirements-lint.txt
+pip install -r requirements-dev.txt
 
 echo "
-To run lint, use the command 'prospector'
+Installation complete. To run lint, use the command 'prospector'
 "
