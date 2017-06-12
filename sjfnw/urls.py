@@ -51,12 +51,13 @@ else:
     # reporting
     (r'^admin/grants/search/?', 'sjfnw.grants.views.grants_report'),
 
-    # cron emails
+    # cron emails TODO use /cron instead of /mail?
     (r'^mail/overdue-step', 'sjfnw.fund.cron.email_overdue'),
     (r'^mail/new-accounts', 'sjfnw.fund.cron.new_accounts'),
     (r'^mail/gifts', 'sjfnw.fund.cron.gift_notify'),
     (r'^mail/drafts/?', 'sjfnw.grants.cron.draft_app_warning'),
     (r'^mail/yer/?', 'sjfnw.grants.cron.yer_reminder_email'),
+    (r'^mail/create-cycles', 'sjfnw.grants.cron.auto_create_cycles'),
 
     # dev
     (r'^dev/jslog/?', 'sjfnw.views.log_javascript')

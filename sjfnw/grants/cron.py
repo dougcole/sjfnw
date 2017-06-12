@@ -1,13 +1,80 @@
 from datetime import timedelta
 import logging
 
+from django.db.models import Q
 from django.http import HttpResponse
 from django.utils import timezone
 
 from sjfnw import constants as c, utils
-from sjfnw.grants.models import DraftGrantApplication, GivingProjectGrant
+from sjfnw.grants.models import DraftGrantApplication, GivingProjectGrant, GrantCycle
 
 logger = logging.getLogger('sjfnw')
+
+
+def auto_create_cycles(request):
+  now = timezone.now()
+
+  if now.hour != 0:
+    logger.error('auto_create_cycles running at unexpected time %s; aborting', now)
+    return HttpResponse(status=500)
+
+  cycles = GrantCycle.objects.filter(
+    Q(title__startswith='Rapid Response') | Q(title__startswith='Seed '),
+    close__range=(now - timedelta(hours=2), now)
+  )
+
+  if len(cycles) == 0:
+    logger.info('auto_create_cycles found no recently closed cycles')
+    return HttpResponse(status=200)
+
+  created = 0
+  for cycle in cycles:
+    prefix = 'Rapid Response' if cycle.get_type() == 'rapid' else 'Seed Grant'
+
+    if GrantCycle.objects.filter(title__startswith=prefix, close__gte=now).exists():
+      logger.info('auto_create_cycles skipping %s cycle; next one exists', prefix)
+      continue
+
+    # cache original cycle before overwriting fields
+    prev_cycle = {
+      'id': cycle.pk,
+      'title': cycle.title
+    }
+    cycle.id = None
+    cycle.open = timezone.now()
+    cycle.close = cycle.close + timedelta(days=14)
+
+    cycle.title = '{} {}.{}.{} - {}.{}.{}'.format(
+      prefix,
+      cycle.open.month, cycle.open.day, cycle.open.year,
+      cycle.close.month, cycle.close.day, cycle.close.year,
+    )
+    cycle.save()
+
+    created += 1
+
+    # add some context for use in email
+
+    cycle.prev_cycle = prev_cycle
+    cycle.drafts_count = (DraftGrantApplication.objects
+        .filter(grant_cycle_id=prev_cycle['id'])
+        .update(grant_cycle_id=cycle.id))
+
+  if created > 0:
+    logger.info('auto_create_cycles created %d new cycles', created)
+
+    utils.send_email(
+      subject='Grant cycles created',
+      sender=c.GRANT_EMAIL,
+      to=['aisapatino@gmail.com'],
+      template='grants/emails/auto_create_cycles.html',
+      context={'cycles': cycles}
+    )
+    return HttpResponse(status=201)
+  else:
+    logger.info('auto_create_cycles did nothing; new cycles already existed')
+    return HttpResponse()
+
 
 def draft_app_warning(request):
   """ Warn orgs of impending draft freezes

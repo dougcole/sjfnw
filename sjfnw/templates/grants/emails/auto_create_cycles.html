@@ -1,0 +1,18 @@
+<p>Grant cycles automatically created:</p>
+
+<table>
+  <th><td>Title</td><td>Replaces</td><td>Drafts migrated</td></th>
+  {% for cycle in cycles %}
+  <tr>
+    <td><b><a href="{% url 'admin:grants_grantcycle_change' cycle.id %}" target="_blank">{{ cycle.title }}</a></b></td>
+    <td><a href="{% url 'admin:grants_grantcycle_change' cycle.prev_cycle.id %}" target="_blank">{{ cycle.prev_cycle.title }}</a></td>
+    <td>{{ cycle.drafts_count }}</td>
+  </tr>
+  {% endfor %}
+</table>
+
+<p>The new grant cycles are open and accepting applications. You can edit them using the links above.</p>
+
+<hr>
+
+<p><i>More information:<br>Email generated automatically. This process runs every morning just after midnight and creates new cycles for any rapid response or seed cycles that have closed within the previous 2 hours. All drafts associated with the closed cycles are moved the corresponding new one.</i></p>

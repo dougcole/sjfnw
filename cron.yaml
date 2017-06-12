@@ -22,3 +22,7 @@ cron:
 - description: daily exception report
   url: /_ereporter?sender=sjfnwads@gmail.com&to=aisapatino@gmail.com
   schedule: every day 17:13
+
+- description: auto-create rapid response and seed grant cycles
+  url: /mail/create-cycles
+  schedule: every day 08:05
