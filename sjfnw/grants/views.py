@@ -600,11 +600,11 @@ def copy_app(request, organization):
         return render(request, 'grants/copy_app_error.html')
 
       if app_id:
-        draft = models.DraftGrantApplication.objects.create_from_submitted_app(source, save=False)
+        draft = models.DraftGrantApplication.objects.create_from_submitted_app(source)
         draft.grant_cycle = cycle
         draft.save()
       elif draft_id:
-        models.DraftGrantApplication.objects.copy(draft, cycle.pk)
+        models.DraftGrantApplication.objects.copy(source, cycle.pk)
 
       return redirect('/apply/' + cycle_id + get_user_override(request))
 
@@ -884,7 +884,6 @@ def admin_rollover(request, app_id):
       application.pre_screening_status = 10
       application.submission_time = timezone.now()
       application.grant_cycle = cycle
-      application.cycle_question = ''
       application.budget = ''
       application.save()
       # TODO narratives
