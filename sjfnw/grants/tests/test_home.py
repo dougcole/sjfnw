@@ -8,7 +8,7 @@ from sjfnw.grants import views
 from sjfnw.grants.tests import factories
 from sjfnw.grants.tests.base import BaseGrantTestCase
 from sjfnw.grants.models import (DraftGrantApplication, GrantApplication,
-    Organization, GivingProjectGrant)
+    GivingProjectGrant)
 
 logger = logging.getLogger('sjfnw')
 
@@ -34,7 +34,7 @@ class OrgHomeAwards(BaseGrantTestCase):
 
   def test_early(self):
     """ org has an award, but agreement has not been mailed. verify not shown """
-    award = factories.GivingProjectGrant(
+    factories.GivingProjectGrant(
       projectapp__application__organization=self.org,
       agreement_mailed=None
     )
@@ -46,7 +46,7 @@ class OrgHomeAwards(BaseGrantTestCase):
 
   def test_sent(self):
     today = timezone.now()
-    award = factories.GivingProjectGrant(
+    factories.GivingProjectGrant(
       projectapp__application__organization=self.org,
       agreement_mailed=today - timedelta(days=1),
       first_yer_due=today + timedelta(weeks=52)

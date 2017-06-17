@@ -27,7 +27,7 @@ def auto_create_cycles(request):
     logger.info('auto_create_cycles found no recently closed cycles')
     return HttpResponse(status=200)
 
-  created = 0
+  created = []
   for cycle in cycles:
     prefix = 'Rapid Response' if cycle.get_type() == 'rapid' else 'Seed Grant'
 
@@ -35,40 +35,32 @@ def auto_create_cycles(request):
       logger.info('auto_create_cycles skipping %s cycle; next one exists', prefix)
       continue
 
-    # cache original cycle before overwriting fields
-    prev_cycle = {
-      'id': cycle.pk,
-      'title': cycle.title
-    }
-    cycle.id = None
-    cycle.open = timezone.now()
-    cycle.close = cycle.close + timedelta(days=14)
-
-    cycle.title = '{} {}.{}.{} - {}.{}.{}'.format(
+    title = '{} {}.{}.{} - {}.{}.{}'.format(
       prefix,
       cycle.open.month, cycle.open.day, cycle.open.year,
       cycle.close.month, cycle.close.day, cycle.close.year,
     )
-    cycle.save()
-
-    created += 1
+    new_cycle = GrantCycle.objects.copy(cycle, title, timezone.now(), cycle.close + timedelta(days=14))
 
     # add some context for use in email
 
-    cycle.prev_cycle = prev_cycle
-    cycle.drafts_count = (DraftGrantApplication.objects
-        .filter(grant_cycle_id=prev_cycle['id'])
-        .update(grant_cycle_id=cycle.id))
+    new_cycle.prev_cycle = cycle
+    new_cycle.drafts_count = (DraftGrantApplication.objects
+        .filter(grant_cycle_id=cycle.id)
+        .update(grant_cycle_id=new_cycle.id))
 
-  if created > 0:
-    logger.info('auto_create_cycles created %d new cycles', created)
+    created.append(new_cycle)
+
+
+  if len(created) > 0:
+    logger.info('auto_create_cycles created %d new cycles', len(created))
 
     utils.send_email(
       subject='Grant cycles created',
       sender=c.GRANT_EMAIL,
       to=['aisapatino@gmail.com'],
       template='grants/emails/auto_create_cycles.html',
-      context={'cycles': cycles}
+      context={'cycles': created}
     )
     return HttpResponse(status=201)
   else:

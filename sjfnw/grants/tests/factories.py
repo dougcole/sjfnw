@@ -163,7 +163,7 @@ CYCLE_NAMES = [
 
 map_status = {
   'open': ['-12w', '-1d'],
-  'closed': ['-1y', '-5w'],
+  'closed': ['-24w', '-5w'],
   'upcoming': ['+1d', '+12w']
 }
 

@@ -7,7 +7,7 @@ from django.core.urlresolvers import reverse
 from django.utils import timezone
 
 from sjfnw.tests.base import BaseTestCase
-from sjfnw.grants import models
+from sjfnw.grants import constants as gc, models
 from sjfnw.grants.cron import auto_create_cycles
 from sjfnw.grants.tests import factories
 
@@ -58,7 +58,7 @@ class AutoCreateCycles(BaseTestCase):
     res = self.client.get(self.url)
     self.assertEqual(res.status_code, 201)
 
-    logger.info.assert_called_once_with('auto_create_cycles created %d new cycles', 2)
+    logger.info.assert_any_call('auto_create_cycles created %d new cycles', 2)
     new_cycle_ids = (models.GrantCycle.objects
         .filter(close__gte=fake_now)
         .values_list('id', flat=True))
@@ -66,6 +66,8 @@ class AutoCreateCycles(BaseTestCase):
     for draft in models.DraftGrantApplication.objects.all():
       self.assertIn(draft.grant_cycle_id, new_cycle_ids)
 
+    for id in new_cycle_ids:
+      self.assert_count(models.CycleNarrative.objects.filter(grant_cycle_id=id), len(gc.STANDARD_NARRATIVES))
     self.assert_length(mail.outbox, 1)
 
   def test_already_created(self):

@@ -162,6 +162,7 @@ class Organization(models.Model):
     self.save()
     logger.info('Org profile updated - %s', self.name)
 
+
 class NarrativeQuestion(models.Model):
   created = models.DateTimeField(blank=True, default=timezone.now)
 
@@ -190,8 +191,28 @@ class NarrativeQuestion(models.Model):
     return self.name.replace('_', ' ').title()
 
 
+class GrantCycleManager(models.Manager):
+
+  def copy(self, source, title, open_date, close):
+    new_cycle = self.model(
+      title=title,
+      open=open_date,
+      close=close,
+      amount_note=source.amount_note,
+      info_page=source.info_page,
+      email_signature=source.email_signature,
+      private=source.private)
+    new_cycle.save()
+    for cn in CycleNarrative.objects.filter(grant_cycle=source):
+      cn_new_cycle = CycleNarrative(grant_cycle=new_cycle, narrative_question=cn.narrative_question, order=cn.order)
+      cn_new_cycle.save()
+    logger.info('Created %s cycle as copy of %s', title, source.title)
+    return new_cycle
+
 
 class GrantCycle(models.Model):
+
+  objects = GrantCycleManager()
 
   title = models.CharField(max_length=100)
   open = models.DateTimeField()
