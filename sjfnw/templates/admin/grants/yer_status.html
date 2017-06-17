@@ -6,19 +6,19 @@
 <script src="//ajax.googleapis.com/ajax/libs/jquery/1.11.0/jquery.min.js"></script>
 <script type="text/javascript">
 $(document).ready(function() {
-  $('button#complete').click(function toggleComplete() {
-    console.log('attempt to toggle');
-    $('.complete').toggle();
-  });
-  $('button#upcoming').click(function toggleComplete() {
-    console.log('attempt to toggle');
-    $('.upcoming').toggle();
-  });
+  $('#complete').change(function () { $('.complete').toggle(); });
+  $('#upcoming').change(function () { $('.upcoming').toggle(); });
 });
 </script>
 <h2>Giving Project Grants - Year-end Report Status</h2>
-Filters: <button id="complete">Hide complete</button> <button id="upcoming">Hide YER not due yet</button>
-Click again to reset. Selecting both will show you only grants with overdue year-end reports.
+<div style="display:inline-block">
+  <label><input type="checkbox" id="complete" style="margin-right:5px">Hide complete</label><br>
+  <label><input type="checkbox" id="upcoming" style="margin-right:5px">Hide YER not due yet</label>
+</div>
+<div style="display:inline-block;margin-left:10px;vertical-align:top">
+  Hiding both will show you only grants with overdue year-end reports.
+</div>
+<br>
 <table>
   <thead>
     <tr>
@@ -32,11 +32,12 @@ Click again to reset. Selecting both will show you only grants with overdue year
   <tbody>
   {% for award in awards %}
     <tr class="{% if award.complete %}complete{% elif not award.past_due %}upcoming{% endif %}">
-      <td><a href="/admin/grants/givingprojectgrant/{{ award.pk }}">{{ award }}</a></td>
-      <td><a href="/admin/grants/organizations/{{ award.projectapp.application.organization_id }}">{{ award.projectapp.application.organization }}</a></td>
+      <td><a href="/admin/grants/givingprojectgrant/{{ award.pk }}/">{{ award }}</a></td>
+      <td><a href="/admin/grants/organizations/{{ award.projectapp.application.organization_id }}/">{{ award.projectapp.application.organization }}</a></td>
       <td>{{ award.projectapp.giving_project }}</td>
       <td align="center">{{ award.yer_count }}/{{ award.grant_length }}</td>
       <td class="{% if award.past_due %}errors{% endif %}">{% if award.complete %}<img src="/static/admin/img/icon-yes.gif" alt="YERs complete">{% else %}{{ award.next_yer_due|date:'n/j/y' }}{% endif %}</td>
     </tr>
-{% endfor %}
+  {% endfor %}
+</table>
 {% endblock content %}
