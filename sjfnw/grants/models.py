@@ -260,15 +260,15 @@ class GrantCycle(models.Model):
 
   def get_open_display(self):
     if self.get_type() == 'standard':
-      return 'Open {:%m/%d/%y} to {:%m/%d/%y}'.format(self.open, self.close)
+      return 'Open {:%m/%d/%y} to {:%m/%d/%y}'.format(timezone.localtime(self.open), timezone.localtime(self.close))
     return self.get_close_display()
 
   def get_close_display(self):
     cycle_type = self.get_type()
     if cycle_type == 'standard':
-      return 'Closes {:%b %d %I:%M %p}'.format(self.close)
+      return 'Closes {:%b %d %I:%M %p}'.format(timezone.localtime(self.close))
     else:
-      return 'Next review cutoff: {:%b %d}'.format(self.close)
+      return 'Next review cutoff: {:%b %d}'.format(timezone.localtime(self.close))
 
 
 class CycleNarrative(models.Model):
