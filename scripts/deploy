@@ -35,7 +35,16 @@ to <version>-dot-sjf-nw.appspot.com. Keep in mind that all non-staging versions
 share the same database.$sep
 
 ${bold}1. Prerequisites$reset
-${indent}libs: "
+${indent}gcloud: "
+
+gcloud_dir=$(which gcloud)
+if [ ! "$gcloud_dir" ] ; then
+  echo -ne "${red}gcloud installation not found - cannot deploy"
+  exit 1
+fi
+gcloud_dir=${gcloud_dir%bin/gcloud}
+
+echo -ne "$ok\n${indent}libs: "
 
 lib_missing=0
 for dir in "django" "pytz" "unicodecsv" ; do
@@ -54,7 +63,7 @@ else
   echo -ne "$ok"
 fi
 
-echo -ne "\n   clean git status: "
+echo -ne "\n${indent}clean git status: "
 if [[ $(git status --porcelain) ]]; then
   echo -e "${red}fail$reset${err}Local uncommitted changes found. Commit or stash them before deploying.\n"
   exit 1
@@ -70,7 +79,7 @@ if [ ! "$pw" ] ; then
   exit 1
 fi
 
-cmd="appcfg.py update --env_variable=CLOUDSQL_PASSWORD:$pw"
+cmd="${gcloud_dir}platform/google_appengine/appcfg.py update --env_variable=CLOUDSQL_PASSWORD:$pw"
 
 branch=$(git status | grep -o "On branch \([a-z\-]\+\)" | grep -o "[a-z_/\-]\+$")
 if [ "$branch" = "master" ] ; then

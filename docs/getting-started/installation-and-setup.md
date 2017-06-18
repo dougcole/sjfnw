@@ -33,9 +33,11 @@ Create the database:
 2. `create database sjfdb_multi character set utf8 collate utf8_general_ci;`
 
 
-#### Google App Engine SDK
+#### Google Cloud tools
 
-[Download](https://cloud.google.com/appengine/downloads#Google_App_Engine_SDK_for_Python) & unzip (somewhere outside the repo).
+Install the Google Cloud SDK with App Engine component by following [these directions](https://cloud.google.com/appengine/docs/standard/python/download)
+
+You do not need to do the optional last step of installing extra libraries. We're using a different version of Django than what App Engine provides.
 
 #### Project dependencies
 
@@ -48,10 +50,9 @@ This will install everything listed in `requirements.txt` into the `libs` folder
 Update your `~/.bashrc` (or other file depending on the shell you use)
 
 ```sh
-export PATH=$PATH:[path to Google App Engine]
-export PYTHONPATH=$PYTHONPATH:[path to Google App Engine]
-export PYTHONPATH=$PYTHONPATH:[path to Google App Engine]/lib/webob-1.2.3
-export PYTHONPATH=$PYTHONPATH:[path to Google App Engine]/lib/yaml/lib
+export PYTHONPATH=$PYTHONPATH:[path to GC SDK]/platform/google_appengine
+export PYTHONPATH=$PYTHONPATH:[path to GC SDK]/platform/google_appengine/lib/webob-1.2.3
+export PYTHONPATH=$PYTHONPATH:[path to GC SDK]/platform/google_appengine/lib/yaml/lib
 export PYTHONPATH=$PYTHONPATH:[path to repo]/sjfnw/libs
 ```
 
