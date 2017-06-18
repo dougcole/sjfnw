@@ -14,7 +14,7 @@ logger = logging.getLogger('sjfnw')
 def auto_create_cycles(request):
   now = timezone.now()
 
-  if now.hour != 0:
+  if now.hour != 8: # UTC
     logger.error('auto_create_cycles running at unexpected time %s; aborting', now)
     return HttpResponse(status=500)
 
