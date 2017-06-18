@@ -364,7 +364,7 @@ class GrantCycleA(BaseModelAdmin):
 
 
 class NarrativeQuestionA(BaseModelAdmin):
-  list_display = ('pretty_name', 'version', 'archived_display')
+  list_display = ('display_name', 'version', 'archived_display')
   list_filter = (IsArchivedFilter, 'name', 'version')
   search_fields = ('name', 'version')
   form = NarrativeQuestionForm
@@ -374,6 +374,8 @@ class NarrativeQuestionA(BaseModelAdmin):
   # https://docs.djangoproject.com/en/1.9/releases/1.9/#django-contrib-admin
   def archived_display(self, obj):
     return obj.archived or ''
+  archived_display.short_description = 'Archived'
+
 
 class OrganizationA(BaseModelAdmin):
   list_display = ['name', 'user']

@@ -187,7 +187,7 @@ class NarrativeQuestion(models.Model):
   def __unicode__(self):
     return u'{} ({})'.format(self.pretty_name(), self.version)
 
-  def pretty_name(self):
+  def display_name(self):
     return self.name.replace('_', ' ').title()
 
 
