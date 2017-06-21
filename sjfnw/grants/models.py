@@ -185,7 +185,7 @@ class NarrativeQuestion(models.Model):
     ordering = ('name', 'version')
 
   def __unicode__(self):
-    return u'{} ({})'.format(self.pretty_name(), self.version)
+    return u'{} ({})'.format(self.display_name(), self.version)
 
   def display_name(self):
     return self.name.replace('_', ' ').title()
