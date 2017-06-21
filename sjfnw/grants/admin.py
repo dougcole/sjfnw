@@ -255,6 +255,7 @@ class CycleNarrativeI(admin.TabularInline):
     kwargs['queryset'] = CycleNarrative.objects.filter(archived__isnull=True)
     return super(CycleNarrativeI, self).formfield_for_manytomany(db_field, request, **kwargs)
 
+
 class GrantApplicationI(BaseShowInline):
   """ List grant applications on organization page """
   model = models.GrantApplication
@@ -364,7 +365,7 @@ class GrantCycleA(BaseModelAdmin):
 
 
 class NarrativeQuestionA(BaseModelAdmin):
-  list_display = ('display_name', 'version', 'archived_display')
+  list_display = ('question', 'version', 'archived_display')
   list_filter = (IsArchivedFilter, 'name', 'version')
   search_fields = ('name', 'version')
   form = NarrativeQuestionForm
@@ -375,6 +376,9 @@ class NarrativeQuestionA(BaseModelAdmin):
   def archived_display(self, obj):
     return obj.archived or ''
   archived_display.short_description = 'Archived'
+
+  def question(self, obj):
+    return obj.display_name()
 
 
 class OrganizationA(BaseModelAdmin):
