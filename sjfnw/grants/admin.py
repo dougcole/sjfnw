@@ -568,7 +568,7 @@ class GivingProjectGrantA(BaseModelAdmin):
   fieldsets = (
     ('', {
       'fields': (
-        ('projectapp', 'total_grant', 'created'),
+        ('projectapp', 'created', 'total_grant'),
         ('amount', 'check_number', 'check_mailed'),
         ('agreement_mailed', 'agreement_returned'),
         'approved'
@@ -582,11 +582,19 @@ class GivingProjectGrantA(BaseModelAdmin):
       'fields': (('second_amount', 'second_check_number', 'second_check_mailed'),)
     })
   )
-  readonly_fields = ['created', 'next_year_end_report_due', 'total_grant']
+  readonly_fields = ['created', 'total_grant']
 
-  inlines = [YERInline]
+  inlines = (YERInline,)
 
   # overrides - change view only
+
+  def get_formsets_with_inlines(self, request, obj=None):
+    # django-recommended way to hide an inline on change page
+    # https://docs.djangoproject.com/en/1.8/ref/contrib/admin/#django.contrib.admin.ModelAdmin.get_formsets_with_inlines
+    for inline in self.get_inline_instances(request, obj):
+      if obj is None:
+        continue
+      yield inline.get_formset(request, obj), inline
 
   def formfield_for_foreignkey(self, db_field, request, **kwargs):
     """ Restrict db query to selected projectapp if specified in url """
@@ -609,13 +617,11 @@ class GivingProjectGrantA(BaseModelAdmin):
 
   # custom methods - list and change views
 
-  def next_year_end_report_due(self, obj):
-    return obj.next_yer_due() or '-'
-
   def total_grant(self, obj):
-    amt = obj.total_amount()
-    if amt:
-      return '${:,}'.format(amt)
+    if obj:
+      amt = obj.total_amount()
+      if amt:
+        return '${:,}'.format(amt)
     return '-'
 
   # custom methods - list only
