@@ -252,7 +252,7 @@ class CycleNarrativeI(admin.TabularInline):
   formset = CycleNarrativeFormset
 
   def formfield_for_manytomany(self, db_field, request, **kwargs):
-    kwargs['queryset'] = CycleNarrative.objects.filter(archived__isnull=True)
+    kwargs['queryset'] = models.CycleNarrative.objects.filter(archived__isnull=True)
     return super(CycleNarrativeI, self).formfield_for_manytomany(db_field, request, **kwargs)
 
 
@@ -365,7 +365,7 @@ class GrantCycleA(BaseModelAdmin):
 
 
 class NarrativeQuestionA(BaseModelAdmin):
-  list_display = ('question', 'version', 'archived_display')
+  list_display = ('question', 'version', 'word_limit_display', 'archived_display')
   list_filter = (IsArchivedFilter, 'name', 'version')
   search_fields = ('name', 'version')
   form = NarrativeQuestionForm
@@ -379,6 +379,11 @@ class NarrativeQuestionA(BaseModelAdmin):
 
   def question(self, obj):
     return obj.display_name()
+
+  def word_limit_display(self, obj):
+    return (obj.word_limit or '<b>Unlimited</b>') if obj.uses_word_limit() else '-'
+  word_limit_display.short_description = 'Word limit'
+  word_limit_display.allow_tags = True
 
 
 class OrganizationA(BaseModelAdmin):
@@ -760,7 +765,7 @@ class NarrativeAnswerA(BaseModelAdmin):
     'answer'
   )
   readonly_fields = ('organization', 'question', 'grant_cycle', 'answer')
-  list_display =  (
+  list_display = (
     'question',
     'organization',
     'grant_cycle'

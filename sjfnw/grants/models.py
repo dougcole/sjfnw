@@ -177,7 +177,8 @@ class NarrativeQuestion(models.Model):
   word_limit = models.PositiveSmallIntegerField(
       blank=True,
       null=True,
-      help_text='Word limit for the question. If left blank, no word limit will be enforced')
+      help_text='Word limit for the question. Ignored for some question types, such as timeline and references. If left blank, no word limit will be enforced.'
+  )
 
   archived = models.DateField(blank=True, null=True)
 
@@ -189,6 +190,9 @@ class NarrativeQuestion(models.Model):
 
   def display_name(self):
     return self.name.replace('_', ' ').title()
+
+  def uses_word_limit(self):
+    return not (self.name.endswith('_references') or self.name == 'timeline')
 
 
 class GrantCycleManager(models.Manager):

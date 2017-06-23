@@ -187,11 +187,13 @@ class GrantApplicationModelForm(forms.ModelForm):
         widget = TimelineWidget()
       elif '_references' in n.name:
         widget = ReferencesMultiWidget()
-      else:
+      elif n.word_limit:
         widget = forms.Textarea(attrs={
           'class': 'wordlimited',
           'data-limit': n.word_limit
         })
+      else:
+        widget = forms.Textarea()
       field = forms.CharField(label=n.text, widget=widget, required=True)
       self.fields[n.name] = field
       self._narrative_fields.append(n.name)

@@ -72,7 +72,8 @@ formUtils.currentTimeDisplay = function() {
  */
 function updateWordCount(event) {
   var area = event.target;
-  var limit = area.dataset.limit;
+  if (!area.dataset.limit) return;
+
   var display = $('#' + area.name + '_wordcount');
 
   var word_count = 0;
@@ -85,7 +86,7 @@ function updateWordCount(event) {
       .split(/[ \r\n]+/)
       .length;
   }
-  var diff = limit - word_count;
+  var diff = area.dataset.limit - word_count;
 
   if (diff >= 0) {
     display.html(diff + ' words remaining');
