@@ -15,10 +15,10 @@ fake = Faker()
 
 """
   Factories to create instances of models for automated and manual testing
-
-  Models with foreign keys will pick from existing objects unless a value
-  is passed in - except for Organization, which creates its own User
+  See http://factoryboy.readthedocs.io/
 """
+
+# pylint: disable=old-style-class
 
 FILES = os.listdir('sjfnw/grants/tests/media/')
 
@@ -64,7 +64,7 @@ class OrganizationWithProfile(factory.django.DjangoModelFactory):
 
 class GrantCycle(factory.django.DjangoModelFactory):
   """ Special options:
-    questions: list of name/version dicts (default: STANDARD_NARRATIVES)
+    narrative_questions: list of name/version dicts (default: STANDARD_NARRATIVES)
     status: 'open', 'closed', 'upcoming' (default: 'open')
     two_year_grants: whether to include two_year_grant question (default: False)
   """
@@ -76,13 +76,17 @@ class GrantCycle(factory.django.DjangoModelFactory):
     status = 'open'
     two_year_grants = False
 
-  open = factory.LazyAttribute(lambda o: fake.date_time_between(map_status[o.status][0], map_status[o.status][1]))
-  close = factory.LazyAttribute(lambda o: get_close(o))
+  title = factory.LazyAttribute(
+    lambda o: '{} {} {}'.format(random.choice(CYCLE_NAMES), 'Grant Cycle', o.close.year)
+  )
+  open = factory.LazyAttribute(
+    lambda o: fake.date_time_between(map_status[o.status][0], map_status[o.status][1])
+  )
+  close = factory.LazyAttribute(get_close)
   info_page = 'http://socialjusticefund.org/grant-app/economic-justice-grant-2017'
-  title = factory.LazyAttribute(lambda o: '{} {} {}'.format(random.choice(CYCLE_NAMES), 'Grant Cycle', o.close.year))
 
   @factory.post_generation
-  def questions(self, create, questions, **kwargs):
+  def narrative_questions(self, create, questions, **kwargs):
     if not create:
       return
 
@@ -90,10 +94,11 @@ class GrantCycle(factory.django.DjangoModelFactory):
     if 'add' in kwargs:
       questions += kwargs['add']
 
-    for i, q in enumerate(questions):
-      nq = models.NarrativeQuestion.objects.get(**q)
-      cn = CycleNarrative(narrative_question=nq, grant_cycle=self, order=i)
-      cn.save()
+    for i, question in enumerate(questions):
+      narrative_question = models.NarrativeQuestion.objects.get(**question)
+      cycle_narrative = CycleNarrative(
+          narrative_question=narrative_question, grant_cycle=self, order=i)
+      cycle_narrative.save()
 
 
 class GrantApplication(factory.django.DjangoModelFactory):
@@ -145,7 +150,7 @@ class GrantApplication(factory.django.DjangoModelFactory):
   project_budget_file = factory.Iterator(FILES)
 
   @factory.post_generation
-  def add_answers(self, create, *args, **kwargs):
+  def add_answers(self, create, *args, **kwargs): #pylint: disable=unused-argument
     if not create:
       return
 
@@ -183,11 +188,11 @@ class CycleNarrative(factory.django.DjangoModelFactory):
 
 
 def generate_narrative_answer(question_name, for_draft=False):
-  ls = None
+  values_list = None
   if question_name == 'timeline':
-    ls = ['A', 'b', 'c', 'D', 'e', 'f', 'G', 'h', 'i']
+    values_list = ['A', 'b', 'c', 'D', 'e', 'f', 'G', 'h', 'i']
   elif question_name.endswith('_references'):
-    ls =  [{
+    values_list = [{
       'name': fake.name(),
       'org': fake.company(),
       'phone': fake.phone_number(),
@@ -199,10 +204,11 @@ def generate_narrative_answer(question_name, for_draft=False):
       'email': fake.email()
     }]
     if for_draft:
-      ls = utils.flatten_references(ls)
-  if ls and for_draft:
-    return utils.multiwidget_list_to_dict(ls, question_name)
-  return ls or fake.paragraph()
+      values_list = utils.flatten_references(values_list)
+  if values_list and for_draft:
+    return utils.multiwidget_list_to_dict(values_list, question_name)
+  return values_list or fake.paragraph()
+
 
 class DraftGrantApplication(factory.django.DjangoModelFactory):
 
@@ -221,18 +227,18 @@ class DraftGrantApplication(factory.django.DjangoModelFactory):
 
   @factory.lazy_attribute
   def contents(self):
-    app = GrantApplication.build()
+    app = GrantApplication.build() # pylint: disable=no-member
     fields_to_exclude = app.file_fields() + [
       'organization', 'grant_cycle', 'giving_projects', 'narratives', 'budget',
       'submission_time', 'pre_screening_status',
       'scoring_bonus_poc', 'scoring_bonus_geo'
     ]
     contents = model_to_dict(app, exclude=fields_to_exclude)
-    qs = self.grant_cycle.narrative_questions.all()
-    for q in qs:
-      result = generate_narrative_answer(q.name, for_draft=True)
+    qs = self.grant_cycle.narrative_questions.all() # pylint: disable=no-member
+    for question in qs:
+      result = generate_narrative_answer(question.name, for_draft=True)
       if isinstance(result, (unicode, str)):
-        contents[q.name] = result
+        contents[question.name] = result
       else:
         contents.update(result)
 

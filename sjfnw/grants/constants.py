@@ -83,3 +83,11 @@ NARRATIVE_WORD_LIMITS = {
   'cycle_question': 750,
   'two_year_question': 300
 }
+
+INPUT_TYPE = (
+  ('text', 'Text box'),
+  ('short_text', 'Single-line text input'),
+  ('number', 'Number'),
+)
+
+STANDARD_REPORT_QUESTIONS = {}

@@ -227,6 +227,11 @@ class ReportQuestion(models.Model):
     help_text='Short description of this variation of the question, e.g. "standard" for general SJF use, "rapid" for rapid response cycles.')
   text = models.TextField(
     help_text='Question text to display, in raw html. Don\'t include question number - that will be added automatically')
+  input_type = models.CharField(
+    choices=GC.INPUT_TYPE,
+    max_length=20,
+    default=GC.INPUT_TYPE[0][0],
+    help_text='Select the type of for input to use for this question.')
   word_limit = models.PositiveSmallIntegerField(
     default=750,
     help_text='Word limit for the question'
