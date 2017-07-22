@@ -67,7 +67,7 @@ else:
   urlpatterns += staticfiles_urlpatterns()
 
   # uncomment to support django debug toolbar
-  # import debug_toolbar
-  # urlpatterns += patterns('',
-  #   (r'^__debug__/', include(debug_toolbar.urls)),
-  # )
+  import debug_toolbar
+  urlpatterns += patterns('',
+    (r'^__debug__/', include(debug_toolbar.urls)),
+  )
