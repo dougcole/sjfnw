@@ -36,7 +36,11 @@ if os.getenv('SERVER_SOFTWARE', '').startswith('Google App Engine'):
   }
   if os.getenv('CURRENT_VERSION_ID', '').startswith('staging'):
     STAGING = True
-    DATABASES['default']['HOST'] += '-clone-2'
+    DEBUG = True
+    # Uncomment below to enable debugging toolbar
+    INTERNAL_IPS = ['127.0.0.1', '::1', '172.217.3.180:443']
+    INSTALLED_APPS.append('django.contrib.staticfiles')
+    INSTALLED_APPS.append('debug_toolbar')
 
 # test
 elif 'test' in sys.argv:
@@ -68,11 +72,11 @@ else:
     INSTALLED_APPS.append('debug_toolbar')
 
 MIDDLEWARE_CLASSES = (
+  'debug_toolbar.middleware.DebugToolbarMiddleware',
   'django.middleware.common.CommonMiddleware',
   'django.contrib.sessions.middleware.SessionMiddleware',
   'django.contrib.auth.middleware.AuthenticationMiddleware',
   'django.contrib.messages.middleware.MessageMiddleware',
-  'debug_toolbar.middleware.DebugToolbarMiddleware',
 )
 
 TEMPLATES = [
