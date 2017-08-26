@@ -112,7 +112,7 @@ def org_support(request):
 
 def _fetch_cycle_info(url):
   if not re.search(r'https?://(www.)?socialjusticefund.org', url):
-    return ('<h4>Grant cycle information page could not be loaded</h4>')
+    return '<h4>Grant cycle information page could not be loaded</h4>'
   try:
     info_page = urllib2.urlopen(url)
   except (urllib2.URLError, ValueError) as err:
@@ -274,7 +274,7 @@ def grant_application(request, organization, cycle_id):
   filter_by = {'organization': organization, 'grant_cycle': cycle}
 
   # check for app already submitted
-  if (models.GrantApplication.objects.filter(**filter_by).exists()):
+  if models.GrantApplication.objects.filter(**filter_by).exists():
     return render(request, 'grants/already_applied.html', {
       'organization': organization, 'cycle': cycle
     })
@@ -330,22 +330,24 @@ def grant_application(request, organization, cycle_id):
           ', '.join(form.errors.keys()))
 
   else: # GET
-    if not cycle.is_open():
-      return render(request, 'grants/closed.html', {'cycle': cycle})
-
     draft = models.DraftGrantApplication.objects.filter(**filter_by).first()
 
-    # if they weren't sent here from info page and draft has not been created, redirect
-    if cycle.info_page and not request.GET.get('info') and draft is None:
-      return redirect(reverse(cycle_info, kwargs={'cycle_id': cycle.pk}))
-
     if draft is None:
+      if not cycle.is_open():
+        return render(request, 'grants/closed.html', {'cycle': cycle})
+      if cycle.info_page and not request.GET.get('info'):
+        return redirect(reverse(cycle_info, kwargs={'cycle_id': cycle.pk}))
+
       draft = models.DraftGrantApplication(**filter_by)
       profiled = _autofill_draft(draft)
       if not profiled: # wasn't saved by _autofill_draft
         draft.save()
-    elif draft.contents == '{}': # if draft was created via admin site
-      profiled = _autofill_draft(draft)
+
+    else:
+      if not draft.editable():
+        return render(request, 'grants/closed.html', {'cycle': cycle})
+      if draft.contents == '{}': # if draft was created via admin site
+        profiled = _autofill_draft(draft)
 
     draft_contents = json.loads(draft.contents)
     format_draft_contents(draft_contents)
@@ -781,9 +783,10 @@ def view_application(request, app_id):
     if hasattr(papp, 'givingprojectgrant'):# and hasattr(papp.givingprojectgrant, 'yearendreport'):
       awards[papp.giving_project] = papp.givingprojectgrant
 
-  return render(request, 'grants/reading_sidebar.html',
-      {'app': app, 'answers': answers, 'form': form, 'file_urls': file_urls, 'print_urls': print_urls,
-                 'awards': awards, 'perm': perm})
+  return render(request, 'grants/reading_sidebar.html', {
+    'app': app, 'answers': answers, 'form': form, 'file_urls': file_urls,
+    'print_urls': print_urls, 'awards': awards, 'perm': perm
+  })
 
 def view_blob(request, blobkey):
   blobinfo = blobstore.BlobInfo.get(blobkey)
