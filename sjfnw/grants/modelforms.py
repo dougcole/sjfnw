@@ -1,6 +1,7 @@
 import json
 import logging
 
+from django.forms.models import model_to_dict
 from django import forms
 from django.forms import ValidationError, ModelForm
 from django.db.models import PositiveIntegerField
@@ -9,9 +10,9 @@ from django.utils.safestring import mark_safe
 from django.utils.text import capfirst
 
 from sjfnw.forms import IntegerCommaField, PhoneNumberField
-from sjfnw.grants import constants as gc, utils
+from sjfnw.grants import utils
 from sjfnw.grants.models import (Organization, GrantApplication, DraftGrantApplication,
-    YearEndReport, NarrativeQuestion, CycleNarrative)
+    ProjectApp, YearEndReport, NarrativeQuestion, CycleNarrative)
 
 logger = logging.getLogger('sjfnw')
 
@@ -74,6 +75,15 @@ class OrgProfile(ModelForm):
     model = Organization
     fields = Organization.get_profile_fields()
 
+
+class CycleNarrativeForm(ModelForm):
+
+  class Meta:
+    model = CycleNarrative
+    fields = ('order', 'narrative_question')
+
+  def __init__(self, *args, **kwargs):
+    super(CycleNarrativeForm, self).__init__(*args, **kwargs)
 
 class CycleNarrativeFormset(forms.models.BaseInlineFormSet):
 
@@ -496,3 +506,34 @@ class LogAdminForm(ModelForm):
     if self.instance and self.instance.organization_id:
       self.fields['application'].queryset = GrantApplication.objects.filter(
           organization_id=self.instance.organization_id)
+
+class ProjectAppInlineForm(ModelForm):
+
+  def __init__(self, *args, **kwargs):
+    print('ProjectAppInlineForm __init__')
+    print(kwargs)
+    super(ProjectAppInlineForm, self).__init__(*args, **kwargs)
+    if self.instance and self.instance.id is not None:
+      print('!! instance')
+      print(self.fields['giving_project'].choices)
+    """
+    Kwargs always includes:
+      u'prefix': u'projectapp_set-0',
+      u'auto_id': u'id_%s',
+    {
+      u'instance': '<ProjectApp: Rapid Response & Seed Grant Committee - Indian People's Action - Rapid Response 6.6.17 - 6.20.17>',
+      u'error_class': <class 'django.forms.utils.ErrorList'>
+    }
+    {
+      u'empty_permitted': True,
+      u'error_class': <class 'django.forms.utils.ErrorList'>
+    }
+    { 'empty_permitted': True } x 3
+    """
+
+    # self.fields['support_type'].widget.attrs['readonly'] = True
+
+  class Meta:
+    model = ProjectApp
+    fields = ('giving_project', 'screening_status')
+

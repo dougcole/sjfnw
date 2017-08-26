@@ -670,6 +670,11 @@ class GrantApplicationLog(models.Model):
   def __unicode__(self):
     return 'Log entry from {:%m/%d/%y}'.format(self.date)
 
+  def save(self, *args, **kwargs):
+    if hasattr(self, 'application') and getattr(self, 'organization_id', None) is None:
+      self.organization_id = self.application.organization_id
+    super(GrantApplicationLog, self).save(*args, **kwargs)
+
 
 class GivingProjectGrant(models.Model):
   created = models.DateTimeField(default=timezone.now)

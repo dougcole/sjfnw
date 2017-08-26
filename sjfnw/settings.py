@@ -21,7 +21,7 @@ INSTALLED_APPS = [
 ]
 
 DEBUG = False
-STAGING = False
+APP_ENV = 'development'
 
 # deployed
 if os.getenv('SERVER_SOFTWARE', '').startswith('Google App Engine'):
@@ -34,13 +34,9 @@ if os.getenv('SERVER_SOFTWARE', '').startswith('Google App Engine'):
       'PASSWORD': os.getenv('CLOUDSQL_PASSWORD')
     }
   }
+  APP_ENV = 'production'
   if os.getenv('CURRENT_VERSION_ID', '').startswith('staging'):
-    STAGING = True
-    DEBUG = True
-    # Uncomment below to enable debugging toolbar
-    INTERNAL_IPS = ['127.0.0.1', '::1', '172.217.3.180:443']
-    INSTALLED_APPS.append('django.contrib.staticfiles')
-    INSTALLED_APPS.append('debug_toolbar')
+    APP_ENV = 'staging'
 
 # test
 elif 'test' in sys.argv:
@@ -49,6 +45,7 @@ elif 'test' in sys.argv:
       'ENGINE': 'django.db.backends.sqlite3'
     }
   }
+  APP_ENV = 'test'
 # local
 else:
   DATABASES = {
@@ -57,7 +54,12 @@ else:
       'USER': 'root',
     }
   }
-  if os.getenv('SETTINGS_MODE'):
+  DEBUG = True
+  # Uncomment below to enable debugging toolbar
+  INTERNAL_IPS = ['127.0.0.1', '::1']
+  INSTALLED_APPS.append('django.contrib.staticfiles')
+  INSTALLED_APPS.append('debug_toolbar')
+  if os.getenv('SETTINGS_MODE') == 'prod':
     DATABASES['default']['HOST'] = os.getenv('CLOUDSQL_IP')
     DATABASES['default']['NAME'] = 'sjfdb'
     DATABASES['default']['PASSWORD'] = os.getenv('CLOUDSQL_PASSWORD')
@@ -65,11 +67,6 @@ else:
     DATABASES['default']['HOST'] = 'localhost'
     DATABASES['default']['NAME'] = 'sjfdb_multi'
     DATABASES['default']['PASSWORD'] = 'SJFdb'
-    DEBUG = True
-    # Uncomment below to enable debugging toolbar
-    INTERNAL_IPS = ['127.0.0.1', '::1']
-    INSTALLED_APPS.append('django.contrib.staticfiles')
-    INSTALLED_APPS.append('debug_toolbar')
 
 MIDDLEWARE_CLASSES = (
   'debug_toolbar.middleware.DebugToolbarMiddleware',

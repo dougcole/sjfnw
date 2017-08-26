@@ -4,6 +4,11 @@ runtime: python27
 api_version: 1
 threadsafe: yes
 
+env_variables:
+  CLOUDSQL_IP: '146.148.84.125'
+  CLOUDSQL_PASSWORD: 'SJFdb'
+  SETTINGS_MODE: 'prod'
+
 builtins:
 - deferred: on
 

@@ -78,7 +78,7 @@ admin.site.site_header = 'Social Justice Fund NW Admin Site'
 admin.site.site_title = 'SJF Admin'
 admin.site.index_title = None
 
-if settings.STAGING:
+if settings.APP_ENV == 'staging':
   admin.site.site_header += ' (STAGING)'
   admin.site.site_title += ' (STAGING)'
 

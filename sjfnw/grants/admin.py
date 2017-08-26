@@ -9,14 +9,15 @@ from django.utils.safestring import mark_safe
 
 from sjfnw import utils
 from sjfnw.admin import BaseModelAdmin, BaseShowInline, YearFilter
+from sjfnw.fund.models import GivingProject
 from sjfnw.grants import models
 from sjfnw.grants.modelforms import (DraftAdminForm, LogAdminForm,
-    CycleNarrativeFormset, NarrativeQuestionForm)
+    CycleNarrativeFormset, NarrativeQuestionForm, ProjectAppInlineForm, CycleNarrativeForm)
 
 logger = logging.getLogger('sjfnw')
 
-# Note: some non-standard fields have been added in order to add text to templates
-# from a centralized location:
+# Note: some non-standard fields have been added to ModelAdmin instances
+# in order to add text to templates from a centralized location:
 #  - list_help_text: display help text at top of changelist page
 #  - list_action_link: display link at top of changelist page
 # see sjfnw/templates/admin/change_list.html
@@ -26,6 +27,19 @@ LOG_IN_AS_ORG = utils.create_link(
   'Log in as an organization',
   new_tab=True
 )
+
+def get_or_set_cache(request, key, func):
+  cache_key = 'cached_' + key
+  if getattr(request, cache_key, None) is None:
+    print('cache miss: ' + key)
+    print(func)
+    val = func()
+    print(val)
+    setattr(request, cache_key, val)
+  else:
+    print('cache hit: ' + key)
+  return getattr(request, cache_key)
+
 # -----------------------------------------------------------------------------
 #  CUSTOM FILTERS
 # -----------------------------------------------------------------------------
@@ -199,10 +213,10 @@ class LogI(admin.TabularInline):
   """ Inline for adding a log to an org or application
       Shows one blank row. Autofills org or app depending on current page """
   model = models.GrantApplicationLog
-  extra = 1
-  max_num = 1
+  extra = 2
+  max_num = 2
   can_delete = False
-  exclude = ['date'] # auto-populated
+  fields = ('organization', 'application', 'staff', 'contacted', 'notes')
   verbose_name_plural = 'Add a log entry'
 
   def get_queryset(self, request):
@@ -211,29 +225,41 @@ class LogI(admin.TabularInline):
   def formfield_for_foreignkey(self, db_field, request, **kwargs):
     """ Give initial values for staff and/or org.
         This is called once on every foreign key field """
-    if '/add' not in request.path: # skip when creating new org/app
+
+    logger.info('formfield_for_foreignkey %s', db_field)
+    # this inline should only be shown for change view (not add)
+    if '/add' not in request.path:
       # autofill staff field
       if db_field.name == 'staff':
         kwargs['initial'] = request.user.id
-        kwargs['queryset'] = User.objects.filter(is_staff=True)
-        return db_field.formfield(**kwargs)
+        kwargs['queryset'] = get_or_set_cache(
+          request,
+          'staff',
+          lambda: User.objects.filter(is_staff=True)
+        )
 
       # organization field on app page
-      elif 'grantapplication' in request.path and db_field.name == 'organization':
-        app_id = int(request.path.split('/')[-2])
-        app = models.GrantApplication.objects.get(pk=app_id)
-        kwargs['initial'] = app.organization_id
-        kwargs['queryset'] = models.Organization.objects.filter(pk=app.organization_id)
-        return db_field.formfield(**kwargs)
+      elif db_field.name == 'organization' and 'grantapplication' in request.path:
+        cached_org = getattr(request, 'cached_org', None)
+        if cached_org is None:
+          app = getattr(request, 'cached_grantapplication', None)
+          if app is None:
+            app_id = int(request.path.split('/')[-2])
+            app = models.GrantApplication.objects.get(pk=app_id)
+          request.cached_org = app.organization
+        kwargs['initial'] = request.cached_org
+        result = db_field.formfield(**kwargs)
+        result.choices = [(request.cached_org.pk, unicode(request.cached_org))]
+        return result
 
-      # application field
-      if db_field.name == 'application':
+      if db_field.name == 'application' and 'organization' in request.path:
         org_pk = int(request.path.split('/')[-2])
         kwargs['queryset'] = (models.GrantApplication.objects
             .select_related('organization', 'grant_cycle')
             .filter(organization_id=org_pk))
 
-    return super(LogI, self).formfield_for_foreignkey(db_field, request, **kwargs)
+    result = super(LogI, self).formfield_for_foreignkey(db_field, request, **kwargs)
+    return result
 
 
 class AppCycleI(BaseShowInline):
@@ -251,9 +277,8 @@ class CycleNarrativeI(admin.TabularInline):
   extra = 0
   formset = CycleNarrativeFormset
 
-  def formfield_for_manytomany(self, db_field, request, **kwargs):
-    kwargs['queryset'] = models.CycleNarrative.objects.filter(archived__isnull=True)
-    return super(CycleNarrativeI, self).formfield_for_manytomany(db_field, request, **kwargs)
+  def get_queryset(self, request):
+    return super(CycleNarrativeI, self).get_queryset(request).select_related('narrative_question')
 
 
 class GrantApplicationI(BaseShowInline):
@@ -305,10 +330,19 @@ class ProjectAppI(admin.TabularInline):
   """ Display giving projects assigned to this app """
   model = models.ProjectApp
   extra = 1
-  fields = ['giving_project', 'screening_status', 'granted', 'year_end_report']
-  readonly_fields = ['granted', 'year_end_report']
+  fields = ('giving_project', 'screening_status', 'granted', 'year_end_report')
+  readonly_fields = ('granted', 'year_end_report')
   verbose_name = 'Giving project'
   verbose_name_plural = 'Giving projects'
+
+
+  def formfield_for_foreignkey(self, db_field, request, **kwargs):
+    if db_field == 'givingproject' and 'grantapplication' in request.path:
+      kwargs['queryset'] = get_or_set_cache(request,
+          'givingprojects',
+          lambda: GivingProjects.objects.all())
+
+    return super(ProjectAppI, self).formfield_for_foreignkey(db_field, request, **kwargs)
 
   def granted(self, obj):
     """ For existing projectapps, shows grant amount or link to add a grant """
@@ -481,7 +515,14 @@ class GrantApplicationA(BaseModelAdmin):
   ]
   readonly_fields = ('organization_link', 'grant_cycle', 'submission_time',
                      'read', 'revert_grant', 'rollover', 'get_files_display')
-  inlines = [ProjectAppI, LogReadonlyI, LogI]
+  inlines = [ProjectAppI, LogI] # LogReadonlyI
+
+  def get_formsets_with_inlines(self, request, obj=None):
+    request.cached_grantapplication = obj
+    if obj is None:
+      return []
+    else:
+      return super(GrantApplicationA, self).get_formsets_with_inlines(request, obj)
 
   def get_files_display(self, obj):
     files = ''
@@ -594,12 +635,10 @@ class GivingProjectGrantA(BaseModelAdmin):
   # overrides - change view only
 
   def get_formsets_with_inlines(self, request, obj=None):
-    # django-recommended way to hide an inline on change page
-    # https://docs.djangoproject.com/en/1.8/ref/contrib/admin/#django.contrib.admin.ModelAdmin.get_formsets_with_inlines
-    for inline in self.get_inline_instances(request, obj):
-      if obj is None:
-        continue
-      yield inline.get_formset(request, obj), inline
+    if obj is None:
+      return []
+    else:
+      return super(GivingProjectGrantA, self).get_formsets_with_inlines(request, obj)
 
   def formfield_for_foreignkey(self, db_field, request, **kwargs):
     """ Restrict db query to selected projectapp if specified in url """

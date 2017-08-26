@@ -1,6 +1,7 @@
 from datetime import timedelta
 import logging
 
+from django.conf import settings
 from django.db.models import Q
 from django.http import HttpResponse
 from django.utils import timezone
@@ -14,7 +15,7 @@ logger = logging.getLogger('sjfnw')
 def auto_create_cycles(request):
   now = timezone.now()
 
-  if now.hour != 8: # UTC
+  if now.hour != 8 and settings.APP_ENV != 'test': # UTC
     logger.error('auto_create_cycles running at unexpected time %s; aborting', now)
     return HttpResponse(status=500)
 
