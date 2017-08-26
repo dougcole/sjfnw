@@ -1,8 +1,23 @@
+import logging
 import re
 
 from django import forms
+from django.contrib.auth.forms import PasswordResetForm
+from django.contrib.auth.models import User
 from django.core import validators
 from django.core.exceptions import ValidationError
+
+logger = logging.getLogger('sjfnw')
+
+class CustomPasswordResetForm(PasswordResetForm):
+
+  def get_users(self, email):
+    """ Parent method searches by email - we want to search by username """
+    users = User.objects.filter(username__iexact=email)
+    valid_users = [u for u in users if u.has_usable_password()]
+    if len(valid_users) == 0:
+      logger.warn('Password reset form found no users for email %s', email)
+    return valid_users
 
 
 class PhoneNumberField(forms.Field):

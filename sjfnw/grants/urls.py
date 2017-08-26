@@ -1,6 +1,8 @@
 from django.conf.urls import patterns
 from django.views.generic.base import TemplateView
+
 from sjfnw import constants
+from sjfnw.forms import CustomPasswordResetForm
 
 apply_urls = patterns('',
   (r'^submitted/?', TemplateView.as_view(template_name='grants/submitted.html')),
@@ -50,7 +52,8 @@ apply_urls += patterns('',
     'template_name': 'grants/reset.html',
     'from_email': constants.GRANT_EMAIL,
     'email_template_name': 'grants/password_reset_email.html',
-    'post_reset_redirect': '/apply/reset-sent'
+    'post_reset_redirect': '/apply/reset-sent',
+    'password_reset_form': CustomPasswordResetForm
   }),
   (r'^reset-sent/?$', 'django.contrib.auth.views.password_reset_done', {
     'template_name': 'grants/password_reset_done.html'
