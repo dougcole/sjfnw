@@ -1,4 +1,4 @@
-﻿{% extends "admin/base_site.html" %}
+{% extends "admin/base_site.html" %}
 {% load i18n %}
 {% load admin_urls %}
 
@@ -6,11 +6,15 @@
 <h3>Are you sure you want to revert this application into a draft?</h3>
 <br>
 <p><b>{{application}} - {{application.grant_cycle}} - submitted {{application.submission_time}}</b></p>
-<p>This will delete the application and replace it with a draft, allowing the organization to make edits.  Screening status and scoring bonuses will be reset to defaults.</p>
-<p>WARNING: Only the author organization can read or submit a draft.  Staff will have no access to this content until it has been submitted again by the organization.</p>
+<p>This will <strong>delete the application</strong> and replace it with a draft, allowing staff or the organization to make edits.</p>
+<ul>
+  <li>Screening status and scoring bonuses will be reset to defaults.</li>
+  <li><strong>Any logs associated with this particular application will be deleted.</strong> Aisa is working on a fix for this. In the meantime, contact her if you need to change something in the application but don't want to revert and lose logs.</li>
+</ul>
+
 <p>If you proceed, you will be redirected to the draft page once the conversion has finished, where you can extend the submission deadline if needed.</p>
 
 <form action="" method="post">
-	<input type="submit" value="Yes, I'm sure" />
+  <input type="submit" value="Yes, I'm sure" />
 </form>
 {% endblock %}
