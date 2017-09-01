@@ -50,10 +50,13 @@ class CycleTypeFilter(admin.SimpleListFilter):
     super(CycleTypeFilter, self).__init__(req, params, model, model_admin)
 
   def lookups(self, request, model_admin):
-    titles = (models.GrantCycle.objects.values_list('title', flat=True)
+    titles = (models.GrantCycle.objects
+        .exclude(title__startswith='Seed')
+        .exclude(title__startswith='Rapid Response')
+        .values_list('title', flat=True)
         .distinct()
         .order_by('title'))
-    cycle_types = []
+    cycle_types = ['Seed', 'Rapid Response']
     for title in titles:
       pos = title.find(' Grant Cycle')
       if pos > 1:
