@@ -7,6 +7,8 @@ from django.forms.models import model_to_dict
 import factory
 from faker import Faker
 
+from pytz import utc
+
 from sjfnw.fund.tests import factories as fund_factories
 from sjfnw.grants import constants as gc, models, utils
 from sjfnw.tests.factories import User as UserFactory
@@ -61,6 +63,14 @@ class OrganizationWithProfile(factory.django.DjangoModelFactory):
   founded = factory.LazyAttribute(lambda o: random.randrange(1999, 2016))
   mission = factory.Faker('text')
 
+def get_close(obj):
+  if obj.status == 'open':
+    return fake.date_time_between('+1d', '+5w', tzinfo=utc)
+  else:
+    start = obj.open
+    end = start + datetime.timedelta(weeks=random.randint(2, 12))
+    return fake.date_time_between_dates(start, end, tzinfo=utc)
+
 
 class GrantCycle(factory.django.DjangoModelFactory):
   """ Special options:
@@ -76,10 +86,14 @@ class GrantCycle(factory.django.DjangoModelFactory):
     status = 'open'
     two_year_grants = False
 
-  open = factory.LazyAttribute(lambda o: fake.date_time_between(map_status[o.status][0], map_status[o.status][1]))
-  close = factory.LazyAttribute(lambda o: get_close(o))
+  open = factory.LazyAttribute(lambda o: fake.date_time_between(
+    map_status[o.status][0], map_status[o.status][1], tzinfo=utc
+  ))
+  close = factory.LazyAttribute(get_close)
   info_page = factory.LazyAttribute(lambda: 'http://socialjusticefund.org/grant-app/economic-justice-grant-2017')
-  title = factory.LazyAttribute(lambda o: '{} {} {}'.format(random.choice(CYCLE_NAMES), 'Grant Cycle', o.close.year))
+  title = factory.LazyAttribute(
+    lambda o: '{} {} {}'.format(random.choice(CYCLE_NAMES), 'Grant Cycle', o.close.year)
+  )
 
   @factory.post_generation
   def questions(self, create, questions, **kwargs):
@@ -167,14 +181,6 @@ map_status = {
   'upcoming': ['+1d', '+12w']
 }
 
-def get_close(obj):
-  if obj.status == 'open':
-    return fake.date_time_between('+1d', '+5w')
-  else:
-    start = obj.open
-    end = start + datetime.timedelta(weeks=random.randint(2, 12))
-    return fake.date_time_between_dates(start, end)
-
 
 class CycleNarrative(factory.django.DjangoModelFactory):
 
@@ -183,11 +189,11 @@ class CycleNarrative(factory.django.DjangoModelFactory):
 
 
 def generate_narrative_answer(question_name, for_draft=False):
-  ls = None
+  values = None
   if question_name == 'timeline':
-    ls = ['A', 'b', 'c', 'D', 'e', 'f', 'G', 'h', 'i']
+    values = ['A', 'b', 'c', 'D', 'e', 'f', 'G', 'h', 'i']
   elif question_name.endswith('_references'):
-    ls =  [{
+    values =  [{
       'name': fake.name(),
       'org': fake.company(),
       'phone': fake.phone_number(),
@@ -199,10 +205,10 @@ def generate_narrative_answer(question_name, for_draft=False):
       'email': fake.email()
     }]
     if for_draft:
-      ls = utils.flatten_references(ls)
-  if ls and for_draft:
-    return utils.multiwidget_list_to_dict(ls, question_name)
-  return ls or fake.paragraph()
+      values = utils.flatten_references(values)
+  if values and for_draft:
+    return utils.multiwidget_list_to_dict(values, question_name)
+  return values or fake.paragraph()
 
 class DraftGrantApplication(factory.django.DjangoModelFactory):
 
@@ -257,7 +263,9 @@ class GivingProjectGrant(factory.django.DjangoModelFactory):
 
   amount = factory.LazyFunction(lambda: random.randrange(5000, 20000))
 
-  first_yer_due = factory.LazyFunction(lambda: fake.date_time_this_year(after_now=True).date())
+  first_yer_due = factory.LazyFunction(
+    lambda: fake.date_time_this_year(after_now=True, tzinfo=utc).date()
+  )
 
 
 class YearEndReport(factory.django.DjangoModelFactory):

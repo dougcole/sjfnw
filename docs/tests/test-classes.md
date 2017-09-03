@@ -30,14 +30,6 @@ sjfnw.fund.tests.base.BaseFundTestCase   sjfnw.grants.tests.base.BaseGrantTestCa
 
 This class provides some basic conveniences that are relevant to both fund and grants tests.
 
-### `self.BASE_URL`
-
-If you ever need to match the full url in a test, this constant has the base, so you can do something like:
-
-```python
-self.assertEqual(response.url, self.BASE_URL + reverse('sjfnw.some.view')
-```
-
 ### Account shortcuts
 
 #### `self.login_as_admin()`

@@ -18,7 +18,7 @@ from sjfnw.grants.models import (Organization, DraftGrantApplication,
 logger = logging.getLogger('sjfnw')
 
 def _get_apply_url(cycle_id):
-  return reverse(views.grant_application, kwargs={'cycle_id': cycle_id})
+  return reverse('grants:grant_application', kwargs={'cycle_id': cycle_id})
 
 class BaseGrantFilesTestCase(BaseGrantTestCase):
   """ Subclass of BaseGrantTestCase that can handle file uploads """
@@ -79,7 +79,7 @@ class CycleInfo(BaseGrantTestCase):
   error_message = 'Grant cycle information page could not be loaded'
 
   def _get_url(self, cycle_id):
-    return reverse(views.cycle_info, kwargs={'cycle_id': cycle_id})
+    return reverse('grants:cycle_info', kwargs={'cycle_id': cycle_id})
 
   def test_no_url(self):
     cycle = factories.GrantCycle(status='open', info_page='')
@@ -228,7 +228,7 @@ class StartApplication(BaseGrantTestCase):
 
     query_kwargs = {'grant_cycle_id': cycle_id, 'organization': self.org}
     view_kwargs = {'cycle_id': cycle_id}
-    url = reverse(views.grant_application, kwargs=view_kwargs) + '?info=1'
+    url = reverse('grants:grant_application', kwargs=view_kwargs) + '?info=1'
 
     # start with no draft
     self.assert_count(DraftGrantApplication.objects.filter(**query_kwargs), 0)
@@ -291,13 +291,13 @@ class StartApplication(BaseGrantTestCase):
 class AddFile(BaseGrantFilesTestCase):
 
   def test_draft_not_found(self):
-    url = reverse('sjfnw.grants.views.add_file',
+    url = reverse('grants:add_file',
                   kwargs={'draft_type': 'apply', 'draft_id': 0})
     res = self.client.get(url, follow=True)
     self.assertEqual(res.status_code, 404)
 
   def test_invalid_type(self):
-    url = reverse('sjfnw.grants.views.add_file',
+    url = reverse('grants:add_file',
                   kwargs={'draft_type': 'what', 'draft_id': 2})
     res = self.client.get(url, follow=True)
     self.assertEqual(res.status_code, 404)
@@ -309,7 +309,7 @@ class AddFile(BaseGrantFilesTestCase):
     self.create_blob('fakeblobkey123', filename='file.txt',
                      content_type='text', content='filler')
 
-    url = reverse(views.add_file,
+    url = reverse('grants:add_file',
                   kwargs={'draft_type': 'apply', 'draft_id': draft.pk})
     budget = SimpleUploadedFile("file.txt", "blob-key=fakeblobkey123")
     res = self.client.post(url, {'budget3': budget}, follow=True)

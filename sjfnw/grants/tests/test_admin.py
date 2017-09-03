@@ -54,7 +54,7 @@ class AdminRevert(BaseGrantTestCase):
     self.login_as_admin()
 
   def _get_url(self, app_id):
-    return reverse(views.revert_app_to_draft, kwargs={'app_id': app_id})
+    return reverse('revert_app_to_draft', kwargs={'app_id': app_id})
 
   def test_load_revert(self):
     app = factories.GrantApplication()
@@ -86,20 +86,20 @@ class AdminRevert(BaseGrantTestCase):
 
 class AdminRollover(BaseGrantTestCase):
 
-  url = reverse(views.admin_rollover, kwargs={'app_id': 1})
+  url = reverse('admin_rollover', kwargs={'app_id': 1})
 
   def setUp(self):
     super(AdminRollover, self).setUp()
     self.login_as_admin()
 
   def test_unknown_app(self):
-    res = self.client.post(reverse(views.admin_rollover, kwargs={'app_id': 101}))
+    res = self.client.post(reverse('admin_rollover', kwargs={'app_id': 101}))
     self.assertEqual(res.status_code, 404)
 
   def test_unknown_cycle(self):
     source_app = factories.GrantApplication()
     res = self.client.post(
-      reverse(views.admin_rollover, kwargs={'app_id': source_app.pk}),
+      reverse('admin_rollover', kwargs={'app_id': source_app.pk}),
       data={'cycle': 99}
     )
     self.assertEqual(res.status_code, 200)
@@ -112,7 +112,7 @@ class AdminRollover(BaseGrantTestCase):
       organization=source_app.organization, grant_cycle=target_cycle)
 
     res = self.client.post(
-      reverse(views.admin_rollover, kwargs={'app_id': source_app.pk}),
+      reverse('admin_rollover', kwargs={'app_id': source_app.pk}),
       data={'cycle': target_cycle.pk}
     )
     self.assertEqual(res.status_code, 200)
@@ -124,7 +124,7 @@ class AdminRollover(BaseGrantTestCase):
     draft = factories.DraftGrantApplication(
       organization=source_app.organization, grant_cycle__status='open')
     res = self.client.post(
-      reverse(views.admin_rollover, kwargs={'app_id': source_app.pk}),
+      reverse('admin_rollover', kwargs={'app_id': source_app.pk}),
       data={'cycle': draft.grant_cycle.pk}
     )
 
@@ -137,7 +137,7 @@ class AdminRollover(BaseGrantTestCase):
     source_app = factories.GrantApplication()
     target_cycle = factories.GrantCycle(status='closed')
     res = self.client.post(
-      reverse(views.admin_rollover, kwargs={'app_id': source_app.pk}),
+      reverse('admin_rollover', kwargs={'app_id': source_app.pk}),
       data={'cycle': target_cycle.pk}
     )
     self.assertEqual(res.status_code, 302)
@@ -148,7 +148,7 @@ class AdminRollover(BaseGrantTestCase):
     source_app = factories.GrantApplication()
     target_cycle = factories.GrantCycle(status='open')
     res = self.client.post(
-      reverse(views.admin_rollover, kwargs={'app_id': source_app.pk}),
+      reverse('admin_rollover', kwargs={'app_id': source_app.pk}),
       data={'cycle': target_cycle.pk}
     )
     self.assertEqual(res.status_code, 302)
@@ -251,7 +251,7 @@ class MergeOrgs(BaseGrantTestCase):
     factories.GrantApplication.create_batch(2, organization=b)
     factories.DraftGrantApplication.create_batch(2, organization=b)
 
-    url = reverse(views.merge_orgs, kwargs={'id_a': a.pk, 'id_b': b.pk})
+    url = reverse('merge_orgs', kwargs={'id_a': a.pk, 'id_b': b.pk})
     post_data = {'primary': a.pk}
     res = self.client.post(url, post_data, follow=True)
 
@@ -302,7 +302,7 @@ class MergeOrgs(BaseGrantTestCase):
     gpg = GivingProjectGrant(projectapp_id=papp.pk, amount=199, first_yer_due='2017-01-03')
     gpg.save()
 
-    url = reverse('sjfnw.grants.views.merge_orgs', kwargs={'id_a': sec, 'id_b': primary})
+    url = reverse('merge_orgs', kwargs={'id_a': sec, 'id_b': primary})
     post_data = {'primary': primary}
     res = self.client.post(url, post_data, follow=True)
 

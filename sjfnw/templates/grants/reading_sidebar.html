@@ -69,7 +69,7 @@
         <p>{{ gp }} - ${{ award.total_amount|intcomma }}</p>
         {% for yer in award.yearendreport_set.all %}
           {% if perm > 1 or yer.visible and perm == 1 %}
-            <a href="{% url 'grants.views.view_yer' report_id=yer.pk %}?embedded=true"
+            <a href="{% url 'grants:view_yer' report_id=yer.pk %}?embedded=true"
                target="reading_frame">View year end report
             {% if award.grant_length > 1 %}
               #{{ forloop.counter }}</a><br>

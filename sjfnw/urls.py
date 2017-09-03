@@ -5,8 +5,8 @@ from django.contrib.staticfiles.urls import staticfiles_urlpatterns
 from django.views.generic.base import RedirectView, TemplateView
 
 from sjfnw import views
-from sjfnw.fund import urls as fund_urls, cron as fund_cron
-from sjfnw.grants import urls as grants_urls, cron as grants_cron, views as grants_views
+from sjfnw.fund import cron as fund_cron
+from sjfnw.grants import cron as grants_cron, views as grants_views
 
 handler404 = 'sjfnw.views.page_not_found'
 handler500 = 'sjfnw.views.server_error'
@@ -23,23 +23,23 @@ else:
     url(r'^/?$', TemplateView.as_view(template_name='home.html')),
 
     # project central
-    url(r'^fund/', include(fund_urls)),
+    url(r'^', include('sjfnw.fund.urls')),
 
     # grants
-    url(r'^', include(grants_urls)),
+    url(r'^', include('sjfnw.grants.urls')),
 
     # admin
     url(r'^admin/', include(admin.site.urls)),
     url(r'^admin$', RedirectView.as_view(url='/admin/')),
-    url(r'^admin/grants/grantapplication/(?P<app_id>\d+)/revert', grants_views.revert_app_to_draft),
-    url(r'^admin/grants/grantapplication/(?P<app_id>\d+)/rollover', grants_views.admin_rollover),
+    url(r'^admin/grants/grantapplication/(?P<app_id>\d+)/revert', grants_views.revert_app_to_draft, 'revert_app'),
+    url(r'^admin/grants/grantapplication/(?P<app_id>\d+)/rollover', grants_views.admin_rollover, name='admin_rollover'),
     url(r'^admin/grants/organization/login', grants_views.login_as_org),
     url(r'^admin/grants/givingprojectgrant/yer-status', grants_views.show_yer_statuses),
 
-    url(r'^admin/grants/organizations/merge/(?P<id_a>\d+)/(?P<id_b>\d+)', grants_views.merge_orgs),
+    url(r'^admin/grants/organizations/merge/(?P<id_a>\d+)/(?P<id_b>\d+)', grants_views.merge_orgs, name='merge_orgs'),
 
     # reporting
-    url(r'^admin/grants/search/?', grants_views.grants_report),
+    url(r'^admin/grants/search/?', grants_views.grants_report, name='admin_grants_report'),
 
     # cron emails TODO use /cron instead of /mail?
     url(r'^mail/overdue-step', fund_cron.email_overdue),

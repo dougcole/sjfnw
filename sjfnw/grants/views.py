@@ -47,7 +47,7 @@ def org_login(request):
       if user:
         if user.is_active:
           login(request, user)
-          return redirect(org_home)
+          return redirect('grants:home')
         else:
           logger.warning('Inactive org account tried to log in, username: ' + email)
           messages.error(request, 'Your account is inactive. Please contact an administrator.')
@@ -78,7 +78,7 @@ def org_register(request):
             password=password, name=org_name)
       except ValueError as err:
         logger.warning(username_email + ' tried to re-register as org')
-        login_link = utils.create_link(reverse('sjfnw.grants.views.org_login'), 'Login')
+        login_link = utils.create_link(reverse('grants:login'), 'Login')
         messages.error(request, '{} {} instead.'.format(err.message, login_link))
 
       else:
@@ -86,7 +86,7 @@ def org_register(request):
         if user:
           if user.is_active:
             login(request, user)
-            return redirect(org_home)
+            return redirect('grants:home')
           else:
             logger.info('Registration needs admin approval, showing message. ' +
                 username_email)
@@ -336,7 +336,7 @@ def grant_application(request, organization, cycle_id):
       if not cycle.is_open():
         return render(request, 'grants/closed.html', {'cycle': cycle})
       if cycle.info_page and not request.GET.get('info'):
-        return redirect(reverse(cycle_info, kwargs={'cycle_id': cycle.pk}))
+        return redirect(reverse('grants:cycle_info', kwargs={'cycle_id': cycle.pk}))
 
       draft = models.DraftGrantApplication(**filter_by)
       profiled = _autofill_draft(draft)
@@ -400,13 +400,13 @@ def year_end_report(request, organization, award_id):
 
   if app.organization_id != organization.pk:
     logger.warning('Trying to edit someone else\'s YER')
-    return redirect(org_home)
+    return redirect('grants:home')
 
   total_yers = models.YearEndReport.objects.filter(award=award).count()
   # check if already submitted
   if total_yers >= award.grant_length():
     logger.warning('Required YER(s) already submitted for this award')
-    return redirect(org_home)
+    return redirect('grants:home')
 
   # get or create draft
   draft, created = models.YERDraft.objects.get_or_create(award=award)
@@ -714,8 +714,7 @@ def rollover_yer(request, organization):
       new_draft.photo4 = report.photo4
       new_draft.photo_release = report.photo_release
       new_draft.save()
-      return redirect(reverse('sjfnw.grants.views.year_end_report',
-                              kwargs={'award_id': award_id}))
+      return redirect(reverse('grants:year_end_report', kwargs={'award_id': award_id}))
     else: # INVALID FORM
       logger.error('Invalid YER rollover. %s', form.errors)
       return render(request, 'grants/yer_rollover.html', {

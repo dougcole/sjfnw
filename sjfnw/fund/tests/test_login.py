@@ -5,7 +5,7 @@ from sjfnw.fund.tests.base import BaseFundTestCase
 
 class Login(BaseFundTestCase):
 
-  url = reverse('sjfnw.fund.views.fund_login')
+  url = reverse('fund:login')
 
   def setUp(self):
     super(Login, self).setUp()
@@ -61,4 +61,4 @@ class Login(BaseFundTestCase):
     res = self.client.post(self.url, self.form_data)
 
     self.assertEqual(res.status_code, 302)
-    self.assertEqual(res.url, self.BASE_URL + reverse('sjfnw.fund.views.not_member'))
+    self.assertEqual(res.url, reverse('fund:not_member'))

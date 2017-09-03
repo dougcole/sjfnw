@@ -9,7 +9,7 @@ logger = logging.getLogger('sjfnw')
 
 class Register(BaseFundTestCase):
 
-  url = reverse('sjfnw.fund.views.fund_register')
+  url = reverse('fund:register')
 
   def test_load(self):
     response = self.client.get(self.url, follow=True)

@@ -17,7 +17,7 @@ class BasicFileField(models.FileField):
   """ Sets standard defaults """
 
   def __init__(self, **kwargs):
-    defaults = {'upload_to': '/', 'max_length': 255}
+    defaults = {'upload_to': '', 'max_length': 255}
     defaults.update(kwargs)
     return super(BasicFileField, self).__init__(**defaults)
 
@@ -208,7 +208,9 @@ class GrantCycleManager(models.Manager):
       private=source.private)
     new_cycle.save()
     for cn in CycleNarrative.objects.filter(grant_cycle=source):
-      cn_new_cycle = CycleNarrative(grant_cycle=new_cycle, narrative_question=cn.narrative_question, order=cn.order)
+      cn_new_cycle = CycleNarrative(
+        grant_cycle=new_cycle, narrative_question=cn.narrative_question, order=cn.order
+      )
       cn_new_cycle.save()
     logger.info('Created %s cycle as copy of %s', title, source.title)
     return new_cycle
@@ -541,7 +543,7 @@ class GrantApplication(models.Model):
 
   @classmethod
   def fields_starting_with(cls, start):
-    return [f for f in cls._meta.get_all_field_names() if f.startswith(start)]
+    return [f.name for f in cls._meta.get_fields() if f.name.startswith(start)]
 
   @classmethod
   def file_fields(cls):
@@ -549,7 +551,7 @@ class GrantApplication(models.Model):
 
   @classmethod
   def get_field_names(cls):
-    return [f for f in cls._meta.get_all_field_names()]
+    return [f.name for f in cls._meta.get_fields()]
 
   def __unicode__(self):
     return '%s - %s' % (unicode(self.organization), unicode(self.grant_cycle))
@@ -719,13 +721,12 @@ class GivingProjectGrant(models.Model):
       return None
 
   def yers_due(self):
-    today = timezone.now().date()
     completed = self.yearendreport_set.count()
     yers_due = []
     # these won't be done out of order as are forced to do in order
-    for x in range(self.grant_length()):
-      if (completed <= x):
-        yers_due.append(self.first_yer_due.replace(year=self.first_yer_due.year + x))
+    for i in range(self.grant_length()):
+      if completed <= i:
+        yers_due.append(self.first_yer_due.replace(year=self.first_yer_due.year + i))
     return yers_due
 
   def next_yer_due(self):
@@ -842,22 +843,20 @@ class YearEndReport(models.Model):
     '12. Other comments or information? Do you have any suggestions for how '
     'SJF can improve its grantmaking programs?'), blank=True) # json dict - see modelforms
 
-  photo1 = models.FileField(validators=[validate_photo_file_extension],
-      upload_to='/', max_length=255,
+  photo1 = BasicFileField(validators=[validate_photo_file_extension],
       help_text=('Please provide two or more photos that show your '
                  'organization\'s members, activities, etc. These pictures '
                  'help us tell the story of our grantees and of Social Justice '
                  'Fund to the broader public.'))
-  photo2 = models.FileField(validators=[validate_photo_file_extension],
-      upload_to='/', max_length=255)
-  photo3 = models.FileField(validators=[validate_photo_file_extension],
-      upload_to='/', help_text='(optional)', blank=True, max_length=255)
-  photo4 = models.FileField(validators=[validate_photo_file_extension],
-      upload_to='/', help_text='(optional)', blank=True, max_length=255)
+  photo2 = BasicFileField(validators=[validate_photo_file_extension])
+  photo3 = BasicFileField(validators=[validate_photo_file_extension],
+      help_text='(optional)', blank=True)
+  photo4 = BasicFileField(validators=[validate_photo_file_extension],
+      help_text='(optional)', blank=True)
 
-  photo_release = models.FileField(upload_to='/', max_length=255,
-    verbose_name=('Please provide photo releases signed by any people who '
-                  'appear in these photos.'))
+  photo_release = BasicFileField(verbose_name=
+    'Please provide photo releases signed by any people who appear in these photos.'
+  )
 
   # admin-entered
   visible = models.BooleanField(default=False, help_text=('Check this to make '

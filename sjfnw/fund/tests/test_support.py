@@ -5,7 +5,7 @@ from sjfnw.fund.tests.base import BaseFundTestCase
 
 class Support(BaseFundTestCase):
 
-  url = reverse('sjfnw.fund.views.support')
+  url = reverse('fund:support')
 
   def test_logged_out(self):
     res = self.client.get(self.url)

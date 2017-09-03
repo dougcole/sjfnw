@@ -4,7 +4,7 @@ from sjfnw.fund.tests.base import BaseFundTestCase
 
 class GivingProjectPage(BaseFundTestCase):
 
-  url = reverse('sjfnw.fund.views.project_page')
+  url = reverse('fund:project_page')
 
   def setUp(self):
     super(GivingProjectPage, self).setUp()

@@ -22,7 +22,7 @@ class Command(BaseCommand):
       if len(apps) > 0:
         app = apps[0]
         # pylint: disable=protected-access
-        for field in Organization._meta.get_all_field_names():
+        for field in [f.name for f in Organization._meta.get_fields()]:
           if field != 'id' and hasattr(app, field):
             setattr(org, field, getattr(app, field))
         org.save()

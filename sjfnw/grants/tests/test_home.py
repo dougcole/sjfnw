@@ -4,7 +4,6 @@ import json, logging
 from django.core.urlresolvers import reverse
 from django.utils import timezone
 
-from sjfnw.grants import views
 from sjfnw.grants.tests import factories
 from sjfnw.grants.tests.base import BaseGrantTestCase
 from sjfnw.grants.models import (DraftGrantApplication, GrantApplication,
@@ -15,7 +14,7 @@ logger = logging.getLogger('sjfnw')
 class OrgHomeAwards(BaseGrantTestCase):
   """ Verify that correct data is showing on the org home page """
 
-  url = reverse(views.org_home)
+  url = reverse('grants:home')
   template = 'grants/org_home.html'
 
   def setUp(self):

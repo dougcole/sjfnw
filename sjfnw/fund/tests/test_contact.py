@@ -18,7 +18,7 @@ class EditContact(BaseFundTestCase):
     }
 
   def _get_url(self, donor_id):
-    return reverse('sjfnw.fund.views.edit_contact', kwargs={'donor_id': donor_id})
+    return reverse('fund:edit_contact', kwargs={'donor_id': donor_id})
 
   def test_get_without_est(self):
     self.login_as_member('new')
@@ -96,7 +96,7 @@ class DeleteContact(BaseFundTestCase):
     membership.save()
 
   def _get_url(self, donor_id):
-    return reverse('sjfnw.fund.views.delete_contact', kwargs={'donor_id': donor_id})
+    return reverse('fund:delete_contact', kwargs={'donor_id': donor_id})
 
   def test_get_valid(self):
     res = self.client.get(self._get_url(self.donor_id))
@@ -111,7 +111,7 @@ class DeleteContact(BaseFundTestCase):
     res = self.client.post(self._get_url(self.donor_id), {})
 
     self.assertEqual(res.status_code, 302)
-    self.assertEqual(res.url, self.BASE_URL + reverse('sjfnw.fund.views.home'))
+    self.assertEqual(res.url, reverse('fund:home'))
 
     donor = Donor.objects.filter(pk=self.donor_id)
     self.assertEqual(len(donor), 0)

@@ -29,12 +29,12 @@
     {# edit/complete links #}
     <div class="edit_done">
       [<span class="load"
-             data-url="{% url 'sjfnw.fund.views.edit_step' donor_id=donor.pk step_id=donor.next_step.pk %}"
+             data-url="{% url 'fund:edit_step' donor_id=donor.pk step_id=donor.next_step.pk %}"
              data-target="{{ donor.pk }}-nextstep">
         edit step
       </span> |
       <span class="load"
-            data-url="{% url 'sjfnw.fund.views.complete_step' donor_id=donor.pk step_id=donor.next_step.pk %}"
+            data-url="{% url 'fund:complete_step' donor_id=donor.pk step_id=donor.next_step.pk %}"
             data-target="{{ donor.pk }}-nextstep"
             data-asked="{{ donor.asked }}"
             data-promised="{{ donor.promised }}">
@@ -44,7 +44,7 @@
 
   {% else %}{# no next step #}
     {% if donor.promised == None and donor.received == 0 %}
-    No next step. <span class="load" data-url="{% url 'sjfnw.fund.views.add_step' donor_id=donor.pk %}"
+    No next step. <span class="load" data-url="{% url 'fund:add_step' donor_id=donor.pk %}"
                         data-target="{{ donor.pk }}-nextstep"> Add one.</span>
     {% endif %}
   {% endif %}
@@ -93,7 +93,7 @@
         <p>
           Completed steps:
           {% if not donor.next_step %}
-            <span class="load" data-url="{% url 'sjfnw.fund.views.add_step' donor_id=donor.pk %}"
+            <span class="load" data-url="{% url 'fund:add_step' donor_id=donor.pk %}"
                   data-target="{{ donor.pk }}-nextstep">
               [add another]
             </span>

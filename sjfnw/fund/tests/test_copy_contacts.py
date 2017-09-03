@@ -10,8 +10,8 @@ logger = logging.getLogger('sjfnw')
 
 class CopyContacts(BaseFundTestCase):
 
-  get_url = reverse('sjfnw.fund.views.home')
-  post_url = reverse('sjfnw.fund.views.copy_contacts')
+  get_url = reverse('fund:home')
+  post_url = reverse('fund:copy_contacts')
   template = 'fund/forms/copy_contacts.html'
 
   def setUp(self):

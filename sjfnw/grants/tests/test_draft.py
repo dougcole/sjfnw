@@ -13,7 +13,7 @@ from sjfnw.grants.tests.base import BaseGrantTestCase
 class DraftAutosave(BaseGrantTestCase):
 
   def _get_url(self, draft):
-    return reverse(views.autosave_app, kwargs={'cycle_id': draft.grant_cycle.pk})
+    return reverse('grants:autosave_app', kwargs={'cycle_id': draft.grant_cycle.pk})
 
   def setUp(self):
     super(DraftAutosave, self).setUp()
@@ -87,7 +87,7 @@ class DraftWarning(BaseGrantTestCase):
 
 class DiscardDraft(BaseGrantTestCase):
 
-  url = reverse(views.discard_draft, kwargs={'draft_id': 1})
+  url = reverse('grants:discard_draft', kwargs={'draft_id': 1})
 
   def setUp(self):
     super(DiscardDraft, self).setUp()
@@ -118,7 +118,7 @@ class DiscardDraft(BaseGrantTestCase):
     self.assert_count(models.DraftGrantApplication.objects.filter(pk=84), 0)
 
     response = self.client.delete(
-      reverse(views.discard_draft, kwargs={'draft_id': 84})
+      reverse('grants:discard_draft', kwargs={'draft_id': 84})
     )
     self.assertEqual(response.status_code, 404)
     self.assertEqual(response.content, '')
@@ -140,7 +140,7 @@ class DraftRemoveFile(BaseGrantTestCase):
 
   def test_unknown_draft_type(self):
 
-    url = reverse(views.remove_file, kwargs={
+    url = reverse('grants:remove_file', kwargs={
       'draft_type': 'madeup', 'draft_id': self.draft.pk, 'file_field': 'budget1'
     })
     res = self.client.get(url)
@@ -148,7 +148,7 @@ class DraftRemoveFile(BaseGrantTestCase):
 
   def test_obj_not_found(self):
 
-    url = reverse(views.remove_file, kwargs={
+    url = reverse('grants:remove_file', kwargs={
       'draft_type': 'apply', 'draft_id': '1880', 'file_field': 'budget1'
     })
     res = self.client.get(url, follow=True)
@@ -156,7 +156,7 @@ class DraftRemoveFile(BaseGrantTestCase):
 
   def test_unknown_field(self):
 
-    url = reverse(views.remove_file, kwargs={
+    url = reverse('grants:remove_file', kwargs={
       'draft_type': 'apply', 'draft_id': self.draft.pk, 'file_field': 'madeup'
     })
 
@@ -172,7 +172,7 @@ class DraftRemoveFile(BaseGrantTestCase):
   def test_remove_draft_app_file(self):
     self.assertTrue(len(self.draft.budget1.name) > 1)
 
-    url = reverse(views.remove_file, kwargs={
+    url = reverse('grants:remove_file', kwargs={
       'draft_type': 'apply', 'draft_id': self.draft.pk, 'file_field': 'budget1'
     })
 
@@ -188,7 +188,7 @@ class DraftRemoveFile(BaseGrantTestCase):
     draft = factories.YERDraft(award__projectapp__application__organization=self.org)
     self.assertTrue(draft.photo_release)
 
-    url = reverse(views.remove_file, kwargs={
+    url = reverse('grants:remove_file', kwargs={
       'draft_type': 'report', 'draft_id': draft.pk, 'file_field': 'photo_release'
     })
     res = self.client.get(url, follow=True)

@@ -33,7 +33,7 @@
   {% if donors.0 %}
     {% if not load %} {# add contacts link only if mass add won't be showing #}
     <div class="edit_done">
-      [<a onclick="loadView('{% url 'sjfnw.fund.views.add_mult' %}', 'addmult')">add contacts</a>]
+      [<a onclick="loadView('{% url 'fund:add_contacts' %}', 'addmult')">add contacts</a>]
     </div>
     {% endif %}
     <div class="donor indent" id="addmult"></div>{# form to add multiple donors is loaded here #}

@@ -4,7 +4,7 @@ from unittest import skip
 from django.core.urlresolvers import reverse
 from django.utils import timezone
 
-from sjfnw.grants import constants as gc, views
+from sjfnw.grants import constants as gc
 from sjfnw.grants.tests import factories
 from sjfnw.grants.tests.base import BaseGrantTestCase
 from sjfnw.grants.models import (GivingProjectGrant, GrantCycle, ProjectApp,
@@ -22,7 +22,7 @@ class GrantReading(BaseGrantTestCase):
     self.yer_id = yer.pk
 
   def _get_url(self, app_id):
-    return reverse(views.view_application, kwargs={'app_id': app_id})
+    return reverse('grants:view_application', kwargs={'app_id': app_id})
 
   def test_author(self):
     self.login_as_org()

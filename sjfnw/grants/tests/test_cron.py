@@ -38,6 +38,7 @@ class AutoCreateCycles(BaseTestCase):
 
   def test_both(self):
     fake_now = timezone.now().replace(hour=8) + timedelta(days=1)
+    timezone.now = Mock(return_value=fake_now)
     rr_cycle = factories.GrantCycle(
       title='Rapid Response',
       open=fake_now - timedelta(weeks=2),
@@ -67,8 +68,9 @@ class AutoCreateCycles(BaseTestCase):
       self.assertIn(draft.grant_cycle_id, new_cycle_ids)
 
     for c_id in new_cycle_ids:
-      c_id.assert_count(models.CycleNarrative.objects.filter(
-        grant_cycle_id=c_id), len(gc.STANDARD_NARRATIVES)
+      self.assert_count(
+        models.CycleNarrative.objects.filter(grant_cycle_id=c_id),
+        len(gc.STANDARD_NARRATIVES)
       )
     self.assert_length(mail.outbox, 1)
 

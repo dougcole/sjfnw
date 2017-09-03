@@ -1,5 +1,9 @@
+from datetime import datetime
+
 from django.core.urlresolvers import reverse
 from django.utils import timezone
+
+from pytz import utc
 
 from sjfnw.fund import models
 from sjfnw.fund.views import _compile_membership_progress
@@ -7,7 +11,7 @@ from sjfnw.fund.tests.base import BaseFundTestCase
 
 class AddContacts(BaseFundTestCase):
 
-  url = reverse('sjfnw.fund.views.home')
+  url = reverse('fund:home')
 
   def setUp(self):
     super(AddContacts, self).setUp()
@@ -78,7 +82,7 @@ class AddContacts(BaseFundTestCase):
 
 class AddEstimates(BaseFundTestCase):
 
-  url = reverse('sjfnw.fund.views.home')
+  url = reverse('fund:home')
 
   def setUp(self):
     super(AddEstimates, self).setUp()
@@ -108,7 +112,7 @@ class AddEstimates(BaseFundTestCase):
 
 class HomeSurveys(BaseFundTestCase):
 
-  url = reverse('sjfnw.fund.views.home')
+  url = reverse('fund:home')
 
   def setUp(self):
     super(HomeSurveys, self).setUp()
@@ -160,8 +164,8 @@ class CompileMembershipProgress(BaseFundTestCase):
     donor = models.Donor(membership_id=ship_id, firstname='Alice',
                          amount=240, likelihood=75, talked=True)
     donor.save()
-    step = models.Step(donor=donor, date='2015-04-01',
-                       description='Talk', completed='2015-04-01')
+    step = models.Step(donor=donor, date='2015-04-01', description='Talk',
+                       completed=datetime(2015, 4, 1, tzinfo=utc))
     step.save()
     step = models.Step(donor=donor, date='2015-5-25', description='Ask')
     step.save()
@@ -171,12 +175,11 @@ class CompileMembershipProgress(BaseFundTestCase):
                          amount=300, likelihood=50, asked=True,
                          promised=300, received_this=100, received_next=100)
     donor.save()
-    step = models.Step(donor=donor, date='2015-04-01',
-                       description='Ask', completed='2015-04-01', asked=True)
+    step = models.Step(donor=donor, date='2015-04-01', description='Ask',
+        completed=datetime(2015, 4, 1, tzinfo=utc), asked=True)
     step.save()
-    step = models.Step(donor=donor, date='2015-04-08',
-                       description='Follow upt', completed='2015-04-08',
-                       promised=300)
+    step = models.Step(donor=donor, date='2015-04-08', description='Follow upt',
+                       completed=datetime(2015, 4, 8, tzinfo=utc), promised=300)
     step.save()
     step = models.Step(donor=donor, date='2015-5-25', description='Thank')
     step.save()
@@ -208,7 +211,7 @@ class FormQueryParams(BaseFundTestCase):
   The logic for loading the forms is in the javascript - all we can test is that
   the url query params are passed into the template via context.
   """
-  url = reverse('sjfnw.fund.views.home')
+  url = reverse('fund:home')
 
   def setUp(self):
     super(FormQueryParams, self).setUp()
@@ -219,7 +222,7 @@ class FormQueryParams(BaseFundTestCase):
 
     self.assertEqual(res.status_code, 200)
     self.assertTemplateUsed(res, 'fund/home.html')
-    self.assertEqual(res.context['load'], reverse('sjfnw.fund.views.add_mult_step'))
+    self.assertEqual(res.context['load'], reverse('fund:add_steps'))
     self.assertEqual(res.context['loadto'], 'addmult')
 
   def test_edit_step(self):
@@ -228,8 +231,7 @@ class FormQueryParams(BaseFundTestCase):
 
     self.assertEqual(res.status_code, 200)
     self.assertTemplateUsed(res, 'fund/home.html')
-    expected_load_url = reverse(
-        'sjfnw.fund.views.edit_step',
+    expected_load_url = reverse('fund:edit_step',
         kwargs={'donor_id': self.donor_id, 'step_id': self.step_id})
     self.assertEqual(res.context['load'], expected_load_url)
     self.assertEqual(res.context['loadto'], '{}-nextstep'.format(self.donor_id))
@@ -241,7 +243,7 @@ class FormQueryParams(BaseFundTestCase):
     self.assertEqual(res.status_code, 200)
     self.assertTemplateUsed(res, 'fund/home.html')
     expected_load_url = reverse(
-        'sjfnw.fund.views.complete_step',
+        'fund:complete_step',
         kwargs={'donor_id': self.donor_id, 'step_id': self.step_id})
     self.assertEqual(res.context['load'], expected_load_url)
     self.assertEqual(res.context['loadto'], '{}-nextstep'.format(self.donor_id))

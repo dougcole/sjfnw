@@ -5,10 +5,10 @@ from django import forms
 from django.core.urlresolvers import reverse
 from django.utils import timezone
 
+from sjfnw.grants import models
 from sjfnw.grants.forms import (AppReportForm, SponsoredAwardReportForm,
     GPGrantReportForm, OrgReportForm)
 from sjfnw.grants.tests.base import BaseGrantTestCase
-from sjfnw.grants import models
 
 import unicodecsv
 
@@ -20,7 +20,7 @@ class ReportingHomePage(BaseGrantTestCase):
     self.login_as_admin()
 
   def test_load_page(self):
-    response = self.client.get(reverse('sjfnw.grants.views.grants_report'))
+    response = self.client.get(reverse('admin_grants_report'))
 
     self.assertEqual(response.status_code, 200)
     self.assertContains(response, 'select id="report-type-selector"')
@@ -93,7 +93,7 @@ def fill_report_form(form, select_filters=False, select_fields=False, fmt='brows
 
 class AppReports(BaseGrantTestCase):
 
-  url = reverse('sjfnw.grants.views.grants_report')
+  url = reverse('admin_grants_report')
   template_success = 'grants/report_results.html'
   template_error = 'grants/reporting.html'
 
@@ -148,7 +148,7 @@ class AppReports(BaseGrantTestCase):
 
 class OrgReports(BaseGrantTestCase):
 
-  url = reverse('sjfnw.grants.views.grants_report')
+  url = reverse('admin_grants_report')
   template_success = 'grants/report_results.html'
   template_error = 'grants/reporting.html'
 
@@ -231,7 +231,7 @@ class OrgReports(BaseGrantTestCase):
 
 class GPGReports(BaseGrantTestCase):
 
-  url = reverse('sjfnw.grants.views.grants_report')
+  url = reverse('admin_grants_report')
   template_success = 'grants/report_results.html'
   template_error = 'grants/reporting.html'
 
@@ -310,12 +310,11 @@ class GPGReports(BaseGrantTestCase):
     self.assertTemplateUsed(response, self.template_success)
 
     results = response.context['results']
-    logger.info(results)
 
 
 class SponsoredAwardReports(BaseGrantTestCase):
 
-  url = reverse('sjfnw.grants.views.grants_report')
+  url = reverse('admin_grants_report')
   template_success = 'grants/report_results.html'
   template_error = 'grants/reporting.html'
 
@@ -384,4 +383,3 @@ class SponsoredAwardReports(BaseGrantTestCase):
     self.assertTemplateUsed(response, self.template_success)
 
     results = response.context['results']
-    logger.info(results)

@@ -7,7 +7,7 @@ from django.core.urlresolvers import reverse
 from django.test.utils import override_settings
 from django.utils import timezone
 
-from sjfnw.grants import cron, models, views
+from sjfnw.grants import cron, models
 from sjfnw.grants.tests import factories
 from sjfnw.grants.tests.base import BaseGrantTestCase
 from sjfnw.grants.tests.test_apply import BaseGrantFilesTestCase
@@ -15,15 +15,15 @@ from sjfnw.grants.tests.test_apply import BaseGrantFilesTestCase
 logger = logging.getLogger('sjfnw')
 
 def _get_autosave_url(award_id):
-  return reverse(views.autosave_yer, kwargs={'award_id': award_id})
+  return reverse('grants:autosave_yer', kwargs={'award_id': award_id})
 
 def _get_yer_url(award_id):
-  return reverse(views.year_end_report, kwargs={'award_id': award_id})
+  return reverse('grants:year_end_report', kwargs={'award_id': award_id})
 
 
 class YearEndReportHomeLinks(BaseGrantTestCase):
 
-  url = reverse(views.org_home)
+  url = reverse('grants:home')
 
   def _assert_link(self, res, award, count=1):
     self.assertEqual(res.status_code, 200)
@@ -385,7 +385,7 @@ class YearEndReportReminders(BaseGrantTestCase):
 class RolloverYER(BaseGrantTestCase):
   """ Test display and function of the rollover feature for YER """
 
-  url = reverse('sjfnw.grants.views.rollover_yer')
+  url = reverse('grants:rollover_yer')
 
   def setUp(self):
     super(RolloverYER, self).setUp()
@@ -394,7 +394,7 @@ class RolloverYER(BaseGrantTestCase):
   def test_rollover_link(self):
     """ Verify that link shows on home page """
 
-    res = self.client.get(reverse(views.org_home))
+    res = self.client.get(reverse('grants:home'))
     self.assertEqual(res.status_code, 200)
     self.assertTemplateUsed(res, 'grants/org_home.html')
     self.assertContains(res, 'rollover a year-end report')
@@ -491,7 +491,7 @@ class ViewYER(BaseGrantTestCase):
   def test_not_logged_in(self):
     yer = factories.YearEndReport()
 
-    url = reverse(views.view_yer, kwargs={'report_id': yer.pk})
+    url = reverse('grants:view_yer', kwargs={'report_id': yer.pk})
     res = self.client.get(url)
 
     self.assertEqual(res.status_code, 200)
@@ -501,7 +501,7 @@ class ViewYER(BaseGrantTestCase):
     self.login_as_org()
     yer = factories.YearEndReport(award__projectapp__application__organization=self.org)
 
-    url = reverse(views.view_yer, kwargs={'report_id': yer.pk})
+    url = reverse('grants:view_yer', kwargs={'report_id': yer.pk})
     res = self.client.get(url)
 
     self.assertEqual(res.status_code, 200)

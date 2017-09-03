@@ -19,7 +19,7 @@ class AddStep(BaseFundTestCase):
     donor = Donor(firstname='user', lastname='', membership_id=self.pre_id)
     donor.save()
     self.donor_id = donor.pk
-    self.url = reverse('sjfnw.fund.views.add_step', kwargs={'donor_id': donor.pk})
+    self.url = reverse('fund:add_step', kwargs={'donor_id': donor.pk})
     self.valid_form = {
       'date': '11/13/2034',
       'description': 'Talk to them'
@@ -66,7 +66,7 @@ class AddStep(BaseFundTestCase):
     self.assertEqual(step.description, 'Talk to them')
 
   def test_invalid_donor(self):
-    url = reverse('sjfnw.fund.views.add_step', kwargs={'donor_id': 0})
+    url = reverse('fund:add_step', kwargs={'donor_id': 0})
     response = self.client.post(url, self.valid_form)
     self.assertEqual(response.status_code, 404)
 
@@ -90,7 +90,7 @@ class EditStep(BaseFundTestCase):
     step = Step(donor_id=donor.pk, date='2034-11-13', description='Think about it')
     step.save()
     self.step_id = step.pk
-    self.url = reverse('sjfnw.fund.views.edit_step',
+    self.url = reverse('fund:edit_step',
                        kwargs={'donor_id': donor.pk, 'step_id': step.pk})
     self.valid_form = {
       'date': '11/13/2034',
@@ -131,13 +131,13 @@ class EditStep(BaseFundTestCase):
     self.assertEqual(step.description, 'Talk to them')
 
   def test_invalid_donor(self):
-    url = reverse('sjfnw.fund.views.edit_step',
+    url = reverse('fund:edit_step',
                   kwargs={'donor_id': 0, 'step_id': self.step_id})
     response = self.client.post(url, self.valid_form)
     self.assertEqual(response.status_code, 404)
 
   def test_invalid_step(self):
-    url = reverse('sjfnw.fund.views.edit_step',
+    url = reverse('fund:edit_step',
                   kwargs={'donor_id': self.donor_id, 'step_id': 0})
     response = self.client.post(url, self.valid_form)
     self.assertEqual(response.status_code, 404)
@@ -149,7 +149,7 @@ class StepComplete(BaseFundTestCase):
   def setUp(self):
     super(StepComplete, self).setUp()
     self.login_as_member('current')
-    self.url = reverse('sjfnw.fund.views.complete_step', kwargs={
+    self.url = reverse('fund:complete_step', kwargs={
       'donor_id': self.donor_id, 'step_id': self.step_id
     })
     # start with blank/defaults form
@@ -471,7 +471,7 @@ class StepComplete(BaseFundTestCase):
     self.post_and_verify_followup_saved(self.form_data)
 
   def test_donor_not_found(self):
-    url = reverse('sjfnw.fund.views.complete_step', kwargs={
+    url = reverse('fund:complete_step', kwargs={
       'donor_id': 8989, 'step_id': self.step_id
     })
     res = self.client.post(url, self.form_data)
@@ -479,7 +479,7 @@ class StepComplete(BaseFundTestCase):
     self.assertEqual(res.status_code, 404)
 
   def test_step_not_found(self):
-    url = reverse('sjfnw.fund.views.complete_step', kwargs={
+    url = reverse('fund:complete_step', kwargs={
       'donor_id': self.donor_id, 'step_id': 8989
     })
     res = self.client.post(url, self.form_data)
@@ -489,7 +489,7 @@ class StepComplete(BaseFundTestCase):
 
 class AddMultStep(BaseFundTestCase):
 
-  url = reverse('sjfnw.fund.views.add_mult_step')
+  url = reverse('fund:add_steps')
 
   def setUp(self):
     super(AddMultStep, self).setUp()

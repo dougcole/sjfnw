@@ -4,15 +4,16 @@ import logging
 from django.core.urlresolvers import reverse
 from django.utils import timezone
 
+from sjfnw.fund import views
 from sjfnw.fund.models import Member, Membership, GivingProject
 from sjfnw.fund.tests.base import BaseFundTestCase
 
 logger = logging.getLogger('sjfnw')
 
-LOGIN_URL = reverse('sjfnw.fund.views.fund_login')
-MANAGE_ACCOUNT_URL = reverse('sjfnw.fund.views.manage_account')
-HOME_URL = reverse('sjfnw.fund.views.home')
-NOT_MEMBER_URL = reverse('sjfnw.fund.views.not_member')
+LOGIN_URL = reverse('fund:login')
+MANAGE_ACCOUNT_URL = reverse('fund:manage_account')
+HOME_URL = reverse('fund:home')
+NOT_MEMBER_URL = reverse('fund:not_member')
 
 class SetCurrent(BaseFundTestCase):
 
@@ -23,18 +24,18 @@ class SetCurrent(BaseFundTestCase):
   def test_not_logged_in(self):
     self.client.logout()
 
-    url = reverse('sjfnw.fund.views.set_current', kwargs={'ship_id': '888'})
+    url = reverse('fund:set_current', kwargs={'ship_id': '888'})
     res = self.client.get(url)
 
     self.assertEqual(res.status_code, 302)
-    self.assertEqual(res.url, self.BASE_URL + LOGIN_URL + '?next=' + url)
+    self.assertEqual(res.url, LOGIN_URL + '?next=' + url)
 
   def test_unknown_id(self):
-    url = reverse('sjfnw.fund.views.set_current', kwargs={'ship_id': '888'})
+    url = reverse('fund:set_current', kwargs={'ship_id': '888'})
     res = self.client.get(url)
 
     self.assertEqual(res.status_code, 302)
-    self.assertEqual(res.url, self.BASE_URL + MANAGE_ACCOUNT_URL)
+    self.assertEqual(res.url, MANAGE_ACCOUNT_URL)
 
   def test_valid(self):
     pre_gp = GivingProject.objects.get(title='Pre training')
@@ -44,12 +45,12 @@ class SetCurrent(BaseFundTestCase):
     member = Member.objects.get(pk=self.member_id)
     self.assertNotEqual(member.current, new_ship.pk)
 
-    url = reverse('sjfnw.fund.views.set_current', kwargs={'ship_id': new_ship.pk})
+    url = reverse('fund:set_current', kwargs={'ship_id': new_ship.pk})
 
     res = self.client.get(url)
 
     self.assertEqual(res.status_code, 302)
-    self.assertEqual(res.url, self.BASE_URL + HOME_URL)
+    self.assertEqual(res.url, HOME_URL)
 
     member = Member.objects.get(pk=self.member_id)
     self.assertEqual(member.current, new_ship.pk)
@@ -60,8 +61,7 @@ class ManageAccount(BaseFundTestCase):
     res = self.client.get(MANAGE_ACCOUNT_URL)
 
     self.assertEqual(res.status_code, 302)
-    self.assertEqual(res.url,
-        self.BASE_URL + LOGIN_URL + '?next=' + MANAGE_ACCOUNT_URL)
+    self.assertEqual(res.url, LOGIN_URL + '?next=' + MANAGE_ACCOUNT_URL)
 
   def test_load_not_member(self):
     self.login_as_admin()
@@ -69,7 +69,7 @@ class ManageAccount(BaseFundTestCase):
     res = self.client.get(MANAGE_ACCOUNT_URL)
 
     self.assertEqual(res.status_code, 302)
-    self.assertEqual(res.url, self.BASE_URL + NOT_MEMBER_URL)
+    self.assertEqual(res.url, NOT_MEMBER_URL)
 
   def test_load(self):
     self.login_as_member('current')
@@ -151,7 +151,7 @@ class ManageAccount(BaseFundTestCase):
     res = self.client.post(MANAGE_ACCOUNT_URL, {'giving_project': str(gp.pk)})
 
     self.assertEqual(res.status_code, 302)
-    self.assertEqual(res.url, self.BASE_URL + HOME_URL)
+    self.assertEqual(res.url, HOME_URL)
     new_membership = Membership.objects.get(member_id=self.member_id, giving_project_id=gp.pk)
     self.assertEqual(new_membership.approved, True)
     member = Member.objects.get(pk=self.member_id)
@@ -159,7 +159,7 @@ class ManageAccount(BaseFundTestCase):
 
 class NotApproved(BaseFundTestCase):
 
-  url = reverse('sjfnw.fund.views.not_approved')
+  url = reverse('fund:not_approved')
 
   def test_not_member(self):
     self.login_as_admin()
@@ -167,7 +167,7 @@ class NotApproved(BaseFundTestCase):
     res = self.client.get(self.url)
 
     self.assertEqual(res.status_code, 302)
-    self.assertEqual(res.url, self.BASE_URL + reverse('sjfnw.fund.views.not_member'))
+    self.assertEqual(res.url, reverse('fund:not_member'))
 
   def test_member(self):
     self.login_as_member('new')
@@ -180,7 +180,7 @@ class NotApproved(BaseFundTestCase):
 
 class Blocked(BaseFundTestCase):
 
-  url = reverse('sjfnw.fund.views.blocked')
+  url = reverse('fund:blocked')
 
   def test_get(self):
     res = self.client.get(self.url)

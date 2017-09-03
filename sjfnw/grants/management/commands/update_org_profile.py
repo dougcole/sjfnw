@@ -40,7 +40,7 @@ class Command(BaseCommand):
       self.stderr.write('Not modifying organization profile.')
       return
 
-    for field in Organization._meta.get_all_field_names():
+    for field in [f.name for f in Organization._meta.get_fields()]:
       if field != 'id' and hasattr(app, field):
         self.stdout.write('Setting ' + field)
         setattr(org, field, getattr(app, field))

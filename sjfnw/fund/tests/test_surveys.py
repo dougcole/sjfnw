@@ -11,7 +11,7 @@ logger = logging.getLogger('sjfnw')
 
 class GPSurveys(BaseFundTestCase):
 
-  url = reverse('sjfnw.fund.views.home')
+  url = reverse('fund:home')
   template = 'fund/forms/gp_survey.html'
 
   def _create_survey(self):
@@ -64,8 +64,8 @@ class GPSurveys(BaseFundTestCase):
 
     self.assertTemplateUsed(res, self.template)
     self.assertContains(res, form_data['intro'])
+    self.assertContains(res, '<form id="gp-survey"', count=1)
     self.assertContains(res, '<textarea', count=1)
-    self.assertContains(res, '<li><label for', count=2)
 
   def test_fill(self):
     self._create_survey()
@@ -85,8 +85,7 @@ class GPSurveys(BaseFundTestCase):
         'date': timezone.now().date,
         'gp_survey': self.gps_pk
     }
-    post_url = reverse('sjfnw.fund.views.project_survey',
-                       kwargs={'gp_survey_id': self.gps_pk})
+    post_url = reverse('fund:project_survey', kwargs={'gp_survey_id': self.gps_pk})
     res = self.client.post(post_url, form_data)
 
     self.assertEqual(res.status_code, 200)
@@ -127,7 +126,7 @@ class GPSurveys(BaseFundTestCase):
   def test_load_not_found(self):
     self.login_as_member('first')
 
-    url = reverse('sjfnw.fund.views.project_survey', kwargs={'gp_survey_id': '9999'})
+    url = reverse('fund:project_survey', kwargs={'gp_survey_id': '9999'})
     res = self.client.get(url)
 
     self.assertEqual(res.status_code, 404)

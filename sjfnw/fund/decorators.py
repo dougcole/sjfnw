@@ -21,8 +21,7 @@ def require_member(require_membership=False):
     def _wrapped_view(request, *args, **kwargs):
 
       if not request.user.is_authenticated():
-        return redirect_to_login(request.get_full_path(),
-                                 reverse('sjfnw.fund.views.fund_login'))
+        return redirect_to_login(request.get_full_path(), reverse('fund:login'))
       elif not request.user.is_active:
         logger.warn('Inactive member %s', request.user.username)
         # TODO error page
@@ -30,7 +29,7 @@ def require_member(require_membership=False):
 
       elif not hasattr(request.user, 'member'):
         logger.debug('Not a member: %s', request.user.username)
-        return redirect(reverse('sjfnw.fund.views.not_member'))
+        return redirect(reverse('fund:not_member'))
 
       if require_membership:
         membership = None
@@ -39,10 +38,10 @@ def require_member(require_membership=False):
                                            .filter(pk=request.user.member.current)
                                            .first())
         if not membership:
-          return redirect(reverse('sjfnw.fund.views.manage_account'))
+          return redirect(reverse('fund:manage_account'))
 
         elif not membership.approved:
-          return redirect(reverse('sjfnw.fund.views.not_approved'))
+          return redirect(reverse('fund:not_approved'))
 
         request.membership = membership
 

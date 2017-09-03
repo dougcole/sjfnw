@@ -20,7 +20,7 @@ class Grants(BaseFundTestCase):
               'sjfnw/grants/fixtures/apps.json',
               'sjfnw/grants/fixtures/project_apps.json']
 
-  url = reverse('sjfnw.fund.views.grant_list')
+  url = reverse('fund:grants')
 
   def setUp(self):
     super(Grants, self).setUp()

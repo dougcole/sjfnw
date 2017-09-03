@@ -5,7 +5,7 @@ from django.core import mail
 from django.core.urlresolvers import reverse
 from django.utils import timezone
 
-from sjfnw.fund import models
+from sjfnw.fund import cron, models
 from sjfnw.fund.tests.base import BaseFundTestCase
 
 logger = logging.getLogger('sjfnw')
@@ -13,8 +13,8 @@ logger = logging.getLogger('sjfnw')
 
 class GiftNotifications(BaseFundTestCase):
 
-  url = reverse('sjfnw.fund.views.home')
-  cron_url = reverse('sjfnw.fund.cron.gift_notify')
+  url = reverse('fund:home')
+  cron_url = reverse(cron.gift_notify)
 
   def setUp(self):
     super(GiftNotifications, self).setUp()
@@ -98,7 +98,7 @@ class GiftNotifications(BaseFundTestCase):
 
 class PendingApproval(BaseFundTestCase):
 
-  url = reverse('sjfnw.fund.cron.new_accounts')
+  url = reverse(cron.new_accounts)
 
   def setUp(self):
     super(PendingApproval, self).setUp()
@@ -218,7 +218,7 @@ class PendingApproval(BaseFundTestCase):
 
 class OverdueEmails(BaseFundTestCase):
 
-  url = reverse('sjfnw.fund.cron.email_overdue')
+  url = reverse(cron.email_overdue)
 
   def setUp(self):
     super(OverdueEmails, self).setUp()

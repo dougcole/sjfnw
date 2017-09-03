@@ -7,7 +7,7 @@ from sjfnw.fund.tests.base import BaseFundTestCase
 
 class AddMultipleDonorsPre(BaseFundTestCase):
 
-  url = reverse('sjfnw.fund.views.add_mult')
+  url = reverse('fund:add_contacts')
 
   def setUp(self):
     super(AddMultipleDonorsPre, self).setUp()
@@ -86,7 +86,7 @@ class AddMultipleDonorsPre(BaseFundTestCase):
 
 class AddMultipleDonorsPost(BaseFundTestCase):
 
-  url = reverse('sjfnw.fund.views.add_mult')
+  url = reverse('fund:add_contacts')
 
   def setUp(self):
     super(AddMultipleDonorsPost, self).setUp()

@@ -30,7 +30,7 @@
       <div class="row">
         <div class="col col-1of3 empty"></div>
         <div class="col col-2of3">
-          <a href="{% url 'sjfnw.grants.views.view_yer' report_id=yer.pk %}">Year end report</a> submitted {{ yer.submitted|date:"n/j/y" }}.
+          <a href="{% url 'grants:view_yer' report_id=yer.pk %}">Year end report</a> submitted {{ yer.submitted|date:"n/j/y" }}.
         </div>
       </div>
     {% endfor %}

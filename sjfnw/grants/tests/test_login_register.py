@@ -14,7 +14,7 @@ logger = logging.getLogger('sjfnw')
 
 class Login(BaseGrantTestCase):
 
-  url = reverse(views.org_login)
+  url = reverse('grants:login')
 
   def test_get(self):
     res = self.client.get(self.url, follow=True)
@@ -57,7 +57,7 @@ class Login(BaseGrantTestCase):
 
 class Register(BaseGrantTestCase):
 
-  url = reverse('sjfnw.grants.views.org_register')
+  url = reverse('grants:register')
   template_success = 'grants/org_home.html'
   template_error = 'grants/org_login_register.html'
 

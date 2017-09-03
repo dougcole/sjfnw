@@ -2,15 +2,15 @@ import logging
 
 from django.core.urlresolvers import reverse
 
-from sjfnw.fund import models
+from sjfnw.fund import models, views
 from sjfnw.fund.tests.base import BaseFundTestCase
 
 logger = logging.getLogger('sjfnw')
 
 class AddEstimates(BaseFundTestCase):
 
-  get_url = reverse('sjfnw.fund.views.home')
-  post_url = reverse('sjfnw.fund.views.add_estimates')
+  get_url = reverse('fund:home')
+  post_url = reverse('fund:add_estimates')
 
   def setUp(self):
     super(AddEstimates, self).setUp()

@@ -52,7 +52,7 @@ def home(request):
 
   if surveys:
     logger.info('Needs to fill out survey; redirecting')
-    return redirect(reverse('sjfnw.fund.views.project_survey', kwargs={
+    return redirect(reverse('fund:project_survey', kwargs={
       'gp_survey_id': surveys[0].pk
     }))
 
@@ -63,13 +63,13 @@ def home(request):
       all_donors = models.Donor.objects.filter(membership__member=membership.member)
       if all_donors:
         logger.info('Eligible to copy contacts; redirecting')
-        return redirect(copy_contacts)
-    return redirect(add_mult)
+        return redirect('fund:copy_contacts')
+    return redirect('fund:add_contacts')
 
   # check whether they need to add estimates
   if (membership.giving_project.require_estimates() and
       donors.filter(amount__isnull=True)):
-    return redirect(add_estimates)
+    return redirect('fund:add_estimates')
 
   # from here we know we're not redirecting
 
@@ -265,11 +265,11 @@ def fund_login(request):
       user = auth.authenticate(username=username, password=password)
       if user:
         if not hasattr(user, 'member'):
-          return redirect(reverse('sjfnw.fund.views.not_member'))
+          return redirect(reverse('fund:not_member'))
         elif user.is_active:
           auth.login(request, user)
           if not redirect_to or not is_safe_url(url=redirect_to, host=request.get_host()):
-            redirect_to = home
+            redirect_to = 'fund:home'
           return redirect(redirect_to)
         else:
           error_msg = 'Your account is not active.  Contact an administrator.'
@@ -326,9 +326,9 @@ def fund_register(request):
             # success! log in and redirect
             auth.login(request, user)
             if not membership:
-              return redirect(manage_account)
+              return redirect('fund:manage_account')
             if membership.approved:
-              return redirect(home)
+              return redirect('fund:home')
             return render(request, 'fund/registered.html', {
               'member': member, 'proj': giv
             })
@@ -369,7 +369,7 @@ def manage_account(request):
       membership, error_msg = _create_membership(member, gp)
       if membership and not error_msg:
         if membership.approved:
-          return redirect(home)
+          return redirect('fund:home')
         return render(request, 'fund/registered.html', {
           'member': member, 'proj': gp
         })
@@ -389,12 +389,12 @@ def set_current(request, ship_id):
   try:
     ship = models.Membership.objects.get(pk=ship_id, member=member, approved=True)
   except models.Membership.DoesNotExist:
-    return redirect(manage_account)
+    return redirect('fund:manage_account')
 
   member.current = ship.pk
   member.save()
 
-  return redirect(home)
+  return redirect('fund:home')
 
 # ----------------------------------------------------------------------------
 #  ERROR & HELP PAGES
@@ -412,7 +412,7 @@ def not_member(request):
 @require_member()
 def not_approved(request):
   if not hasattr(request.user, 'member'):
-    return redirect(not_member)
+    return redirect('fund:not_member')
 
   return render(request, 'fund/not_approved.html')
 
@@ -738,7 +738,7 @@ def delete_contact(request, donor_id):
     request.membership.last_activity = timezone.now()
     request.membership.save(skip=True)
     donor.delete()
-    return redirect(home)
+    return redirect('fund:home')
 
   return render(request, 'fund/forms/delete_contact.html', {'action': action})
 
@@ -900,7 +900,7 @@ def complete_step(request, donor_id, step_id):
                   str(step_id))
     raise Http404
 
-  action = reverse('sjfnw.fund.views.complete_step', kwargs={
+  action = reverse('fund:complete_step', kwargs={
     'donor_id': donor_id, 'step_id': step_id
   })
 

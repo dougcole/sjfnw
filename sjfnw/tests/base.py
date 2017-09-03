@@ -27,8 +27,6 @@ class BaseTestCase(TestCase):
 
   longMessage = True
 
-  BASE_URL = 'http://testserver'
-
   known_members = {
     'first': 'firstacct@gmail.com',
     'blank': 'blankacct@gmail.com'
@@ -154,7 +152,7 @@ class ColorTestRunner(TextTestRunner):
 
     expectedFails = unexpectedSuccesses = skipped = 0
     try:
-      results = map(len, (result.expectedFailures, # pylint: disable=bad-builtin
+      results = map(len, (result.expectedFailures,
         result.unexpectedSuccesses,
         result.skipped))
     except AttributeError:
