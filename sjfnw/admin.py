@@ -107,21 +107,18 @@ class UserA(UserAdmin):
     if hasattr(obj, 'member'):
       return utils.admin_change_link('fund_member', obj.member, new_tab=True)
     return '-'
-  member_link.allow_tags = True
   member_link.short_description = 'Member'
 
   def organization_link(self, obj):
     if hasattr(obj, 'organization'):
       return utils.admin_change_link('grants_organization', obj.organization, new_tab=True)
     return '-'
-  organization_link.allow_tags = True
   organization_link.short_description = 'Organization'
 
   def change_password(self, obj):
     return utils.create_link(reverse('admin:auth_user_password_change', args=(obj.pk,)),
                              'Change password')
 
-  change_password.allow_tags = True
   change_password.short_description = 'Password'
 
 admin.site.register(User, UserA)

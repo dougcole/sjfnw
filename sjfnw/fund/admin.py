@@ -1,4 +1,4 @@
-import datetime, logging, json, re
+import datetime, logging, json
 
 from django.contrib import admin
 from django.contrib.admin import SimpleListFilter
@@ -185,7 +185,6 @@ class ProjectAppInline(admin.TabularInline):
         'View application')
     else:
       return ''
-  app_link.allow_tags = True
 
   def grant_link(self, obj):
     if obj:
@@ -200,7 +199,6 @@ class ProjectAppInline(admin.TabularInline):
           'Add grant')
     else:
       return ''
-  grant_link.allow_tags = True
 
 
 class GPSurveyI(admin.TabularInline):
@@ -240,11 +238,10 @@ class GivingProjectA(BaseModelAdmin):
   def gp_year(self, obj):
     year = obj.fundraising_deadline.year
     if year == timezone.now().year:
-      return '<b>%d</b>' % year
+      return mark_safe('<b>%d</b>' % year)
     else:
       return year
   gp_year.short_description = 'Year'
-  gp_year.allow_tags = True
 
 
 @admin.register(Resource)
@@ -293,24 +290,24 @@ class MembershipA(BaseModelAdmin):
 
   def list_progress(self, obj): # for membership list - mimics columns
     membership_progress = obj.get_progress()
-    return ('<table class="nested-column nested-column-4"><tr><td>${estimated}</td>'
-            '<td>${promised}</td><td>${received_total}</td>'
-            '<td>{received_this}, {received_next}, {received_afternext}</td>'
-            '</tr></table>').format(**membership_progress)
+    return mark_safe((
+      '<table class="nested-column nested-column-4"><tr><td>${estimated}</td>'
+      '<td>${promised}</td><td>${received_total}</td>'
+      '<td>{received_this}, {received_next}, {received_afternext}</td>'
+      '</tr></table>').format(**membership_progress)
+    )
   list_progress.short_description = mark_safe(
       '<table class="nested-column-4"><tr><td>Estimated</td><td>Total promised</td>'
       '<td>Received</td><td>Rec. by year</td></tr></table>')
-  list_progress.allow_tags = True
 
   def progress(self, obj): # for single membership view
     membership_progress = obj.get_progress()
     year = obj.giving_project.fundraising_deadline.year
-    return (
+    return mark_safe((
         'Estimated: ${estimated}<br>Promised: ${promised}<br>'
         'Received: ${received_total}<br>Received by year: {year}: ${received_this} / '
         '{next}: ${received_next} / {after_next}: ${received_afternext}'
-      ).format(year=year, next=year + 1, after_next=year + 2, **membership_progress)
-  progress.allow_tags = True
+      ).format(year=year, next=year + 1, after_next=year + 2, **membership_progress))
 
 
 @admin.register(Donor)

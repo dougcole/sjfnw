@@ -35,7 +35,7 @@ class GrantApplicationYearFilter(YearFilter):
   field = 'submission_time'
 
   def lookups(self, request, model_admin):
-    return [(y, y) for y in range(2013, timezone.now().date().year + 1)]
+    return [(y, y) for y in range(timezone.now().date().year, 2012, -1)]
 
 class CycleTypeFilter(admin.SimpleListFilter):
   title = 'Grant cycle type'
@@ -289,7 +289,6 @@ class GrantApplicationI(BaseShowInline):
 
   def read(self, obj):
     return utils.create_link('/grants/view/{}'.format(obj.pk), 'Read application', new_tab=True)
-  read.allow_tags = True
 
 
 class SponsoredProgramI(BaseShowInline):
@@ -314,7 +313,6 @@ class ProjectAppI(admin.TabularInline):
   def granted(self, obj):
     """ For existing projectapps, shows grant amount or link to add a grant """
     if obj.pk:
-      link = '<a target="_blank" href="/admin/grants/givingprojectgrant/'
       if hasattr(obj, 'givingprojectgrant'):
         url = reverse('admin:grants_givingprojectgrant_change', args=(obj.givingprojectgrant.pk,))
         text = '${:,}'.format(obj.givingprojectgrant.total_amount())
@@ -352,7 +350,6 @@ class YERInline(BaseShowInline):
 
   def view(self, obj):
     return utils.create_link('/report/view/{}'.format(obj.pk), 'View')
-  view.allow_tags = True
 
 # -----------------------------------------------------------------------------
 #  MODELADMIN
@@ -388,9 +385,10 @@ class NarrativeQuestionA(BaseModelAdmin):
     return obj.display_name()
 
   def word_limit_display(self, obj):
-    return (obj.word_limit or '<b>Unlimited</b>') if obj.uses_word_limit() else '-'
+    if obj.uses_word_limit():
+      return obj.word_limit or mark_safe('<b>Unlimited</b>')
+    return '-'
   word_limit_display.short_description = 'Word limit'
-  word_limit_display.allow_tags = True
 
 
 @admin.register(models.Organization)
@@ -448,7 +446,7 @@ class OrganizationA(BaseModelAdmin):
   def merge(self, request, queryset):
     if len(queryset) == 2:
       return redirect(reverse(
-        'sjfnw.grants.views.merge_orgs',
+        'merge_orgs',
         kwargs={'id_a': queryset[0].pk, 'id_b': queryset[1].pk}
       ))
     messages.warning(request,
@@ -459,7 +457,7 @@ class OrganizationA(BaseModelAdmin):
 class GrantApplicationA(BaseModelAdmin):
   list_display = ['organization', 'grant_cycle', 'submission_time', 'read']
   list_filter = (GrantApplicationYearFilter, 'pre_screening_status')
-  list_action_link = utils.create_link('/admin/grants/search', 'Run a report', new_tab=True)
+  list_action_link = utils.create_link('/admin/grants/search/', 'Run a report', new_tab=True)
   search_fields = ['organization__name', 'grant_cycle__title']
   ordering = ('-submission_time',)
 
@@ -513,9 +511,7 @@ class GrantApplicationA(BaseModelAdmin):
 
         files += '<tr><td>{}</td><td>{}</td></tr>'.format(verbose_name, file_link)
 
-    return '<table>' + (files or 'No files uploaded') + '</table>'
-
-  get_files_display.allow_tags = True
+    return mark_safe('<table>' + (files or 'No files uploaded') + '</table>')
   get_files_display.short_description = 'Uploaded files'
 
   def has_add_permission(self, request):
@@ -523,11 +519,9 @@ class GrantApplicationA(BaseModelAdmin):
 
   def revert_grant(self, _):
     return utils.create_link('revert', 'Revert to draft')
-  revert_grant.allow_tags = True
 
   def rollover(self, _):
     return utils.create_link('rollover', 'Copy to another grant cycle')
-  rollover.allow_tags = True
 
   def organization_link(self, obj):
     return utils.create_link(
@@ -538,7 +532,6 @@ class GrantApplicationA(BaseModelAdmin):
 
   def read(self, obj):
     return utils.create_link('/grants/view/{}'.format(obj.pk), 'Read application', new_tab=True)
-  read.allow_tags = True
 
 
 @admin.register(models.DraftGrantApplication)
@@ -567,9 +560,8 @@ class DraftGrantApplicationA(BaseModelAdmin):
     url = reverse('grants:grant_application',
                   kwargs={'cycle_id': obj.grant_cycle_id})
     url += '?user=' + obj.organization.get_email()
-    return (utils.create_link(url, "Edit this draft", new_tab=True) +
+    return mark_safe(utils.create_link(url, "Edit this draft", new_tab=True) +
             '<br>(logs you in as the organization)')
-  edit.allow_tags = True
 
 
 @admin.register(models.GivingProjectGrant)
@@ -711,14 +703,12 @@ class YearEndReportA(BaseModelAdmin):
     if obj.pk:
       url = reverse('grants:view_yer', kwargs={'report_id': obj.pk})
       return utils.create_link(url, 'View report', new_tab=True)
-  view_link.allow_tags = True
   view_link.short_description = 'View'
 
   def award_link(self, obj):
     if obj.pk:
       url = reverse('admin:grants_givingprojectgrant_change', args=(obj.pk,))
       return utils.create_link(url, obj.award.full_description(), new_tab=True)
-  award_link.allow_tags = True
   award_link.short_description = 'Award'
 
   def org(self, obj):
@@ -808,8 +798,7 @@ class NarrativeAnswerA(BaseModelAdmin):
     )
 
   def answer(self, obj):
-    return obj.get_display_value()
-  answer.allow_tags = True
+    return mark_safe(obj.get_display_value())
 
   def question(self, obj):
     return obj.cycle_narrative.narrative_question
