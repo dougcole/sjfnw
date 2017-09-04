@@ -7,8 +7,6 @@ from django.contrib.auth.models import Group, User
 from django.core.urlresolvers import reverse
 
 from sjfnw import utils
-from sjfnw.fund.models import Member
-from sjfnw.grants.models import Organization
 
 logger = logging.getLogger('sjfnw')
 
@@ -68,7 +66,6 @@ class YearFilter(admin.SimpleListFilter):
       key = self.intermediate + '__' if self.intermediate else ''
       filt['{}{}__year'.format(key, self.field)] = year
       return queryset.filter(**filt)
-
 
 # Configure admin site
 # ---------------------
