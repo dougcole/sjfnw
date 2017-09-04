@@ -110,9 +110,9 @@
 
     {# delete/edit links #}
     <div class="donor_delete" id="delete-{{ donor.pk }}">
-      [<span class="load" data-url="{% url 'sjfnw.fund.views.edit_contact' donor_id=donor.pk %}"
+      [<span class="load" data-url="{% url 'fund:edit_contact' donor_id=donor.pk %}"
              data-target="donor-{{ donor.pk }}">edit contact</span>]&nbsp;
-      [<span class="load" data-url="{% url 'sjfnw.fund.views.delete_contact' donor_id=donor.pk %}"
+      [<span class="load" data-url="{% url 'fund:delete_contact' donor_id=donor.pk %}"
              data-target="delete-{{ donor.pk }}">remove contact</span>]
     </div>
   </div>

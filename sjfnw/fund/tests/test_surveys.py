@@ -48,7 +48,7 @@ class GPSurveys(BaseFundTestCase):
      'questions_10': '',
      'questions_11': ''
     }
-    res = self.client.post('/admin/fund/survey/add/', form_data)
+    res = self.client.post(reverse('admin:fund_survey_add'), form_data)
 
     survey = models.Survey.objects.get(title='Another Survey')
     self.assertEqual(survey.intro, 'Please fill this out!')

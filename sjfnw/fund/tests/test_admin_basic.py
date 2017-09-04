@@ -1,5 +1,6 @@
 import logging
 
+from django.core.urlresolvers import reverse
 from unittest import skip
 
 from sjfnw.fund.tests.base import BaseFundTestCase
@@ -19,7 +20,7 @@ class AdminHome(BaseFundTestCase):
     self.assertEqual(len(response.context['app_list']), 4)
 
   def test_fund_home(self):
-    response = self.client.get('/admin/fund/', follow=True)
+    response = self.client.get(reverse('admin:app_list', args=('fund',)), follow=True)
     self.assertEqual(response.status_code, 200)
     self.assertEqual(response.context['title'], 'Fundraising administration')
     self.assertEqual(len(response.context['app_list']), 1)
@@ -41,7 +42,7 @@ class AdminGivingProjects(BaseFundTestCase):
     self.login_as_admin()
 
   def test_giving_projects(self):
-    response = self.client.get('/admin/fund/givingproject/', follow=True)
+    response = self.client.get(reverse('admin:fund_givingproject_changelist'), follow=True)
     self.assertEqual(response.status_code, 200)
     self.assertEqual(response.context['module_name'], u'giving projects')
     self.assertIn('choices', response.context)
@@ -62,13 +63,13 @@ class AdminMembershipRelated(BaseFundTestCase):
     self.login_as_admin()
 
   def test_memberships(self):
-    response = self.client.get('/admin/fund/membership/', follow=True)
+    response = self.client.get(reverse('admin:fund_membership_changelist'), follow=True)
     self.assertEqual(response.status_code, 200)
     self.assertEqual(response.context['module_name'], u'memberships')
     self.assertIn('choices', response.context)
 
   def test_donors(self):
-    response = self.client.get('/admin/fund/donor/', follow=True)
+    response = self.client.get(reverse('admin:fund_donor_changelist'), follow=True)
     self.assertEqual(response.status_code, 200)
     self.assertEqual(response.context['module_name'], u'donors')
     self.assertIn('choices', response.context)
@@ -88,7 +89,7 @@ class AdminResources(BaseFundTestCase):
     self.login_as_admin()
 
   def test_resource(self):
-    response = self.client.get('/admin/fund/resource/', follow=True)
+    response = self.client.get(reverse('admin:fund_resource_changelist'), follow=True)
     self.assertEqual(response.status_code, 200)
     self.assertEqual(response.context['module_name'], u'resources')
 
@@ -103,18 +104,18 @@ class AdminMisc(BaseFundTestCase):
     self.login_as_admin()
 
   def test_news_items(self):
-    response = self.client.get('/admin/fund/newsitem/', follow=True)
+    response = self.client.get(reverse('admin:fund_newsitem_changelist'), follow=True)
     self.assertEqual(response.status_code, 200)
     self.assertEqual(response.context['module_name'], u'news items')
     self.assertIn('choices', response.context)
 
   def test_surveys(self):
-    response = self.client.get('/admin/fund/survey/', follow=True)
+    response = self.client.get(reverse('admin:fund_survey_changelist'), follow=True)
     self.assertEqual(response.status_code, 200)
     self.assertEqual(response.context['module_name'], u'surveys')
 
   def test_survey_responses(self):
-    response = self.client.get('/admin/fund/surveyresponse/', follow=True)
+    response = self.client.get(reverse('admin:fund_surveyresponse_changelist'), follow=True)
     self.assertEqual(response.status_code, 200)
     self.assertEqual(response.context['module_name'], u'survey responses')
     self.assertIn('choices', response.context)

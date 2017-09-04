@@ -1,6 +1,7 @@
 import datetime
 import logging
 
+from django.core.urlresolvers import reverse
 from django.http import HttpResponse
 from django.utils import timezone
 
@@ -62,7 +63,7 @@ def new_accounts(request):
           sender=from_email,
           template='fund/emails/accounts_need_approval.html',
           context={
-            'admin_url': c.APP_BASE_URL + '/admin/fund/membership/',
+            'admin_url': c.APP_BASE_URL + reverse('admin:fund_membership_changelist'),
             'count': need_approval,
             'giving_project': unicode(gp),
             'support_email': c.SUPPORT_EMAIL

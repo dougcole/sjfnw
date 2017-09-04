@@ -21,11 +21,7 @@ logger = logging.getLogger('sjfnw')
 #  - list_action_link: display link at top of changelist page
 # see sjfnw/templates/admin/change_list.html
 
-LOG_IN_AS_ORG = utils.create_link(
-  '/admin/grants/organization/login', # reverse crashes, don't know why
-  'Log in as an organization',
-  new_tab=True
-)
+
 # -----------------------------------------------------------------------------
 #  CUSTOM FILTERS
 # -----------------------------------------------------------------------------
@@ -215,6 +211,8 @@ class LogI(admin.TabularInline):
     """ Give initial values for staff and/or org.
         This is called once on every foreign key field """
     if '/add' not in request.path: # skip when creating new org/app
+      view_name = request.resolver_match.url_name
+
       # autofill staff field
       if db_field.name == 'staff':
         kwargs['initial'] = request.user.id
@@ -222,16 +220,16 @@ class LogI(admin.TabularInline):
         return db_field.formfield(**kwargs)
 
       # organization field on app page
-      elif 'grantapplication' in request.path and db_field.name == 'organization':
-        app_id = int(request.path.split('/')[-2])
+      elif view_name == 'grants_grantapplication_change' and db_field.name == 'organization':
+        app_id = request.resolver_match.args[0]
         app = models.GrantApplication.objects.get(pk=app_id)
         kwargs['initial'] = app.organization_id
         kwargs['queryset'] = models.Organization.objects.filter(pk=app.organization_id)
         return db_field.formfield(**kwargs)
 
       # application field
-      if db_field.name == 'application':
-        org_pk = int(request.path.split('/')[-2])
+      elif view_name == 'grants_organization_change' and db_field.name == 'application':
+        org_pk = request.resolver_match.args[0]
         kwargs['queryset'] = (models.GrantApplication.objects
             .select_related('organization', 'grant_cycle')
             .filter(organization_id=org_pk))
@@ -318,14 +316,16 @@ class ProjectAppI(admin.TabularInline):
     if obj.pk:
       link = '<a target="_blank" href="/admin/grants/givingprojectgrant/'
       if hasattr(obj, 'givingprojectgrant'):
-        award = obj.givingprojectgrant
-        link += '{}/">${:,}</a>'
-        if obj.givingprojectgrant.grant_length() > 1:
-          link += ' (' + str(obj.givingprojectgrant.grant_length()) + '-year)'
-        return mark_safe(link.format(award.pk, award.total_amount()))
+        url = reverse('admin:grants_givingprojectgrant_change', args=(obj.givingprojectgrant.pk,))
+        text = '${:,}'.format(obj.givingprojectgrant.total_amount())
+        grant_length = obj.givingprojectgrant.grant_length()
+        if grant_length > 1:
+          text += '({}-year)'.format(grant_length)
       else:
-        link = link + 'add/?projectapp={}">Enter an award</a>'
-        return mark_safe(link.format(obj.pk))
+        url = reverse('admin:grants_givingprojectgrant_add') + '?projectapp={}'.format(obj.pk)
+        text = 'Enter an award'
+
+      return mark_safe(utils.create_link(url, text, new_tab=True))
     return ''
 
   def year_end_report(self, obj):
@@ -336,9 +336,11 @@ class ProjectAppI(admin.TabularInline):
       for i, report in enumerate(reports):
         if i > 0:
           yer_link += " | "
-        yer_link += utils.create_link('/admin/grants/yearendreport/{}/'.format(report.pk),
-                                      'Year {}'.format(i + 1), new_tab=True)
-      return mark_safe(yer_link)
+        yer_link += utils.create_link(
+          reverse('admin:grants_yearendreport_change', args=(report.pk,)),
+          'Year {}'.format(i + 1),
+          new_tab=True)
+      return yer_link
     else:
       return ''
 
@@ -356,6 +358,7 @@ class YERInline(BaseShowInline):
 #  MODELADMIN
 # -----------------------------------------------------------------------------
 
+@admin.register(models.GrantCycle)
 class GrantCycleA(BaseModelAdmin):
   list_display = ['title', 'open', 'close']
   list_filter = (CycleOpenFilter, CycleTypeFilter)
@@ -367,6 +370,7 @@ class GrantCycleA(BaseModelAdmin):
   inlines = [CycleNarrativeI, AppCycleI]
 
 
+@admin.register(models.NarrativeQuestion)
 class NarrativeQuestionA(BaseModelAdmin):
   list_display = ('question', 'version', 'word_limit_display', 'archived_display')
   list_filter = (IsArchivedFilter, 'name', 'version')
@@ -389,9 +393,12 @@ class NarrativeQuestionA(BaseModelAdmin):
   word_limit_display.allow_tags = True
 
 
+@admin.register(models.Organization)
 class OrganizationA(BaseModelAdmin):
   list_display = ['name', 'user']
-  list_action_link = LOG_IN_AS_ORG
+  list_action_link = utils.create_link(
+    '/admin/grants/organization/login', 'Log in as an organization', new_tab=True
+  )
   search_fields = ['name', 'user__username']
   list_filter = (OrgRegisteredFilter,)
 
@@ -448,6 +455,7 @@ class OrganizationA(BaseModelAdmin):
       'Merge can only be done on two organizations. You selected {}.'.format(len(queryset)))
 
 
+@admin.register(models.GrantApplication)
 class GrantApplicationA(BaseModelAdmin):
   list_display = ['organization', 'grant_cycle', 'submission_time', 'read']
   list_filter = (GrantApplicationYearFilter, 'pre_screening_status')
@@ -494,7 +502,7 @@ class GrantApplicationA(BaseModelAdmin):
       field_file = getattr(obj, field_name) if hasattr(obj, field_name) else None
 
       if field_file:
-        url = reverse('sjfnw.grants.views.view_file', kwargs={
+        url = reverse('grants:view_file', kwargs={
           'obj_type': 'app', 'obj_id': obj.pk, 'field_name': field_name
         })
 
@@ -522,9 +530,10 @@ class GrantApplicationA(BaseModelAdmin):
   rollover.allow_tags = True
 
   def organization_link(self, obj):
-    return utils.create_link('/admin/grants/organization/{}/'.format(obj.organization.pk),
-                             unicode(obj.organization))
-  organization_link.allow_tags = True
+    return utils.create_link(
+      '/admin/grants/organization/{}/change/'.format(obj.organization.pk),
+      unicode(obj.organization)
+    )
   organization_link.short_description = 'Organization'
 
   def read(self, obj):
@@ -532,11 +541,14 @@ class GrantApplicationA(BaseModelAdmin):
   read.allow_tags = True
 
 
+@admin.register(models.DraftGrantApplication)
 class DraftGrantApplicationA(BaseModelAdmin):
   list_display = ['organization', 'grant_cycle', 'modified', 'overdue',
                   'extended_deadline']
   list_filter = ['grant_cycle']
-  list_action_link = LOG_IN_AS_ORG
+  list_action_link = utils.create_link(
+    '/admin/grants/organization/login', 'Log in as an organization', new_tab=True
+  )
   fields = [('organization', 'grant_cycle', 'modified'),
             ('extended_deadline'),
             ('edit')]
@@ -552,7 +564,7 @@ class DraftGrantApplicationA(BaseModelAdmin):
   def edit(self, obj):
     if not obj or not obj.organization:
       return '-'
-    url = reverse('sjfnw.grants.views.grant_application',
+    url = reverse('grants:grant_application',
                   kwargs={'cycle_id': obj.grant_cycle_id})
     url += '?user=' + obj.organization.get_email()
     return (utils.create_link(url, "Edit this draft", new_tab=True) +
@@ -560,6 +572,7 @@ class DraftGrantApplicationA(BaseModelAdmin):
   edit.allow_tags = True
 
 
+@admin.register(models.GivingProjectGrant)
 class GivingProjectGrantA(BaseModelAdmin):
   list_display = ['organization_name', 'grant_cycle', 'giving_project',
                   'short_created', 'total_grant', 'fully_paid', 'check_mailed']
@@ -656,6 +669,7 @@ class GivingProjectGrantA(BaseModelAdmin):
   short_created.admin_order_field = 'created'
 
 
+@admin.register(models.SponsoredProgramGrant)
 class SponsoredProgramGrantA(BaseModelAdmin):
   list_display = ['organization', 'amount', 'check_mailed']
   list_filter = ['check_mailed']
@@ -669,6 +683,8 @@ class SponsoredProgramGrantA(BaseModelAdmin):
       return self.readonly_fields + ('organization',)
     return self.readonly_fields
 
+
+@admin.register(models.YearEndReport)
 class YearEndReportA(BaseModelAdmin):
   list_display = ['org', 'award', 'cycle', 'submitted', 'visible', 'view_link']
   list_filter = ['award__projectapp__application__grant_cycle']
@@ -693,7 +709,7 @@ class YearEndReportA(BaseModelAdmin):
 
   def view_link(self, obj):
     if obj.pk:
-      url = reverse('sjfnw.grants.views.view_yer', kwargs={'report_id': obj.pk})
+      url = reverse('grants:view_yer', kwargs={'report_id': obj.pk})
       return utils.create_link(url, 'View report', new_tab=True)
   view_link.allow_tags = True
   view_link.short_description = 'View'
@@ -714,6 +730,7 @@ class YearEndReportA(BaseModelAdmin):
   cycle.admin_order_field = 'award__projectapp__application__grant_cycle'
 
 
+@admin.register(models.YERDraft)
 class YERDraftA(BaseModelAdmin):
   list_display = ('award', 'organization', 'giving_project', 'grant_cycle', 'modified', 'due')
 
@@ -747,6 +764,7 @@ class YERDraftA(BaseModelAdmin):
     return obj.award.next_yer_due()
 
 
+@admin.register(models.GrantApplicationLog)
 class LogA(BaseModelAdmin):
   form = LogAdminForm
   fields = (('organization', 'date'),
@@ -762,6 +780,7 @@ class LogA(BaseModelAdmin):
     perms['unlisted'] = True
     return perms
 
+@admin.register(models.NarrativeAnswer)
 class NarrativeAnswerA(BaseModelAdmin):
   fields = (
     ('organization', 'question', 'grant_cycle'),
@@ -800,19 +819,3 @@ class NarrativeAnswerA(BaseModelAdmin):
 
   def grant_cycle(self, obj):
     return obj.grant_application.grant_cycle
-
-# -----------------------------------------------------------------------------
-#  REGISTER
-# -----------------------------------------------------------------------------
-
-admin.site.register(models.NarrativeAnswer, NarrativeAnswerA)
-admin.site.register(models.GrantCycle, GrantCycleA)
-admin.site.register(models.NarrativeQuestion, NarrativeQuestionA)
-admin.site.register(models.Organization, OrganizationA)
-admin.site.register(models.GrantApplication, GrantApplicationA)
-admin.site.register(models.DraftGrantApplication, DraftGrantApplicationA)
-admin.site.register(models.GivingProjectGrant, GivingProjectGrantA)
-admin.site.register(models.SponsoredProgramGrant, SponsoredProgramGrantA)
-admin.site.register(models.YearEndReport, YearEndReportA)
-admin.site.register(models.YERDraft, YERDraftA)
-admin.site.register(models.GrantApplicationLog, LogA)

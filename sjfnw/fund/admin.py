@@ -2,6 +2,7 @@ import datetime, logging, json, re
 
 from django.contrib import admin
 from django.contrib.admin import SimpleListFilter
+from django.core.urlresolvers import reverse
 from django.http import HttpResponse
 from django.utils import timezone
 from django.utils.safestring import mark_safe
@@ -180,7 +181,7 @@ class ProjectAppInline(admin.TabularInline):
   def app_link(self, obj):
     if obj and hasattr(obj, 'application'):
       return utils.create_link(
-        '/admin/grants/grantapplication/{}/'.format(obj.application.pk),
+        reverse('admin:grants_grantapplication_change', args=(obj.application.pk,)),
         'View application')
     else:
       return ''
@@ -190,12 +191,12 @@ class ProjectAppInline(admin.TabularInline):
     if obj:
       if hasattr(obj, 'givingprojectgrant'):
         return utils.create_link(
-          '/admin/grants/givingprojectgrant/{}/'.format(obj.givingprojectgrant.pk),
+          reverse('admin:grants_givingprojectgrant_change', args=(obj.givingprojectgrant.pk,)),
           'View grant')
 
       if hasattr(obj, 'screening_status') and obj.screening_status > 80:
         return utils.create_link(
-          '/admin/grants/givingprojectgrant/add/?projectapp={}'.format(obj.pk),
+          reverse('admin:grants_givingprojectgrant_add') + '?projectapp=' + obj.pk,
           'Add grant')
     else:
       return ''
@@ -215,6 +216,7 @@ class GPSurveyI(admin.TabularInline):
 # ModelAdmin
 # -----------------------------------------------------------------------------
 
+@admin.register(GivingProject)
 class GivingProjectA(BaseModelAdmin):
   list_per_page = 15
   list_display = ['title', 'gp_year', 'estimated']
@@ -231,7 +233,9 @@ class GivingProjectA(BaseModelAdmin):
 
   def change_view(self, request, object_id, form_url='', extra_context=None):
     self.inlines = [MembershipInline, GPSurveyI, ProjectResourcesInline, ProjectAppInline]
-    return super(GivingProjectA, self).change_view(request, object_id, form_url=form_url, extra_context=extra_context)
+    return super(GivingProjectA, self).change_view(
+      request, object_id, form_url=form_url, extra_context=extra_context
+    )
 
   def gp_year(self, obj):
     year = obj.fundraising_deadline.year
@@ -243,12 +247,14 @@ class GivingProjectA(BaseModelAdmin):
   gp_year.allow_tags = True
 
 
+@admin.register(Resource)
 class ResourceA(BaseModelAdmin):
   list_display = ['title', 'created']
   list_help_text = '<p>NOTE: This page is for viewing all of the resources that have been stored.  To add resources to a giving project, edit that project and use the Project Resources section at the bottom.</p>'
   fields = ['title', 'summary', 'link']
 
 
+@admin.register(Member)
 class MemberA(BaseModelAdmin):
   list_display = ['first_name', 'last_name', 'user']
   search_fields = ['first_name', 'last_name', 'user__username']
@@ -257,6 +263,7 @@ class MemberA(BaseModelAdmin):
   inlines = (MembershipInline,)
 
 
+@admin.register(Membership)
 class MembershipA(BaseModelAdmin):
   actions = ['approve']
   search_fields = ['member__first_name', 'member__last_name']
@@ -306,6 +313,7 @@ class MembershipA(BaseModelAdmin):
   progress.allow_tags = True
 
 
+@admin.register(Donor)
 class DonorA(BaseModelAdmin):
   actions = ['export_donors']
   search_fields = ['firstname', 'lastname', 'membership__member__first_name',
@@ -371,21 +379,13 @@ class DonorA(BaseModelAdmin):
     return response
 
 
+@admin.register(NewsItem)
 class NewsA(BaseModelAdmin):
   list_display = ['summary', 'date', 'membership']
   list_filter = ['membership__giving_project']
 
 
-class StepAdv(BaseModelAdmin):
-  list_display = ['description', 'donor', 'step_membership', 'date',
-                  'completed', 'promised']
-  list_filter = ['donor__membership', PromisedFilter,
-                 ReceivedBooleanFilter]
-
-  def step_membership(self, obj):
-    return obj.donor.membership
-
-
+@admin.register(Survey)
 class SurveyA(BaseModelAdmin):
   list_display = ['title', 'updated']
   form = modelforms.CreateSurvey
@@ -398,6 +398,7 @@ class SurveyA(BaseModelAdmin):
     obj.save()
 
 
+@admin.register(SurveyResponse)
 class SurveyResponseA(BaseModelAdmin):
   search_fields = ['gp_survey__survey__title', 'gp_survey__giving_project__title']
   list_display = ['gp_survey', 'date']
@@ -450,16 +451,3 @@ class SurveyResponseA(BaseModelAdmin):
       writer.writerow(row)
 
     return response
-
-# -----------------------------------------------------------------------------
-#  Register
-# -----------------------------------------------------------------------------
-
-admin.site.register(GivingProject, GivingProjectA)
-admin.site.register(Member, MemberA)
-admin.site.register(Membership, MembershipA)
-admin.site.register(NewsItem, NewsA)
-admin.site.register(Donor, DonorA)
-admin.site.register(Resource, ResourceA)
-admin.site.register(Survey, SurveyA)
-admin.site.register(SurveyResponse, SurveyResponseA)

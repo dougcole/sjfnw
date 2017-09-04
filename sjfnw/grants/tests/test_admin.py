@@ -22,7 +22,7 @@ class AdminInlines(BaseGrantTestCase):
 
     app = GrantApplication.objects.first()
 
-    res = self.client.get('/admin/grants/organization/{}/'.format(app.organization_id))
+    res = self.client.get('admin:grants_organization/{}/'.format(app.organization_id))
 
     self.assertContains(res, app.grant_cycle.title)
     self.assertContains(res, app.pre_screening_status)
@@ -32,7 +32,7 @@ class AdminInlines(BaseGrantTestCase):
 
     papp = ProjectApp.objects.first()
 
-    res = self.client.get('/admin/fund/givingproject/{}/'.format(papp.giving_project_id))
+    res = self.client.get(reverse('admin:fund_givingproject_change', papp.giving_project_id))
 
     self.assertContains(res, unicode(papp.application.organization))
 
@@ -41,7 +41,7 @@ class AdminInlines(BaseGrantTestCase):
 
     papp = ProjectApp.objects.first()
 
-    res = self.client.get('/admin/grants/grantapplication/{}/'.format(papp.application_id))
+    res = self.client.get('admin:grants_grantapplication/{}/'.format(papp.application_id))
 
     self.assertContains(res, papp.giving_project.title)
     self.assertContains(res, papp.screening_status)
@@ -54,7 +54,7 @@ class AdminRevert(BaseGrantTestCase):
     self.login_as_admin()
 
   def _get_url(self, app_id):
-    return reverse('revert_app_to_draft', kwargs={'app_id': app_id})
+    return reverse('revert_app', kwargs={'app_id': app_id})
 
   def test_load_revert(self):
     app = factories.GrantApplication()
