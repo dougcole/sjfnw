@@ -15,7 +15,7 @@ INSTALLED_APPS = [
   'django.contrib.messages',
   'sjfnw',
   'sjfnw.grants',
-  'sjfnw.fund',
+  'sjfnw.fund.apps.Fundraising',
   'sjfnw.support',
 ]
 
