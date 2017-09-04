@@ -1,74 +1,51 @@
-{# Extends django 1.8.4's index template, adding custom sidebar and supporting hidden models #}
-{# Admin site is configured to use this in sjfnw/admin.py #}
 {% extends "admin/index.html" %}
-{% load i18n %}
-
-{% block title %}Index | {{ site_title|default:_('Django site admin') }}{% endblock %}
-
-{% block content %}
-<div id="content-main">
-
-{% if app_list %}
-    {% for app in app_list %}
-        <div class="app-{{ app.app_label }} module">
-        <table>
-        <caption>
-            <a href="{{ app.app_url }}" class="section" title="{% blocktrans with name=app.name %}Models in the {{ name }} application{% endblocktrans %}">{{ app.name }}</a>
-        </caption>
-        {% for model in app.models %}
-        {% if not model.perms.unlisted %}{# added #}
-            <tr class="model-{{ model.object_name|lower }}">
-            {% if model.admin_url %}
-                <th scope="row"><a href="{{ model.admin_url }}">{{ model.name }}</a></th>
-            {% else %}
-                <th scope="row">{{ model.name }}</th>
-            {% endif %}
-
-            {% if model.add_url %}
-                <td><a href="{{ model.add_url }}" class="addlink">{% trans 'Add' %}</a></td>
-            {% else %}
-                <td>&nbsp;</td>
-            {% endif %}
-
-            {% if model.admin_url %}
-                <td><a href="{{ model.admin_url }}" class="changelink">{% trans 'Change' %}</a></td>
-            {% else %}
-                <td>&nbsp;</td>
-            {% endif %}
-            </tr>
-          {% endif %}
-        {% endfor %}
-        </table>
-        </div>
-    {% endfor %}
-{% else %}
-    <p>{% trans "You don't have permission to edit anything." %}</p>
-{% endif %}
-</div>
-{% endblock content %}
 
 {% block sidebar %}
-<div class="admin-sidebar">
-  <div class="module" id="links-module">
+<div id="content-related" class="admin-sidebar">
+  <div class="module">
     <h2>Links</h2>
     <h3><a href="/fund" target="_blank">Project Central</a></h3>
     <h3><a href="/apply" target="_blank">Grant Application</a></h3>
     <h3><a href="/admin/grants/search" target="_blank">Run a grants report</a></h3>
     <h3><a href="/admin/grants/givingprojectgrant/yer-status" target="_blank">YER status report</a></h3>
-    <br>
   </div>
-  <div class="module" id="report-module">
+  <div class="module">
     <h2>Report a problem</h2>
     <h3><a href="https://docs.google.com/forms/d/1ssR9lwBO-8Z0qygh89Wu5XK6YwxSmjIFUtOwlJOjLWw/viewform?entry.804197744={{user.username}}" target="_blank">Project Central</a></h3>
     <h3><a href="https://docs.google.com/forms/d/1SKjXMmDgXeM0IFp0yiJTJgLt6smP8b3P3dbOb4AWTck/viewform?entry.804197744={{user.username}}" target="_blank">Grant application</a></h3>
-    <br>
   </div>
-  <div class="module" id="resources-module">
+  <div class="module">
     <h2>Additional resources</h2>
     <h3><a href="https://docs.google.com/forms/d/1srZAM_D4FDDt-AjJuOHqQlaysxJ5qH8kVKFOvsWZBVE/viewform?entry.1708036642={{user.username}}&entry.1767194948&entry.1155321034&entry.1319351054" target="_blank">Request a feature</a></h3>
     <h3><a href="mailto:techsupport@socialjusticefund.org" target="_blank">Email tech support</a></h3>
-    <br>
   </div>
-  {{ block.super }}
+  {# sidebar contents copied from django's index template, without trans trags or content-related wrapper #}
+  <div class="module" id="recent-actions-module">
+    <h2>Recent actions</h2>
+    <h3>My actions</h3>
+    {% load log %}
+    {% get_admin_log 10 as admin_log for_user user %}
+    {% if not admin_log %}
+    <p>None available</p>
+    {% else %}
+    <ul class="actionlist">
+      {% for entry in admin_log %}
+      <li class="{% if entry.is_addition %}addlink{% endif %}{% if entry.is_change %}changelink{% endif %}{% if entry.is_deletion %}deletelink{% endif %}">
+        {% if entry.is_deletion or not entry.get_admin_url %}
+        {{ entry.object_repr }}
+        {% else %}
+        <a href="{{ entry.get_admin_url }}">{{ entry.object_repr }}</a>
+        {% endif %}
+        <br/>
+        {% if entry.content_type %}
+        <span class="mini quiet">{% filter capfirst %}{{ entry.content_type }}{% endfilter %}</span>
+        {% else %}
+        <span class="mini quiet">Unknown content</span>
+        {% endif %}
+      </li>
+      {% endfor %}
+    </ul>
+    {% endif %}
+  </div>
 </div>
 {% endblock sidebar %}

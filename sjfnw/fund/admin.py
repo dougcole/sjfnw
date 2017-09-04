@@ -10,7 +10,7 @@ from django.utils.safestring import mark_safe
 import unicodecsv
 
 from sjfnw import utils
-from sjfnw.admin import BaseModelAdmin, YearFilter
+from sjfnw.admin import BaseModelAdmin, BaseShowInline, YearFilter
 from sjfnw.fund.models import (GivingProject, Member, Membership, Survey,
     GPSurvey, Resource, ProjectResource, Donor, NewsItem, SurveyResponse)
 from sjfnw.fund import forms, modelforms, utils as fund_utils
@@ -125,18 +125,16 @@ class MembershipInline(admin.TabularInline):
 class ProjectResourcesInline(admin.TabularInline):
   model = ProjectResource
   extra = 0
-  template = 'admin/fund/projectresource/tabular_inline.html'
   fields = ['resource', 'session']
+  help_text = ('Resources are grouped by session when displayed to the '
+    'user, with sessions listed alphabetically.')
 
 
-class DonorInline(admin.TabularInline):
+class DonorInline(BaseShowInline):
   model = Donor
-  extra = 0
-  max_num = 0
-  can_delete = False
-  readonly_fields = ['firstname', 'lastname', 'amount', 'talked', 'asked',
-                     'promised', 'total_promised']
-  fields = ['firstname', 'lastname', 'amount', 'talked', 'asked', 'promised']
+  readonly_fields = ('firstname', 'lastname', 'amount', 'talked', 'asked',
+      'promised')
+  fields = ('firstname', 'lastname', 'amount', 'talked', 'asked', 'promised')
   show_change_link = True
 
 
@@ -195,7 +193,7 @@ class ProjectAppInline(admin.TabularInline):
 
       if hasattr(obj, 'screening_status') and obj.screening_status > 80:
         return utils.create_link(
-          reverse('admin:grants_givingprojectgrant_add') + '?projectapp=' + obj.pk,
+          '{}?projectapp={}'.format(reverse('admin:grants_givingprojectgrant_add'), obj.pk),
           'Add grant')
     else:
       return ''

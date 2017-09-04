@@ -5,6 +5,7 @@ from django.contrib import admin, messages
 from django.contrib.auth.admin import UserAdmin
 from django.contrib.auth.models import Group, User
 from django.core.urlresolvers import reverse
+from django.utils.safestring import mark_safe
 
 from sjfnw import utils
 
@@ -84,6 +85,13 @@ admin.site.unregister(User)
 
 class UserA(UserAdmin):
   list_display = ('username', 'is_superuser')
+  list_help_text = mark_safe(
+    'The User object contains the login info (email and password) '
+    'for all users - both Members and Organizations.<br>'
+    'An admin can have just a User object if they only need to access the admin site.'
+    ' Otherwise, User objects should never be created here; the user should '
+    'register with the appropriate app instead.'
+  )
   search_fields = ('username',)
   fieldsets = (
       (None, {

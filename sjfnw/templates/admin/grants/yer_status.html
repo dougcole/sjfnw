@@ -32,8 +32,8 @@ $(document).ready(function() {
   <tbody>
   {% for award in awards %}
     <tr class="{% if award.complete %}complete{% elif not award.past_due %}upcoming{% endif %}">
-      <td><a href="/admin/grants/givingprojectgrant/{{ award.pk }}/">{{ award }}</a></td>
-      <td><a href="/admin/grants/organizations/{{ award.projectapp.application.organization_id }}/">{{ award.projectapp.application.organization }}</a></td>
+      <td><a href="{% url 'admin:grants_givingprojectgrant_change object_id=award.pk %}/">{{ award }}</a></td>
+      <td><a href="{% url 'admin:grants_organizations_change object_id=award.projectapp.application.organization_id %}/">{{ award.projectapp.application.organization }}</a></td>
       <td>{{ award.projectapp.giving_project }}</td>
       <td align="center">{{ award.yer_count }}/{{ award.grant_length }}</td>
       <td class="{% if award.past_due %}errors{% endif %}">{% if award.complete %}<img src="/static/admin/img/icon-yes.gif" alt="YERs complete">{% else %}{{ award.next_yer_due|date:'n/j/y' }}{% endif %}</td>

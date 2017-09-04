@@ -1,20 +1,9 @@
-{# modified copy of django 1.8.4's admin/auth/user/add_form.html #}
-{# adds text to caution against manually creating users #}
-{% extends "admin/change_form.html" %}
-{% load i18n %}
+{% extends "admin/auth/user/add_form.html" %}
 
 {% block form_top %}
   <p><i>
     Once a User is created, they will not be able to register on Project Central or the online grant application with the same email.<br>
     If they need to use one of those apps, they should register through the app instead, or a Member or Organization object will have to be created for them through the admin site.<br><br>
   </i></p>
-  {% if not is_popup %}
-    <p>{% trans "First, enter a username and password. Then, you'll be able to edit more user options." %}</p>
-  {% else %}
-    <p>{% trans "Enter a username and password." %}</p>
-  {% endif %}
-{% endblock %}
-
-{% block after_field_sets %}
-<script type="text/javascript">document.getElementById("id_username").focus();</script>
+  {{ block.super }}
 {% endblock %}

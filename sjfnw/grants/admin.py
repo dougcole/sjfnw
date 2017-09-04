@@ -18,7 +18,7 @@ logger = logging.getLogger('sjfnw')
 # Note: some non-standard fields have been added in order to add text to templates
 # from a centralized location:
 #  - list_help_text: display help text at top of changelist page
-#  - list_action_link: display link at top of changelist page
+#  - list_action_link: display link at top of changelist page (e.g. 'Login as organization')
 # see sjfnw/templates/admin/change_list.html
 
 
@@ -179,7 +179,7 @@ class LogReadonlyI(admin.TabularInline):
   readonly_fields = ['date', 'grantcycle', 'staff', 'contacted', 'notes']
   verbose_name = 'Log'
   verbose_name_plural = 'Logs'
-  collapsed = True
+  classes = ('collapse',)
   show_change_link = True
 
   def get_queryset(self, request):
@@ -296,7 +296,6 @@ class SponsoredProgramI(BaseShowInline):
   model = models.SponsoredProgramGrant
   fields = ['amount', 'check_mailed', 'approved']
   readonly_fields = fields
-  template = 'admin/grants/sponsoredprogramgrant/tabular.html'
   show_change_link = True
   change_link_text = "View/edit"
 
