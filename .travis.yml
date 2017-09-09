@@ -1,33 +1,44 @@
 # config for https://travis-ci.org/aisapatino/sjfnw
 
+sudo: false
 language: python
 python:
   - "2.7"
 
-# disable sudo to let travis run in container
-sudo: false
+cache:
+  - pip: true
+  - directories:
+    - $HOME/google-cloud-sdk
 
-# only send emails for new failures
+env:
+  global:
+    - PATH=$PATH:${HOME}/google-cloud-sdk/bin:$HOME/google-cloud-sdk/platform/google_appengine
+    - GAE_PATH=$HOME/google-cloud-sdk/platform/google_appengine
+    - PYTHONPATH=$PYTHONPATH:$GAE_PATH:$GAE_PATH/lib/webob-1.2.3:$GAE_PATH/lib/yaml/lib
+
+before_install:
+- if [ ! -d $HOME/google-cloud-sdk ] || [ ! -d $HOME/google-cloud-sdk/bin ]; then
+    rm -rfv $HOME/google-cloud-sdk;
+    CLOUDSDK_CORE_DISABLE_PROMPTS=1 curl https://sdk.cloud.google.com | bash;
+    gcloud components remove bq gsutil;
+  fi
+- if [ ! -d $HOME/google-cloud-sdk/platform/google_appengine ]; then
+    gcloud components install app-engine-python;
+  fi
+
+install:
+  - pip install codecov
+  - pip install -r requirements.txt -r requirements-dev.txt
+  - pip show pytz
+
+before_script:
+  - echo $PYTHONPATH
+
+script: ./scripts/coverage skip-html
+
+after_success: codecov
+
 notifications:
   email:
     on_success: never
     on_failure: change
-
-install:
-  - wget https://storage.googleapis.com/appengine-sdks/featured/google_appengine_1.9.40.zip
-  - unzip -q google_appengine_1.9.40.zip
-  - pip install codecov
-  - pip install -r requirements.txt -t libs
-  - pip install factory-boy
-
-before_script:
-  - export PATH=$PATH:$PWD/google_appengine
-  - export PYTHONPATH=$PYTHONPATH:$PWD/google_appengine
-  - export PYTHONPATH=$PYTHONPATH:$PWD/google_appengine/lib/webob-1.2.3
-  - export PYTHONPATH=$PYTHONPATH:$PWD/google_appengine/lib/yaml/lib
-
-# run tests with coverage
-script: ./scripts/coverage skip-html
-
-# send coverage to coveralls if tests passed
-after_success: codecov

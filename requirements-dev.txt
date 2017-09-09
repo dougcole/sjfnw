@@ -1,3 +1,4 @@
 mock==2.0.0
+factory_boy==2.9.2
 pylint==1.5.4
 git+git://github.com/aisapatino/pylint-django.git
