@@ -195,7 +195,9 @@ $(document).ready(function() {
 
       {% include row_template with left=form.budget_last right=form.budget_current %}
 
+      {% if form.budget1 %}
       <div class="row">* Upload budget files at the bottom of the form.</div>
+      {% endif %}
 
       <div class="row">
         {{ form.grant_period.label_tag }}{{ form.grant_period }}{{ form.grant_period.errors }}
