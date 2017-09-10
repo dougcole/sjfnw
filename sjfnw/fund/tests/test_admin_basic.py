@@ -25,29 +25,6 @@ class AdminHome(BaseFundTestCase):
     self.assertEqual(response.context['title'], 'Fundraising administration')
     self.assertEqual(len(response.context['app_list']), 1)
 
-
-class AdminGivingProjects(BaseFundTestCase):
-
-  fixtures = [
-    'sjfnw/fund/fixtures/giving_projects.json',
-    'sjfnw/fund/fixtures/members.json',
-    'sjfnw/fund/fixtures/memberships.json',
-    'sjfnw/fund/fixtures/donors.json',
-    'sjfnw/fund/fixtures/resources.json',
-    'sjfnw/fund/fixtures/project_resources.json'
-  ]
-
-  def setUp(self):
-    super(AdminGivingProjects, self).setUp()
-    self.login_as_admin()
-
-  def test_giving_projects(self):
-    response = self.client.get(reverse('admin:fund_givingproject_changelist'), follow=True)
-    self.assertEqual(response.status_code, 200)
-    self.assertEqual(response.context['module_name'], u'giving projects')
-    self.assertIn('choices', response.context)
-
-
 @skip
 class AdminMembershipRelated(BaseFundTestCase):
 
