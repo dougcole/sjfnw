@@ -62,7 +62,6 @@ class DraftManager(BaseGrantFilesTestCase):
 
     form = get_form_for_cycle(draft.grant_cycle)(draft.grant_cycle, draft_data, files_data)
     if not form.is_valid():
-      print(form.errors)
       raise Exception('Expected form to be valid')
 
 

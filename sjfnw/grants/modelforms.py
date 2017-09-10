@@ -105,7 +105,6 @@ class TimelineWidget(forms.widgets.MultiWidget):
       _widgets.append(forms.Textarea(attrs={'rows': '5'}))
       _widgets.append(forms.Textarea(attrs={'rows': '5'}))
 
-    print('init', [getattr(w, 'quarter', None) for w in _widgets])
     super(TimelineWidget, self).__init__(_widgets, attrs)
 
   def decompress(self, value):
