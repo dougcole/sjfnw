@@ -141,7 +141,7 @@ class AdminRollover(BaseGrantTestCase):
       data={'cycle': target_cycle.pk}
     )
     self.assertEqual(res.status_code, 302)
-    self.assertRegexpMatches(res.get('Location'), r'/admin/grants/grantapplication/\d+/$')
+    self.assertRegexpMatches(res.get('Location'), r'/admin/grants/grantapplication/\d+/change/$')
     self.assert_count(GrantApplication.objects.filter(grant_cycle=target_cycle), 1)
 
   def test_cycle_open(self):
@@ -152,7 +152,7 @@ class AdminRollover(BaseGrantTestCase):
       data={'cycle': target_cycle.pk}
     )
     self.assertEqual(res.status_code, 302)
-    self.assertRegexpMatches(res.get('Location'), r'/admin/grants/grantapplication/\d/$')
+    self.assertRegexpMatches(res.get('Location'), r'/admin/grants/grantapplication/\d/change/$')
     self.assert_count(GrantApplication.objects.filter(grant_cycle=target_cycle), 1)
 
 class MergeOrgs(BaseGrantTestCase):

@@ -1,3 +1,4 @@
+{% load dict_key %}
 {% for subwidget in widget.subwidgets %}
   {% if forloop.counter == 2 %}
   <label for="{{ subwidget.attrs|key:'id' }}">Title</label>

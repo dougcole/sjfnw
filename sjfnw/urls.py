@@ -30,7 +30,7 @@ else:
 
     # admin
     url(r'^admin/grants/grantapplication/(?P<app_id>\d+)/revert',
-      grants_views.revert_app_to_draft, 'revert_app'),
+      grants_views.revert_app_to_draft, name='revert_app'),
     url(r'^admin/grants/grantapplication/(?P<app_id>\d+)/rollover',
       grants_views.admin_rollover, name='admin_rollover'),
     url(r'^admin/grants/organization/login', grants_views.login_as_org,

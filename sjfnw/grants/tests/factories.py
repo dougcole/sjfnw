@@ -90,7 +90,9 @@ class GrantCycle(factory.django.DjangoModelFactory):
     map_status[o.status][0], map_status[o.status][1], tzinfo=utc
   ))
   close = factory.LazyAttribute(get_close)
-  info_page = factory.LazyAttribute(lambda: 'http://socialjusticefund.org/grant-app/economic-justice-grant-2017')
+  info_page = factory.LazyAttribute(
+    lambda _: 'http://socialjusticefund.org/grant-app/economic-justice-grant-2017'
+  )
   title = factory.LazyAttribute(
     lambda o: '{} {} {}'.format(random.choice(CYCLE_NAMES), 'Grant Cycle', o.close.year)
   )
@@ -193,7 +195,7 @@ def generate_narrative_answer(question_name, for_draft=False):
   if question_name == 'timeline':
     values = ['A', 'b', 'c', 'D', 'e', 'f', 'G', 'h', 'i']
   elif question_name.endswith('_references'):
-    values =  [{
+    values = [{
       'name': fake.name(),
       'org': fake.company(),
       'phone': fake.phone_number(),
