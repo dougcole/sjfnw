@@ -865,6 +865,7 @@ def revert_app_to_draft(request, app_id):
 
   if request.method == 'POST':
     draft = models.DraftGrantApplication.objects.create_from_submitted_app(submitted_app)
+    models.GrantApplicationLog.objects.filter(application_id=app_id).update(application_id=None)
     submitted_app.delete()
     draft.save()
     logger.info('Reverted to draft, draft id %s', draft.pk)
