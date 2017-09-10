@@ -27,6 +27,7 @@ else:
     url(r'^', include('sjfnw.grants.urls')),
 
     url(r'^admin/', site.urls),
+    url(r'^admin$', RedirectView.as_view(url='/admin/')),
 
     # admin
     url(r'^admin/grants/grantapplication/(?P<app_id>\d+)/revert',
