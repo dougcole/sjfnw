@@ -20,7 +20,7 @@ urlpatterns = [
   url(r'^apply/logout/?$', auth_views.logout, {'next_page': '/apply'}),
 
   # home page
-  url(r'^apply/$', views.org_home, name='home'),
+  url(r'^apply/?$', views.org_home, name='home'),
   url(r'^apply/draft/(?P<draft_id>\d+)/?$', views.discard_draft, name='discard_draft'),
   url(r'^apply/copy/?$', views.copy_app),
   url(r'^apply/support/?', views.org_support, name='support'),

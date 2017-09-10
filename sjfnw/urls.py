@@ -1,6 +1,6 @@
 from django.conf import settings
 from django.conf.urls import url, include
-from django.contrib import admin
+from django.contrib.admin import site
 from django.contrib.staticfiles.urls import staticfiles_urlpatterns
 from django.views.generic.base import RedirectView, TemplateView
 
@@ -17,8 +17,6 @@ if settings.MAINTENANCE:
     url(r'', RedirectView.as_view(url='/maintenance')),
   ]
 else:
-  admin.autodiscover() # load admin.py from all apps
-
   urlpatterns = [
     url(r'^/?$', TemplateView.as_view(template_name='home.html')),
 
@@ -28,15 +26,19 @@ else:
     # grants
     url(r'^', include('sjfnw.grants.urls')),
 
+    url(r'^admin/', site.urls),
+
     # admin
-    url(r'^admin/', include(admin.site.urls)),
-    url(r'^admin$', RedirectView.as_view(url='/admin/')),
-    url(r'^admin/grants/grantapplication/(?P<app_id>\d+)/revert', grants_views.revert_app_to_draft, 'revert_app'),
-    url(r'^admin/grants/grantapplication/(?P<app_id>\d+)/rollover', grants_views.admin_rollover, name='admin_rollover'),
-    url(r'^admin/grants/organization/login', grants_views.login_as_org),
+    url(r'^admin/grants/grantapplication/(?P<app_id>\d+)/revert',
+      grants_views.revert_app_to_draft, 'revert_app'),
+    url(r'^admin/grants/grantapplication/(?P<app_id>\d+)/rollover',
+      grants_views.admin_rollover, name='admin_rollover'),
+    url(r'^admin/grants/organization/login', grants_views.login_as_org,
+      name='login_as_org'),
     url(r'^admin/grants/givingprojectgrant/yer-status', grants_views.show_yer_statuses),
 
-    url(r'^admin/grants/organizations/merge/(?P<id_a>\d+)/(?P<id_b>\d+)', grants_views.merge_orgs, name='merge_orgs'),
+    url(r'^admin/grants/organizations/merge/(?P<id_a>\d+)/(?P<id_b>\d+)',
+      grants_views.merge_orgs, name='merge_orgs'),
 
     # reporting
     url(r'^admin/grants/search/?', grants_views.grants_report, name='admin_grants_report'),
@@ -58,6 +60,6 @@ else:
 
   # uncomment to support django debug toolbar
   # import debug_toolbar
-  # urlpatterns += patterns('',
-  #   (r'^__debug__/', include(debug_toolbar.urls)),
-  # )
+  # urlpatterns += [
+  #   url(r'^__debug__/', include(debug_toolbar.urls)),
+  # ]
