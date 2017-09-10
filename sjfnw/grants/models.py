@@ -1,4 +1,4 @@
-from datetime import timedelta, date
+from datetime import timedelta
 import json, logging
 
 from django.contrib.auth.models import User
