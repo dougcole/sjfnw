@@ -1,75 +1,63 @@
-from django.conf.urls import patterns
+from django.contrib.auth import views as auth_views
 from django.views.generic.base import TemplateView
 
 from sjfnw import constants
 from sjfnw.forms import CustomPasswordResetForm
+from sjfnw.grants import views as grants_views
 
-apply_urls = patterns('',
+apply_urls = [
   (r'^submitted/?', TemplateView.as_view(template_name='grants/submitted.html')),
-)
-
-apply_urls += patterns('sjfnw.grants.views',
 
   # login, logout, registration
-  (r'^login/?$', 'org_login'),
-  (r'^register/?$', 'org_register'),
-  (r'^nr', 'not_registered'),
+  (r'^login/?$', grants_views.org_login),
+  (r'^register/?$', grants_views.org_register),
+  (r'^nr', grants_views.not_registered),
 
   # home page
-  (r'^$', 'org_home'),
-  (r'^draft/(?P<draft_id>\d+)/?$', 'discard_draft'),
-  (r'^copy/?$', 'copy_app'),
-  (r'^support/?', 'org_support'),
+  (r'^$', grants_views.org_home),
+  (r'^draft/(?P<draft_id>\d+)/?$', grants_views.discard_draft),
+  (r'^copy/?$', grants_views.copy_app),
+  (r'^support/?', grants_views.org_support),
 
   # application
-  (r'^(?P<cycle_id>\d+)/?$', 'grant_application'),
-  (r'^info/(?P<cycle_id>\d+)/?$', 'cycle_info'),
+  (r'^(?P<cycle_id>\d+)/?$', grants_views.grant_application),
+  (r'^info/(?P<cycle_id>\d+)/?$', grants_views.cycle_info),
 
   # application ajax
-  (r'^(?P<cycle_id>\d+)/autosave/?$', 'autosave_app')
-)
+  (r'^(?P<cycle_id>\d+)/autosave/?$', grants_views.autosave_app),
 
-root_urls = patterns('sjfnw.grants.views',
-  (r'^(?P<draft_type>.*)/(?P<draft_id>\d+)/add-file/?$', 'add_file'),
-  (r'^(?P<draft_type>.*)/(?P<draft_id>\d+)/remove/(?P<file_field>.*)/?$', 'remove_file')
-)
+  (r'^(?P<draft_type>.*)/(?P<draft_id>\d+)/add-file/?$', grants_views.add_file),
+  (r'^(?P<draft_type>.*)/(?P<draft_id>\d+)/remove/(?P<file_field>.*)/?$', grants_views.remove_file),
 
-report_urls = patterns('sjfnw.grants.views',
   # year-end report
-  (r'^(?P<award_id>\d+)/?$', 'year_end_report'),
-  (r'^(?P<award_id>\d+)/autosave/?$', 'autosave_yer'),
-  (r'^view/(?P<report_id>\d+)/?$', 'view_yer'),
-  (r'^rollover/?$', 'rollover_yer'),
-)
+  (r'^(?P<award_id>\d+)/?$', grants_views.year_end_report),
+  (r'^(?P<award_id>\d+)/autosave/?$', grants_views.autosave_yer),
+  (r'^view/(?P<report_id>\d+)/?$', grants_views.view_yer),
+  (r'^rollover/?$', grants_views.rollover_yer),
 
-report_urls += patterns('',
   (r'^submitted/?', TemplateView.as_view(template_name='grants/yer_submitted.html')),
-)
 
-apply_urls += patterns('',
   # password reset
-  (r'^reset/?$', 'django.contrib.auth.views.password_reset', {
+  (r'^reset/?$', auth_views.password_reset, {
     'template_name': 'grants/reset.html',
     'from_email': constants.GRANT_EMAIL,
     'email_template_name': 'grants/password_reset_email.html',
     'post_reset_redirect': '/apply/reset-sent',
     'password_reset_form': CustomPasswordResetForm
   }),
-  (r'^reset-sent/?$', 'django.contrib.auth.views.password_reset_done', {
+  (r'^reset-sent/?$', auth_views.password_reset_done, {
     'template_name': 'grants/password_reset_done.html'
   }),
   (r'^reset/(?P<uidb64>[0-9A-Za-z_\-]+)/(?P<token>.+)/?$',
-    'django.contrib.auth.views.password_reset_confirm', {
+    auth_views.password_reset_confirm, {
       'template_name': 'grants/password_reset_confirm.html',
       'post_reset_redirect': '/apply/reset-complete'
     }, 'org-reset'),
-  (r'^reset-complete/?', 'django.contrib.auth.views.password_reset_complete', {
+  (r'^reset-complete/?', auth_views.password_reset_complete, {
       'template_name': 'grants/password_reset_complete.html'
   }),
-)
 
-grants_urls = patterns('sjfnw.grants.views',
   # reading
-  (r'^view/(?P<app_id>\d+)/?$', 'view_application'),
-  (r'^(?P<obj_type>.*)-file/(?P<obj_id>\d+)-(?P<field_name>.*)', 'view_file'),
-)
+  (r'^view/(?P<app_id>\d+)/?$', grants_views.view_application),
+  (r'^(?P<obj_type>.*)-file/(?P<obj_id>\d+)-(?P<field_name>.*)', grants_views.view_file),
+]
