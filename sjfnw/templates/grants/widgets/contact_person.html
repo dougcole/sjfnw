@@ -1,0 +1,6 @@
+{% for subwidget in widget.subwidgets %}
+  {% if forloop.counter == 2 %}
+  <label for="{{ subwidget.attrs|key:'id' }}">Title</label>
+  {% endif %}
+  {% include subwidget.template_name with widget=subwidget %}
+{% endfor %}

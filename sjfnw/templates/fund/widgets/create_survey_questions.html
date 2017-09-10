@@ -1,0 +1,16 @@
+<table id="survey-questions">'
+  <tr>
+    <th></th>
+    <th>Title</th>
+    <th>Choices</th>
+  </tr>
+  {% for subwidget in widget.subwidgets %}
+    {% if forloop.counter0|divisibleby:'6' %}
+    <tr>
+    {% endif %}
+      <td>{% include subwidget.template_name with widget=subwidget %}</td>
+    {% if forloop.counter0|add:'1'|divisibleby:'6' %}
+    </tr>
+    {% endif %}
+  {% endfor %}
+</table>

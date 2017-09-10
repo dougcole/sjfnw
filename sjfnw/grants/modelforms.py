@@ -94,14 +94,18 @@ class CycleNarrativeFormset(forms.models.BaseInlineFormSet):
 
 
 class TimelineWidget(forms.widgets.MultiWidget):
+  template_name = 'grants/widgets/timeline.html'
 
   def __init__(self, attrs=None, quarters=5):
     self._quarters = quarters
     _widgets = []
-    for _ in range(0, quarters):
-      _widgets.append(forms.Textarea(attrs={'rows': '5', 'cols': '20'}))
+    for i in range(0, quarters):
+      # total hack to make quarter accessible in template
+      _widgets.append(forms.Textarea(attrs={'rows': '5', 'cols': '20', 'quarter': i + 1 }))
       _widgets.append(forms.Textarea(attrs={'rows': '5'}))
       _widgets.append(forms.Textarea(attrs={'rows': '5'}))
+
+    print('init', [getattr(w, 'quarter', None) for w in _widgets])
     super(TimelineWidget, self).__init__(_widgets, attrs)
 
   def decompress(self, value):
@@ -112,23 +116,6 @@ class TimelineWidget(forms.widgets.MultiWidget):
     if value:
       return json.loads(value)
     return [None for _ in range(0, self._quarters * 3)]
-
-  def format_output(self, rendered_widgets):
-    """
-    format the widgets for display
-      args: list of rendered widgets
-      returns: a string of HTML for displaying the widgets
-    """
-
-    html = ('<table id="timeline_form"><tr class="heading"><td></td>'
-            '<th>Date range</th><th>Activities<br><i>(What will you be doing?)</i></th>'
-            '<th>Goals/objectives<br><i>(What do you hope to achieve?)</i></th></tr>')
-    for i in range(0, len(rendered_widgets), 3):
-      html += ('<tr><th class="left">Quarter ' + str(i / 3 + 1) + '</th><td>' +
-              rendered_widgets[i] + '</td><td>' + rendered_widgets[i + 1] +
-              '</td><td>' + rendered_widgets[i + 2] + '</td></tr>')
-    html += '</table>'
-    return html
 
   def value_from_datadict(self, data, files, name):
     """ Consolodate widget data into a single value
@@ -337,6 +324,8 @@ class ReferencesMultiWidget(forms.widgets.MultiWidget):
   """ Displays fields for entering 2 references (collab/racial justice)
    Stored in DB as single JSON string """
 
+  template_name = 'grants/widgets/references.html'
+
   def __init__(self, attrs=None):
     _widgets = [
         forms.TextInput(),
@@ -359,26 +348,6 @@ class ReferencesMultiWidget(forms.widgets.MultiWidget):
       vals = utils.flatten_references(json.loads(value))
     return [None for _ in range(0, 8)]
 
-  def format_output(self, rendered_widgets):
-    """ Format the widgets for display
-      Args: rendered_widgets - list of rendered widgets (html strings)
-      Returns: string of HTML for displaying the widgets
-    """
-
-    wrapper = u'<div class="col col-1of4">{}</div>'
-    row_start = u'<div class="row">'
-    row_end = u'</div>'
-    html = (row_start + wrapper.format('Name') + wrapper.format('Organization') +
-        wrapper.format('Phone') + wrapper.format('Email') + row_end)
-    wrapped = [wrapper.format(w) for w in rendered_widgets]
-    for i in [0, 1]:
-      html += row_start
-      for j in range(0, 4):
-        html += wrapper.format(rendered_widgets[j + i * 4])
-      html += row_end
-
-    return html
-
   def value_from_datadict(self, data, files, name):
     """ Consolodate widget data into a single value to store in db
       Returns: json string of field data
@@ -389,6 +358,8 @@ class ReferencesMultiWidget(forms.widgets.MultiWidget):
 class ContactPersonWidget(forms.widgets.MultiWidget):
   """ Displays widgets for contact person and their title
   Stores in DB as a single value: Name, title """
+
+  template_name = 'grants/widgets/contact_person.html'
 
   def __init__(self, attrs=None):
     _widgets = (forms.TextInput(), forms.TextInput())
@@ -401,12 +372,6 @@ class ContactPersonWidget(forms.widgets.MultiWidget):
       return [val for val in value.split(', ', 1)]
     else:
       return [None, None]
-
-  def format_output(self, rendered_widgets):
-    """ format widgets for display - add any additional labels, html, etc """
-    return (rendered_widgets[0] +
-            '<label for="contact_person_1" style="margin-left:5px">Title</label>' +
-            rendered_widgets[1])
 
   def value_from_datadict(self, data, files, name):
     """ Consolidate widget data into single value for db storage """

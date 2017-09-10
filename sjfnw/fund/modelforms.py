@@ -60,6 +60,8 @@ class StepForm(ModelForm):
 class CreateQuestionsWidget(widgets.MultiWidget):
   """ Widget used by staff to create GPSurvey questions """
 
+  template_name = 'fund/widgets/create_survey_questions.html'
+
   def __init__(self, attrs=None):
     _widgets = []
     for _ in range(1, 6):
@@ -86,18 +88,6 @@ class CreateQuestionsWidget(widgets.MultiWidget):
       for _ in range(count, 6):
         val_list.append(None)
     return val_list
-
-  def format_output(self, rendered_widgets):
-    """ Format widgets for display by wrapping them in html """
-    html = ('<table id="survey-questions">'
-            '<tr><th></th><th>Title</th><th>Choices</th></tr>')
-    for i in range(0, len(rendered_widgets), 6):
-      html += ('<tr><td>' + str((i + 6) / 6) + '</td><td>' +
-              rendered_widgets[i] + '</td><td>' + rendered_widgets[i + 1] +
-              rendered_widgets[i + 2] + rendered_widgets[i + 3] +
-              rendered_widgets[i + 4] + rendered_widgets[i + 5] + '</td></tr>')
-    html += '</table>'
-    return html
 
   def value_from_datadict(self, data, files, name):
     """ Consolidate widget data into a single value for storage

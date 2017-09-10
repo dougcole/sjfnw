@@ -1,0 +1,22 @@
+{% spaceless %}
+<table id="timeline_form">
+  <tr class="heading">
+    <td></td>
+    <th>Date range</th>
+    <th>Activities<br><i>(What will you be doing?)</i></th>
+    <th>Goals/objectives<br><i>(What do you hope to achieve?)</i></th>
+  </tr>
+  {% load dict_key %}
+  {% for subwidget in widget.subwidgets %}
+    {% if forloop.counter0|divisibleby:'3' %}
+    <tr>
+      <th class="left">Quarter  {{ subwidget.attrs|key:'quarter' }}</th>
+    {% endif %}
+      <td>{% include subwidget.template_name with widget=subwidget %}</td>
+    {% if forloop.counter0|add:'1'|divisibleby:'3' %}
+    </tr>
+    {% endif %}
+  {% endfor %}
+  </tr>
+</table>
+{% endspaceless %}
