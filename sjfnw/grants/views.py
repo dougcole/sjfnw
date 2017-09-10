@@ -869,7 +869,7 @@ def revert_app_to_draft(request, app_id):
     draft.save()
     logger.info('Reverted to draft, draft id %s', draft.pk)
 
-    return redirect('/admin/grants/draftgrantapplication/' + str(draft.pk) + '/')
+    return redirect('admin:grants_draftgrantapplication_change', draft.pk)
 
   return render(request, 'admin/grants/confirm_revert.html', {'application': submitted_app})
 
@@ -891,7 +891,7 @@ def admin_rollover(request, app_id):
       application.save()
       # TODO narratives
       logger.info(u'Successful rollover of %s to %s', application, cycle)
-      return redirect('/admin/grants/grantapplication/' + str(application.pk) + '/')
+      return redirect('admin:grants_grantapplication_change', application.pk)
   else:
     form = AdminRolloverForm(org)
 
