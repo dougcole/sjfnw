@@ -3,7 +3,7 @@
 | | |
 ----|-----
 **Code** | **Communication**
-[Github repository](https://github.com/aisapatino/sjfnw)<br>Issue tracker: [Github](https://github.com/aisapatino/sjfnw/issues) or [overv.io](https://overv.io/workspace/aisapatino/tough-owl/board/)<br>[Travis CI](https://travis-ci.org/aisapatino/sjfnw) (tests)<br>[Code coverage](https://codecov.io/github/aisapatino/sjfnw?branch=master)<br>[landscape.io](https://landscape.io/github/aisapatino/sjfnw) | [Asana](https://app.asana.com/0/5175284945766/list) (shared staff/dev task tracker)<br>[Slack channel](https://socialjusticefund.slack.com/messages/project-central/)
+[Github repository](https://github.com/aisapatino/sjfnw)<br>[Github issues](https://github.com/aisapatino/sjfnw/issues)<br>[Travis CI](https://travis-ci.org/aisapatino/sjfnw)<br>[Code coverage](https://codecov.io/github/aisapatino/sjfnw?branch=master)<br>[landscape.io](https://landscape.io/github/aisapatino/sjfnw) | [Asana](https://app.asana.com/0/5175284945766/list) (shared staff/dev task tracker)<br>[Slack channel](https://socialjusticefund.slack.com/messages/project-central/)
 | **Links to site** | **User activity** |
  [Project Central](https://sjf-nw.appspot.com/fund)<br>[Grants portal](https://sjf-nw.appspot.com/apply)<br>[Admin site](https://sjf-nw.appspot.com/admin) | [GAE Logs](https://console.developers.google.com/project/sjf-nw/logs) (requests and `logger` output)<br>[Google Analytics](https://analytics.google.com/analytics/web/#report/visitors-overview/a28076150w59219748p60506002/)
 
