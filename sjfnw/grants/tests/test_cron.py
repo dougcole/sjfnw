@@ -28,7 +28,7 @@ class AutoCreateCycles(BaseTestCase):
       timezone.now.return_value)
 
   def test_no_cycles_found(self):
-    timezone.now = Mock(return_value=timezone.now().replace(hour=0))
+    timezone.now = Mock(return_value=timezone.now().replace(hour=8))
     logger.info = Mock()
     res = self.client.get(self.url)
     self.assertEqual(res.status_code, 200)
@@ -37,7 +37,7 @@ class AutoCreateCycles(BaseTestCase):
         'auto_create_cycles found no recently closed cycles')
 
   def test_both(self):
-    fake_now = timezone.now().replace(hour=0) + timedelta(days=1)
+    fake_now = timezone.now().replace(hour=8) + timedelta(days=1)
     rr_cycle = factories.GrantCycle(
       title='Rapid Response',
       open=fake_now - timedelta(weeks=2),
@@ -66,12 +66,14 @@ class AutoCreateCycles(BaseTestCase):
     for draft in models.DraftGrantApplication.objects.all():
       self.assertIn(draft.grant_cycle_id, new_cycle_ids)
 
-    for id in new_cycle_ids:
-      self.assert_count(models.CycleNarrative.objects.filter(grant_cycle_id=id), len(gc.STANDARD_NARRATIVES))
+    for c_id in new_cycle_ids:
+      c_id.assert_count(models.CycleNarrative.objects.filter(
+        grant_cycle_id=c_id), len(gc.STANDARD_NARRATIVES)
+      )
     self.assert_length(mail.outbox, 1)
 
   def test_already_created(self):
-    fake_now = timezone.now().replace(hour=0) + timedelta(days=1)
+    fake_now = timezone.now().replace(hour=8) + timedelta(days=1)
     timezone.now = Mock(return_value=fake_now)
     logger.info = Mock()
 
@@ -91,7 +93,9 @@ class AutoCreateCycles(BaseTestCase):
 
     self.assertEqual(res.status_code, 200)
     self.assertEqual(logger.info.call_count, 2)
-    logger.info.assert_any_call('auto_create_cycles skipping %s cycle; next one exists', 'Rapid Response')
-    logger.info.assert_any_call('auto_create_cycles did nothing; new cycles already existed')
+    logger.info.assert_any_call(
+      'auto_create_cycles skipping %s cycle; next one exists', 'Rapid Response')
+    logger.info.assert_any_call(
+      'auto_create_cycles did nothing; new cycles already existed')
     self.assert_count(models.GrantCycle.objects.all(), 2)
     self.assert_length(mail.outbox, 0)

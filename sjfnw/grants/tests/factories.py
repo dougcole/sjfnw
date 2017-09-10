@@ -78,7 +78,7 @@ class GrantCycle(factory.django.DjangoModelFactory):
 
   open = factory.LazyAttribute(lambda o: fake.date_time_between(map_status[o.status][0], map_status[o.status][1]))
   close = factory.LazyAttribute(lambda o: get_close(o))
-  info_page = 'http://socialjusticefund.org/grant-app/economic-justice-grant-2017'
+  info_page = factory.LazyAttribute(lambda: 'http://socialjusticefund.org/grant-app/economic-justice-grant-2017')
   title = factory.LazyAttribute(lambda o: '{} {} {}'.format(random.choice(CYCLE_NAMES), 'Grant Cycle', o.close.year))
 
   @factory.post_generation

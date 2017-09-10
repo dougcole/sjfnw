@@ -22,7 +22,7 @@ class BaseGrantTestCase(BaseTestCase):
       if hasattr(app, field):
         self.assertEqual(unicode(value), unicode(getattr(app, field)))
       elif field.startswith('timeline') or '_references' in field:
-        print('Skipping assertion for json field')
+        continue #TODO check these
       elif app_narratives:
         self.assertEqual(value, app_narratives[field])
       else:

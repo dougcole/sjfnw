@@ -1,4 +1,3 @@
-from datetime import timedelta
 import json
 import logging
 import unittest
@@ -6,7 +5,6 @@ import unittest
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.core.urlresolvers import reverse
 from django.test.utils import override_settings
-from django.utils import timezone
 
 from google.appengine.ext import testbed
 from google.appengine.api import blobstore, datastore
@@ -15,7 +13,7 @@ from sjfnw.grants import constants as gc, views
 from sjfnw.grants.tests import factories
 from sjfnw.grants.tests.base import BaseGrantTestCase
 from sjfnw.grants.models import (Organization, DraftGrantApplication,
-  GrantApplication, GrantCycle, NarrativeAnswer)
+  GrantApplication)
 
 logger = logging.getLogger('sjfnw')
 
@@ -111,6 +109,7 @@ class CycleInfo(BaseGrantTestCase):
     self.assertContains(res, 'Try visiting it directly')
     self.assertContains(res, 'a href="{}"'.format(info_page))
 
+  @unittest.skip('TODO https://app.asana.com/0/5175284945766/425482409603196')
   def test_valid_url(self):
     cycle = factories.GrantCycle(
       status='open',
@@ -175,7 +174,6 @@ class ApplyBlocked(BaseGrantTestCase):
 
   def test_already_submitted(self):
     app = factories.GrantApplication(organization=self.org)
-    ids = {'organization': self.org, 'grant_cycle_id': app.grant_cycle.pk}
 
     res = self.client.get(_get_apply_url(app.grant_cycle.pk))
 
@@ -228,7 +226,7 @@ class StartApplication(BaseGrantTestCase):
   def _load_application_form(self, cycle_id):
     """ Goes through initial cycle info load, returns application form response """
 
-    query_kwargs={'grant_cycle_id': cycle_id, 'organization': self.org}
+    query_kwargs = {'grant_cycle_id': cycle_id, 'organization': self.org}
     view_kwargs = {'cycle_id': cycle_id}
     url = reverse(views.grant_application, kwargs=view_kwargs) + '?info=1'
 
