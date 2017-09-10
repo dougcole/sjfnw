@@ -17,7 +17,6 @@ INSTALLED_APPS = [
   'sjfnw.grants',
   'sjfnw.fund',
   'sjfnw.support',
-  'pytz',
 ]
 
 DEBUG = False
