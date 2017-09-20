@@ -356,7 +356,7 @@ class ReferencesMultiWidget(forms.widgets.MultiWidget):
         returns: list of values to be displayed in widgets """
 
     if value:
-      vals = utils.flatten_references(json.loads(value))
+      return utils.flatten_references(json.loads(value))
     return [None for _ in range(0, 8)]
 
   def format_output(self, rendered_widgets):
