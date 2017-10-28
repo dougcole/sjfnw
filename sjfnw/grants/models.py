@@ -263,13 +263,14 @@ class GrantCycle(models.Model):
     return 'standard'
 
   def get_open_display(self):
+    """ Summary of cycle's open period: open and close dates """
     if self.get_type() == 'standard':
       return 'Open {:%m/%d/%y} to {:%m/%d/%y}'.format(timezone.localtime(self.open), timezone.localtime(self.close))
     return self.get_close_display()
 
   def get_close_display(self):
-    cycle_type = self.get_type()
-    if cycle_type == 'standard':
+    """ Display when cycle closes. Intended for use while cycle is open """
+    if self.get_type() == 'standard':
       return 'Closes {:%b %d %I:%M %p}'.format(timezone.localtime(self.close))
     else:
       return 'Next review cutoff: {:%b %d}'.format(timezone.localtime(self.close))
