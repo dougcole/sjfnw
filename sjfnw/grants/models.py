@@ -1,17 +1,23 @@
-from datetime import timedelta, date
+from datetime import timedelta
 import json, logging
 
 from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError
+from django.core.urlresolvers import reverse
 from django.core.validators import BaseValidator, MinValueValidator
+from django.utils.safestring import mark_safe
 from django.db import models
 from django.forms.models import model_to_dict
 from django.utils import timezone
 
+from sjfnw.utils import create_link
 from sjfnw.fund.models import GivingProject
 from sjfnw.grants import constants as gc, utils
 
 logger = logging.getLogger('sjfnw')
+
+# Custom fields
+#---------------
 
 class BasicFileField(models.FileField):
   """ Sets standard defaults """
@@ -19,12 +25,44 @@ class BasicFileField(models.FileField):
   def __init__(self, **kwargs):
     defaults = {'upload_to': '/', 'max_length': 255}
     defaults.update(kwargs)
-    return super(BasicFileField, self).__init__(**defaults)
+    super(BasicFileField, self).__init__(**defaults)
+
+# Validators
+#------------
+
+class WordLimitValidator(BaseValidator):
+  """ Custom validator that checks number of words in a string """
+  message = (u'This field has a maximum word count of %(limit_value)d '
+              '(current count: %(show_value)d)')
+  code = 'max_words'
+
+  def compare(self, count_a, count_b):
+    return count_a > count_b
+
+  def clean(self, val):
+    return len(utils.strip_punctuation_and_non_ascii(val).split())
+
+def validate_file_extension(value):
+  """ Method to validate extension of uploaded files
+      (Before I knew how to create a validator like the one above) """
+  value = value.name if hasattr(value, 'name') else value
+  if not utils.has_allowed_file_ext(value):
+    raise ValidationError(u'That file type is not supported.')
+
+def validate_photo_file_extension(value):
+  """ Method to validate file extension of uploaded photos.
+      (Should probably be custom validator) """
+  value = value.name if hasattr(value, 'name') else value
+  if not utils.has_allowed_photo_file_ext(value):
+    raise ValidationError(u'That file type is not supported. Please upload an '
+        'image with one of these extensions: %s' % ', '.join(gc.PHOTO_FILE_TYPES))
+
+# Organizations
+#---------------
 
 class OrganizationManager(models.Manager):
 
   def create_with_user(self, email=None, password=None, name=None):
-
     error_msg = self.model.check_registration(name, email)
     if error_msg:
       raise ValueError(error_msg)
@@ -162,38 +200,8 @@ class Organization(models.Model):
     self.save()
     logger.info('Org profile updated - %s', self.name)
 
-
-class NarrativeQuestion(models.Model):
-  created = models.DateTimeField(blank=True, default=timezone.now)
-
-  name = models.CharField(max_length=75,
-    help_text='Short description of question topic, e.g. "mission", "racial_justice"'
-  )
-  version = models.CharField(
-      max_length=40,
-      help_text='Short description of this variation of the question, e.g. "standard" for general SJF use, "rapid" for rapid response cycles.')
-  text = models.TextField(
-      help_text='Text to display, in raw html. Don\'t include question number - that will be added automatically')
-  word_limit = models.PositiveSmallIntegerField(
-      blank=True,
-      null=True,
-      help_text='Word limit for the question. Ignored for some question types, such as timeline and references. If left blank, no word limit will be enforced.'
-  )
-
-  archived = models.DateField(blank=True, null=True)
-
-  class Meta:
-    ordering = ('name', 'version')
-
-  def __unicode__(self):
-    return u'{} ({})'.format(self.display_name(), self.version)
-
-  def display_name(self):
-    return self.name.replace('_', ' ').title()
-
-  def uses_word_limit(self):
-    return not (self.name.endswith('_references') or self.name == 'timeline')
-
+# Organizations
+#---------------
 
 class GrantCycleManager(models.Manager):
 
@@ -208,11 +216,12 @@ class GrantCycleManager(models.Manager):
       private=source.private)
     new_cycle.save()
     for cn in CycleNarrative.objects.filter(grant_cycle=source):
-      cn_new_cycle = CycleNarrative(grant_cycle=new_cycle, narrative_question=cn.narrative_question, order=cn.order)
+      cn_new_cycle = CycleNarrative(
+        grant_cycle=new_cycle, narrative_question=cn.narrative_question, order=cn.order
+      )
       cn_new_cycle.save()
     logger.info('Created %s cycle as copy of %s', title, source.title)
     return new_cycle
-
 
 class GrantCycle(models.Model):
 
@@ -232,9 +241,10 @@ class GrantCycle(models.Model):
       'accessed by anyone who has the direct link)')
 
   amount_note = models.CharField(blank=True,
-      max_length=255,
-      help_text='Text to display in parenthesis after "Amount Requested" in the grant application form')
-  narrative_questions = models.ManyToManyField(NarrativeQuestion, through='CycleNarrative')
+    max_length=255,
+    help_text='Text to display in parenthesis after "Amount Requested" in the grant application form')
+  narrative_questions = models.ManyToManyField('NarrativeQuestion', through='CycleNarrative')
+  report_questions = models.ManyToManyField('ReportQuestion', through='CycleReportQuestion')
 
   class Meta:
     ordering = ['-close', 'title']
@@ -243,8 +253,7 @@ class GrantCycle(models.Model):
     return self.title
 
   def is_open(self):
-    a = self.open < timezone.now() < self.close
-    return a
+    return self.open < timezone.now() < self.close
 
   def get_status(self):
     today = timezone.now()
@@ -265,7 +274,8 @@ class GrantCycle(models.Model):
   def get_open_display(self):
     """ Summary of cycle's open period: open and close dates """
     if self.get_type() == 'standard':
-      return 'Open {:%m/%d/%y} to {:%m/%d/%y}'.format(timezone.localtime(self.open), timezone.localtime(self.close))
+      return 'Open {:%m/%d/%y} to {:%m/%d/%y}'.format(
+          timezone.localtime(self.open), timezone.localtime(self.close))
     return self.get_close_display()
 
   def get_close_display(self):
@@ -275,21 +285,8 @@ class GrantCycle(models.Model):
     else:
       return 'Next review cutoff: {:%b %d}'.format(timezone.localtime(self.close))
 
-
-class CycleNarrative(models.Model):
-
-  narrative_question = models.ForeignKey(NarrativeQuestion)
-  grant_cycle = models.ForeignKey(GrantCycle)
-
-  order = models.PositiveSmallIntegerField(validators=[MinValueValidator(1)], default=1)
-
-  class Meta:
-    ordering = ('order',)
-    unique_together = ('grant_cycle', 'narrative_question')
-
-  def __unicode__(self):
-    return u'{}. {}'.format(self.order, self.narrative_question)
-
+# Grant applications
+#--------------------
 
 class DraftManager(models.Manager):
 
@@ -394,25 +391,6 @@ class DraftGrantApplication(models.Model):
     return timezone.now() < self.modified + timedelta(seconds=35)
 
 
-class WordLimitValidator(BaseValidator):
-  """ Custom validator that checks number of words in a string """
-  message = (u'This field has a maximum word count of %(limit_value)d '
-              '(current count: %(show_value)d)')
-  code = 'max_words'
-
-  def compare(self, count_a, count_b):
-    return count_a > count_b
-
-  def clean(self, val):
-    return len(utils.strip_punctuation_and_non_ascii(val).split())
-
-
-def validate_file_extension(value):
-  """ Method to validate extension of uploaded files
-      (Before I knew how to create a validator like the one above) """
-  if not value.name.lower().split(".")[-1] in gc.ALLOWED_FILE_TYPES:
-    raise ValidationError(u'That file type is not supported.')
-
 class GrantApplication(models.Model):
   """ Submitted grant application """
 
@@ -478,7 +456,7 @@ class GrantApplication(models.Model):
                                   choices=gc.STATE_CHOICES, blank=True)
   fiscal_zip = models.CharField(verbose_name='ZIP', max_length=50, blank=True)
 
-  narratives = models.ManyToManyField(CycleNarrative, through='NarrativeAnswer', blank=True)
+  narratives = models.ManyToManyField('CycleNarrative', through='NarrativeAnswer', blank=True)
 
   # files
   budget = BasicFileField( # no longer shown, but field holds file from early apps
@@ -493,6 +471,7 @@ class GrantApplication(models.Model):
     blank=True,
     validators=[validate_file_extension]
   )
+  # pylint: disable=line-too-long
   budget1 = BasicFileField(
     blank=True,
     help_text='Statement of actual income and expenses for the most recent completed fiscal year. Upload in your own format, but do not send your annual report, tax returns, or entire audited financial statement.',
@@ -523,6 +502,7 @@ class GrantApplication(models.Model):
     validators=[validate_file_extension],
     verbose_name='Fiscal sponsor letter'
   )
+  # pylint: enable=line-too-long
 
   # admin fields
   pre_screening_status = models.IntegerField(choices=gc.PRE_SCREENING, default=10)
@@ -586,6 +566,52 @@ class GrantApplication(models.Model):
       return answer.text
     except NarrativeAnswer.DoesNotExist:
       return ''
+
+
+class NarrativeQuestion(models.Model):
+  created = models.DateTimeField(blank=True, default=timezone.now)
+
+  name = models.CharField(max_length=75,
+    help_text='Short description of question topic, e.g. "mission", "racial_justice"'
+  )
+  version = models.CharField(
+      max_length=40,
+      help_text='Short description of this variation of the question, e.g. "standard" for general SJF use, "rapid" for rapid response cycles.')
+  text = models.TextField(
+      help_text='Text to display, in raw html. Don\'t include question number - that will be added automatically')
+  word_limit = models.PositiveSmallIntegerField(
+      blank=True,
+      null=True,
+      help_text='Word limit for the question. Ignored for some question types, such as timeline and references. If left blank, no word limit will be enforced.'
+  )
+
+  archived = models.DateField(blank=True, null=True)
+
+  class Meta:
+    ordering = ('name', 'version')
+
+  def __unicode__(self):
+    return u'{} ({})'.format(self.display_name(), self.version)
+
+  def display_name(self):
+    return self.name.replace('_', ' ').title()
+
+  def uses_word_limit(self):
+    return not (self.name.endswith('_references') or self.name == 'timeline')
+
+
+class CycleNarrative(models.Model):
+  narrative_question = models.ForeignKey(NarrativeQuestion)
+  grant_cycle = models.ForeignKey(GrantCycle)
+
+  order = models.PositiveSmallIntegerField(validators=[MinValueValidator(1)], default=1)
+
+  class Meta:
+    ordering = ('order',)
+    unique_together = ('grant_cycle', 'narrative_question')
+
+  def __unicode__(self):
+    return u'{}. {}'.format(self.order, self.narrative_question)
 
 
 class NarrativeAnswer(models.Model):
@@ -672,6 +698,9 @@ class GrantApplicationLog(models.Model):
     return 'Log entry from {:%m/%d/%y}'.format(self.date)
 
 
+# Grants (awards)
+#-----------------
+
 class GivingProjectGrant(models.Model):
   created = models.DateTimeField(default=timezone.now)
 
@@ -689,10 +718,9 @@ class GivingProjectGrant(models.Model):
   agreement_returned = models.DateField(null=True, blank=True)
   approved = models.DateField(verbose_name='Date approved by the ED', null=True, blank=True)
 
-  first_yer_due = models.DateField(
-      verbose_name='Year-end report due date',
-      help_text='If this is a two-year grant, the second YER will '
-                'automatically be due one year after the first')
+  first_report_due = models.DateField(verbose_name='First grantee report due date')
+  second_report_due = models.DateField(null=True, blank=True,
+    verbose_name='Second grantee report due date (if applicable)')
 
   class Meta:
     ordering = ['-created']
@@ -719,23 +747,25 @@ class GivingProjectGrant(models.Model):
     else:
       return None
 
+  # TODO delete
   def yers_due(self):
-    today = timezone.now().date()
     completed = self.yearendreport_set.count()
     yers_due = []
-    # these won't be done out of order as are forced to do in order
-    for x in range(self.grant_length()):
-      if (completed <= x):
-        yers_due.append(self.first_yer_due.replace(year=self.first_yer_due.year + x))
+    if completed == 0:
+      yers_due.append(self.first_report_due)
+    if self.second_report_due and completed < 2:
+      yers_due.append(self.second_report_due)
     return yers_due
 
   def next_yer_due(self):
-    """ Year-end reports are due n year(s) after first_yer_due
+    """ Get
       Returns datetime.date or None if all YER have been submitted for this grant
     """
-    due = self.yers_due()
-    if len(due) > 0:
-      return due[0]
+    completed = self.yearendreport_set.count()
+    if completed == 0:
+      return self.first_report_due
+    elif completed == 1 and self.second_report_due:
+      return self.second_report_due
     else:
       return None
 
@@ -760,7 +790,6 @@ class GivingProjectGrant(models.Model):
 
 
 class SponsoredProgramGrant(models.Model):
-
   entered = models.DateTimeField(default=timezone.now)
   organization = models.ForeignKey(Organization)
   amount = models.PositiveIntegerField()
@@ -780,12 +809,109 @@ class SponsoredProgramGrant(models.Model):
     return desc
 
 
-def validate_photo_file_extension(value):
-  """ Method to validate file extension of uploaded photos.
-      (Should probably be custom validator) """
-  if not value.name.lower().split('.')[-1] in gc.PHOTO_FILE_TYPES:
-    raise ValidationError(u'That file type is not supported. Please upload an '
-        'image with one of these extensions: %s' % ', '.join(gc.PHOTO_FILE_TYPES))
+# Grantee reports
+#-----------------
+
+class GranteeReport(models.Model):
+  giving_project_grant = models.ForeignKey(GivingProjectGrant)
+  created = models.DateTimeField(default=timezone.now)
+
+  cycle_report_questions = models.ManyToManyField('CycleReportQuestion',
+      through='ReportAnswer')
+
+  def __unicode__(self):
+    return 'Grantee report: {}'.format(self.giving_project_grant)
+
+  def get_organization(self):
+    return self.giving_project_grant.projectapp.application.organization
+
+  def get_grant_cycle(self):
+    return self.giving_project_grant.projectapp.application.grant_cycle
+
+
+class GranteeReportDraft(models.Model):
+  giving_project_grant = models.ForeignKey(GivingProjectGrant)
+  created = models.DateTimeField(default=timezone.now)
+  modified = models.DateTimeField(default=timezone.now)
+  contents = models.TextField(default='{}')
+  files = models.TextField(default='{}')
+
+  def get_due_date(self):
+    return self.giving_project_grant.next_yer_due()
+
+
+class ReportQuestion(models.Model):
+  created = models.DateTimeField(blank=True, default=timezone.now)
+
+  name = models.CharField(max_length=75,
+    help_text='Short description of question topic, e.g. "mission", "racial_justice"'
+  )
+  version = models.CharField(
+    max_length=40,
+    help_text='Short description of this variation of the question, e.g. "standard" for general SJF use, "rapid" for rapid response cycles.')
+  text = models.TextField(
+    help_text='Question text to display, in raw html. Don\'t include question number - that will be added automatically')
+  input_type = models.CharField(
+    choices=gc.QuestionTypes.choices(),
+    max_length=20,
+    default=gc.QuestionTypes.TEXT,
+    help_text='Select the type of for input to use for this question.')
+  word_limit = models.PositiveSmallIntegerField(
+    default=750,
+    help_text='Word limit for the question'
+  )
+
+  archived = models.DateField(blank=True, null=True)
+
+  class Meta:
+    ordering = ('name', 'version')
+
+  def __unicode__(self):
+    return u'{} ({})'.format(self.display_name(), self.version)
+
+  def display_name(self):
+    return self.name.replace('_', ' ').title()
+
+
+class CycleReportQuestion(models.Model):
+  report_question = models.ForeignKey(ReportQuestion)
+  grant_cycle = models.ForeignKey(GrantCycle)
+
+  order = models.PositiveSmallIntegerField(validators=[MinValueValidator(1)], default=1)
+  required = models.BooleanField(default=True)
+
+  class Meta:
+    ordering = ('order',)
+    unique_together = ('grant_cycle', 'order')
+
+  def __unicode__(self):
+    return u'{}. {}'.format(self.order, self.report_question)
+
+
+class ReportAnswer(models.Model):
+  cycle_report_question = models.ForeignKey(CycleReportQuestion)
+  grantee_report = models.ForeignKey(GranteeReport)
+  text = models.TextField()
+
+  class Meta:
+    unique_together = ('grantee_report', 'cycle_report_question')
+
+  def get_display(self):
+    question_type = self.cycle_report_question.report_question.input_type
+    if question_type == gc.QuestionTypes.FILE or question_type == gc.QuestionTypes.PHOTO:
+      filename = self.text.split('/')[-1]
+      url = reverse('sjfnw.grants.views.view_file_direct', kwargs={'answer_id': self.pk})
+      return mark_safe(create_link(url, filename, new_tab=True))
+    elif self.cycle_report_question.report_question.name == 'stay_informed':
+      try:
+        return '\n'.join([value for value in json.loads(self.text).values()])
+      except:
+        return 'Could not parse answer'
+    else:
+      return self.text
+
+  def get_question_text(self):
+    return self.cycle_report_question.report_question.text
 
 
 class YearEndReport(models.Model):
