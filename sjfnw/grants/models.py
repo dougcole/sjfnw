@@ -816,6 +816,7 @@ class GranteeReport(models.Model):
   giving_project_grant = models.ForeignKey(GivingProjectGrant)
   created = models.DateTimeField(default=timezone.now)
 
+  report_number = models.IntegerField(default=1)
   cycle_report_questions = models.ManyToManyField('CycleReportQuestion',
       through='ReportAnswer')
 
@@ -835,9 +836,11 @@ class GranteeReportDraft(models.Model):
   modified = models.DateTimeField(default=timezone.now)
   contents = models.TextField(default='{}')
   files = models.TextField(default='{}')
+  report_number = models.IntegerField(default=1)
 
   def get_due_date(self):
-    return self.giving_project_grant.next_yer_due()
+    award = self.giving_project_grant
+    return award.first_report_due if self.report_number == 1 else award.second_report_due
 
 
 class ReportQuestion(models.Model):
