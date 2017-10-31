@@ -4,7 +4,15 @@
 /**----------------------------- formUtils ---------------------------------**/
 var formUtils = {};
 
+/**
+ * Log message to console, if window._sjfDebug flag is set. Adds timestamp.
+ *
+ * @param {string} message
+ */
 formUtils.log = function (message) {
+  if (!window._sjfDebug) {
+    return;
+  }
   var d = new Date();
   var min = d.getMinutes();
   min = min < 10 ? '0' + min : min;
