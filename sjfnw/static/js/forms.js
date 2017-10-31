@@ -1,5 +1,4 @@
 'use strict';
-/** Shared form functions - utils, autosave, file handling **/
 
 /**----------------------------- formUtils ---------------------------------**/
 var formUtils = {};
@@ -36,11 +35,16 @@ formUtils.statusTexts = { // for ajax error messages
 
 
 /**
+ * Initialize forms-related javascript. Must be called in template.
+ * 1) Stores given staff override
+ * 2) Initializes autosave (see autoSave.init)
+ * 3) Initializes file upload handling (see fileUploads.init)
+ *
  * @param {string} urlPrefix - beginning of path (i.e. 'apply'). no slashes
  * @param {number} draftId - pk of draft object (draft app or draft yer)
  * @param {number} submitId - pk of object used in post (cycle or award)
  * @param {string.alphanum} userId - randomly generated user id for mult edit warning
- * @param {string} staffUser - querystring for user override (empty string if n/a)
+ * @param {string} [staffUser] - querystring for user override (empty string if n/a)
  */
 formUtils.init = function(urlPrefix, draftId, submitId, userId, staffUser) {
   if (staffUser && staffUser !== 'None') {
@@ -54,7 +58,9 @@ formUtils.init = function(urlPrefix, draftId, submitId, userId, staffUser) {
 
 
 /**
- * Return current time as a string for display. Format: May 12, 2:45p.m.
+ * Get current time as a string for display.
+ *
+ * @returns {string} Current datetime in format "May 12, 2:45p.m."
  */
 formUtils.currentTimeDisplay = function() {
   var monthNames = ['January', 'February', 'March', 'April', 'May', 'June',
@@ -73,12 +79,29 @@ formUtils.currentTimeDisplay = function() {
 };
 
 
+var wordLimiter = {};
+
+/**
+ * Add word count display before each textarea with .wordlimited.
+ * Updates the display on keyup.
+ */
+wordLimiter.init = function () {
+  var word_limited = $('textarea.wordlimited');
+  word_limited.after(function () {
+    return '<div class="wordcount" id="' + this.name + '_wordcount"></div>';
+  });
+  word_limited.on('keyup', wordLimiter.handleKeyUp)
+  word_limited.keyup();
+};
+
 /**
  * Update word limit indicator for text field.
  *
+ * Uses event.target's `data-limit` attr; no-op if that is not set.
+ *
  * @param {jQuery.Event} event - jQuery keyup event
  */
-function updateWordCount(event) {
+wordLimiter.handleKeyUp = function (event) {
   var area = event.target;
   if (!area.dataset.limit) return;
 
@@ -109,16 +132,14 @@ function updateWordCount(event) {
 
 var autoSave = {
   INTERVAL_MS: 60000,
-  INITIAL_DELAY_MS: 10000
+  INITIAL_DELAY_MS: 10000,
 };
-autoSave.saveTimer = false;
-autoSave.pauseTimer = false;
 
 
 autoSave.init = function(urlPrefix, submitId, userId) {
-  autoSave.submitUrl = '/' + urlPrefix + '/' + submitId;
-  autoSave.saveUrl = autoSave.submitUrl + '/autosave' + formUtils.staffUser;
-  autoSave.submitUrl += formUtils.staffUser;
+  var baseUrl = '/' + urlPrefix + '/' + submitId;
+  autoSave.saveUrl = baseUrl + '/autosave' + formUtils.staffUser;
+  autoSave.submitUrl = baseUrl + formUtils.staffUser;
   if (userId) {
     autoSave.userId = userId;
   } else {
@@ -193,7 +214,7 @@ autoSave.save = function (submit, force) {
     url: autoSave.saveUrl + force,
     type: 'POST',
     data: $('form').serialize() + '&user_id=' + autoSave.userId,
-    success: function(data, textStatus, jqXHR) {
+    success: function (data, textStatus, jqXHR) {
       if (jqXHR.status === 200) {
         if (submit) {
           // button click - trigger the hidden submit button
@@ -236,51 +257,39 @@ fileUploads.uploading = false;
 fileUploads.uploadingSpan = '';
 fileUploads.currentField = '';
 
+/**
+ * Set up file fields.
+ *
+ * @param {string} urlPrefix - Beginning of url. Examples: 'apply', 'report'
+ * @param {number} draftId - Pk of draft
+ */
 fileUploads.init = function(urlPrefix, draftId) {
   fileUploads.getUrl = '/get-upload-url/?type=' + urlPrefix + '&id=' + draftId;
   fileUploads.removeUrl = '/' + urlPrefix + '/' + draftId + '/remove/';
-  $("[type='file']").change(function() {
-      fileUploads.fileChanged(this.id);
-    });
+  $("[type='file']").change(fileUploads.handleFileChanged);
+  $('#id_upload_frame').load(fileUploads.handleIframeUpdated);
   formUtils.log('fileUploads vars loaded, file fields scripted');
   $('.default-file-input').children('a').remove();
-};
-
-/* each file field has its own form. html element ids use this pattern:
-  input field: 							'id_' + fieldname
-  form: 										fieldname + '_form'
-  span for upload status: 	fieldname + '_uploaded'
-  submit button: 						fieldname + '_submit' */
-
-fileUploads.clickFileInput = function(event, inputId) {
-  /* triggered when 'choose file' label is clicked
-     transfers the click to the hidden file input */
-  formUtils.log('clickFileInput' + inputId);
-  var input = document.getElementById(inputId);
-  if (input) {
-    input.control.click();
-  } else {
-    formUtils.log('clickFileInput error - no input found with id ' + inputId);
-  }
 };
 
 /**
  * Update draft when file input is changed.
  *
- * @param fieldId - id of the file field that changed
- *
  * Set as change handler in fileUploads.init. Show loader and get upload url
+ *
+ * @param {jQuery.Event} ev
  **/
-fileUploads.fileChanged = function (fieldId) {
+fileUploads.handleFileChanged = function (ev) {
   if (fileUploads.uploading) {
-    formUtils.log('fileChanged - Upload in progress; returning');
+    formUtils.log('File changed - Upload still in progress; returning');
     return false;
   }
-  var file = document.getElementById(fieldId).value;
+  var id = ev.target.id;
+  var file = document.getElementById(id).value;
   if (file) {
     fileUploads.uploading = true;
-    fileUploads.currentField = fieldId.replace('id_', '');
-    fileUploads.uploadingSpan = document.getElementById(fieldId.replace('id_', '') + '_uploaded');
+    fileUploads.currentField = id.replace('id_', '');
+    fileUploads.uploadingSpan = document.getElementById(fileUploads.currentField + '_uploaded');
     fileUploads.uploadingSpan.innerHTML = formUtils.loadingImage;
     fileUploads.getUploadURL();
   }
@@ -305,16 +314,26 @@ fileUploads.getUploadURL = function () {
   });
 };
 
-fileUploads.iframeUpdated = function(iframe) { // process response
+/**
+ * Handles iframe update which indicates a server response to a file upload request
+ *
+ * @param {jQuery.Event} ev
+ */
+fileUploads.handleIframeUpdated = function (ev) {
   formUtils.log('iframeUpdated');
-  var results = iframe.contentDocument.body.innerHTML;
-  formUtils.log('The iframe changed! New contents: ' + results);
-  if (results) {
-    var fieldName = results.split('~~')[0];
-    var linky = results.split('~~')[1];
-    var fileInput = document.getElementById('id_' + fieldName);
-    if (fileInput && linky) {
-      fileUploads.uploadingSpan.innerHTML = linky;
+  var res;
+  try {
+    res = JSON.parse(ev.target.contentDocument.body.innerText);
+    formUtils.log('The iframe changed! New contents: ' + res);
+  } catch (err) {
+    formUtils.log('Error trying to parse response: ' + err.message);
+  }
+  if (res) {
+    var fileInput = document.getElementById('id_' + res.field);
+    if (fileInput && res.url && res.filename) {
+      fileUploads.uploadingSpan.innerHTML = [
+        '<a href="', res.url, '" target="_blank">', res.filename, '</a>'
+      ].join('');
     } else {
       fileUploads.uploadingSpan.innerHTML = 'There was an error uploading your file. Try again or <a href="/apply/support">contact us</a>.';
     }

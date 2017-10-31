@@ -85,7 +85,6 @@ function setInfoClicks(){
   $('.has-more-info').each(function(index) {
       if (this.id) {
         this.onclick = function(){ showMoreInfo(this.id); };
-        console.log('Linked ' + this.id);
       } else {
         console.log('Error - has-more-info without an id');
       }
@@ -98,10 +97,7 @@ function setInfoClicks(){
 
 $(document).ready(function() {
   formUtils.init('apply', {{ draft.pk }}, {{ cycle.pk }}, setUserID(), '{{ user_override|default:"" }}');
-
-  var word_limited = $('textarea.wordlimited');
-  word_limited.on('keyup', updateWordCount)
-  word_limited.keyup();
+  wordLimiter.init();
 
   //check whether it was edited recently -- show override confirmation
   if ('{{ flag }}' == 'True'){
@@ -111,7 +107,6 @@ $(document).ready(function() {
   // more info toggles
   setInfoClicks();
 });
-
 </script>
 {% endblock script %}
 
@@ -184,7 +179,6 @@ $(document).ready(function() {
 
       <div class="row">
         {{ form.mission.label_tag }}{{ form.mission.errors }}
-        <span class="wordcount" id="mission_wordcount"></span>
         {{ form.mission }}
       </div>
 
@@ -207,7 +201,6 @@ $(document).ready(function() {
       {% include row_template with left=form.project_title right=form.project_budget %}
       <div class="row">
         {{ form.grant_request.label_tag }}{{ form.grant_request.errors }}
-        <span class="wordcount" id="grant_request_wordcount"></span>
         {{ form.grant_request }}
       </div>
 
@@ -228,7 +221,6 @@ $(document).ready(function() {
       {% for field in form.get_narrative_fields %}
       <li>
         {{ field.label }}{{ field.errors }}{{ field }}
-        <div class="wordcount" id="{{ field.name }}_wordcount"></div>
       </li>
       {% endfor %}
     </ol>
@@ -236,7 +228,7 @@ $(document).ready(function() {
   </form>
 
   {# hidden iframe for file submissions #}
-  <iframe class="upload" id="id_upload_frame" name="upload_frame" onload="fileUploads.iframeUpdated(this);"></iframe>
+  <iframe class="upload" id="id_upload_frame" name="upload_frame"></iframe>
 
   <h4>File uploads</h4>
   <p><a href="/apply/info/{{ cycle.pk }}" target="_blank">Download templates here.</a></p>
