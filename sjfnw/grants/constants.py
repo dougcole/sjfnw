@@ -83,3 +83,51 @@ NARRATIVE_WORD_LIMITS = {
   'cycle_question': 750,
   'two_year_question': 300
 }
+
+class QuestionTypes:
+  TEXT = 'text'
+  SHORT_TEXT = 'short_text'
+  NUMBER = 'number'
+  PHOTO = 'photo'
+  FILE = 'file'
+
+  @classmethod
+  def choices(cls):
+    return [
+      (cls.TEXT, 'Text box'),
+      (cls.SHORT_TEXT, 'Single-line text input'),
+      (cls.NUMBER, 'Number'),
+      (cls.PHOTO, 'Photo upload'),
+      (cls.FILE, 'File upload'),
+    ]
+
+STANDARD_REPORT_QUESTIONS = [
+  {'name': 'contact_info', 'version': 'legacy'},
+  {'name': 'summarize_last_year', 'version': 'legacy'},
+  {'name': 'goal_progress', 'version': 'legacy'},
+  {'name': 'quantitative_measures', 'version': 'legacy'},
+  {'name': 'evaluation', 'version': 'legacy'},
+  {'name': 'achievements', 'version': 'legacy'},
+  {'name': 'collaboration', 'version': 'legacy'},
+  {'name': 'new_funding', 'version': 'legacy'},
+  {'name': 'organizational_changes', 'version': 'legacy'},
+  {'name': 'total_size', 'version': 'legacy'},
+  {'name': 'donations_count', 'version': 'legacy'},
+  {'name': 'donations_count_prev', 'version': 'legacy'},
+  {'name': 'stay_informed', 'version': 'legacy'},
+  {'name': 'other_comments', 'version': 'legacy'},
+  {'name': 'photo1', 'version': 'legacy'},
+  {'name': 'photo2', 'version': 'legacy'},
+  {'name': 'photo3', 'version': 'legacy', 'required': False},
+  {'name': 'photo4', 'version': 'legacy', 'required': False},
+]
+
+RAPID_REPORT_QUESTIONS = [
+  {'name': 'progress', 'version': 'rapid_response'},
+  {'name': 'impact', 'version': 'rapid_response'},
+  {'name': 'current_direction', 'version': 'rapid_response'},
+  {'name': 'relation_to_regular_work', 'version': 'rapid_response'},
+  {'name': 'more_info_for_members', 'version': 'rapid_response'},
+  {'name': 'photo', 'version': 'rapid_response', 'required': False},
+  {'name': 'photo_release', 'version': 'general', 'required': False}
+]
