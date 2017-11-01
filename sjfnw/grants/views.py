@@ -351,13 +351,13 @@ def grant_application(request, organization, cycle_id):
     form = modelforms.get_form_for_cycle(cycle)(cycle, initial=draft_contents)
 
   # get draft files
-  file_urls = get_files_info(request, draft)
+  files_info = get_files_info(request, draft)
   link_template = (u'<a href="{0}" target="_blank" title="{1}">{1}</a> '
                    '[<a onclick="fileUploads.removeFile(\'{2}\');">remove</a>]')
-  for field, url in file_urls.iteritems():
-    if url:
-      name = getattr(draft, field).name.split('/')[-1]
-      file_urls[field] = link_template.format(url, name, field)
+  file_urls = {}
+  for field, value in files_info.iteritems():
+    if value and value.get('url', None):
+      file_urls[field] = link_template.format(value['url'], value.get('name', field), field)
     else:
       file_urls[field] = '<i>no file uploaded</i>'
 
@@ -548,7 +548,7 @@ def add_file(request, draft_type, draft_id):
   return JsonResponse({
     'field': file_key,
     'filename': unicode(blob_file),
-    'url': get_files_info(request, draft)[file_key]['url'],
+    'url': get_files_info(request, draft, url_only=True)[file_key],
   })
 
 def remove_file(request, draft_id, file_field):
@@ -729,8 +729,8 @@ def view_application(request, app_id):
   if form_only:
     return render(request, 'grants/reading.html',
                   {'app': app, 'form': form, 'perm': perm})
-  file_urls = get_files_info(request, app)
-  print_urls = get_files_info(request, app, printing=True)
+  file_urls = get_files_info(request, app, url_only=True)
+  print_urls = get_files_info(request, app, printing=True, url_only=True)
   awards = {}
   for papp in app.projectapp_set.all():
     if hasattr(papp, 'givingprojectgrant'):
@@ -1444,7 +1444,7 @@ def get_sponsored_award_results(options):
 #  Helpers
 # -----------------------------------------------------------------------------
 
-def get_files_info(request, app, printing=False):
+def get_files_info(request, app, printing=False, url_only=False):
   files = {}
 
   if isinstance(app, models.GrantApplication):
@@ -1461,7 +1461,7 @@ def get_files_info(request, app, printing=False):
 
   def _get_file_info(key, value):
     if not value:
-      return {'url': '', 'filename': ''}
+      return '' if url_only else {'url': '', 'filename': ''}
 
     if hasattr(value, 'name'): # FileField
       value = value.name
@@ -1479,7 +1479,7 @@ def get_files_info(request, app, printing=False):
       elif not (ext == 'xls' or ext == 'xlsx'):
         url = 'https://docs.google.com/viewer?url=' + url
 
-    return {'url': url, 'filename': filename}
+    return url if url_only else {'url': url, 'filename': filename}
 
   if obj_type.startswith('a'):
     for field in models.GrantApplication.file_fields():
