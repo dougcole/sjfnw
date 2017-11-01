@@ -67,7 +67,7 @@ class AutoCreateCycles(BaseTestCase):
       self.assertIn(draft.grant_cycle_id, new_cycle_ids)
 
     for c_id in new_cycle_ids:
-      c_id.assert_count(models.CycleNarrative.objects.filter(
+      self.assert_count(models.CycleNarrative.objects.filter(
         grant_cycle_id=c_id), len(gc.STANDARD_NARRATIVES)
       )
     self.assert_length(mail.outbox, 1)

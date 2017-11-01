@@ -4,7 +4,7 @@
   <div class="tabular inline-related {% if forloop.last %}last-related{% endif %}">
 {{ inline_admin_formset.formset.management_form }}
 {# adding collapsed class & expand link, inline info #}
-<fieldset class="module{% if inline_admin_formset.opts.collapsed %} collapse collapsed{% endif %}">
+<fieldset class="module{% if inline_admin_formset.opts.collapsed %} collapse{% endif %}">
   <h2>{{ inline_admin_formset.opts.verbose_name_plural|capfirst }}
     {% if inline_admin_formset.opts.collapsed %}({{ inline_admin_formset.formset.total_form_count }}){% endif %}
     {% block inline-info %}{% endblock %}

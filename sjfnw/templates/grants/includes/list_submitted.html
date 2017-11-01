@@ -1,7 +1,6 @@
 {% for sub in submitted %}
   <div class="row">
-    <div class="col col-1of3">
-      {{ sub.grant_cycle }}
+    <div class="col col-1of3">{{ sub.grant_cycle }}
     </div>
     <div class="col col-1of3">
       Submitted {{ sub.submission_time|date:"n/j/y" }}
@@ -13,49 +12,47 @@
 
   {% for award in sub.awards %}
     {% if award.agreement_mailed %}
-      <div class="row">
-        <div class="col col-1of3 empty"></div>
-        <div class="col col-2of3">
-          Agreement mailed {{ award.agreement_mailed|date:"n/j/y" }},
-          {% if award.agreement_returned %}
-            returned {{ award.agreement_returned|date:"n/j/y" }}.
-          {% else %}
-            <span class="due">due {{ award.agreement_due|date:"n/j/y" }}</span>.
-          {% endif %}
-        </div>
-      </div>
+  <div class="row">
+    <div class="col col-1of3 empty"></div>
+    <div class="col col-2of3">
+      Agreement mailed {{ award.agreement_mailed|date:"n/j/y" }},
+      {% if award.agreement_returned %}
+        returned {{ award.agreement_returned|date:"n/j/y" }}.
+      {% else %}
+        <span class="due">due {{ award.agreement_due|date:"n/j/y" }}</span>.
+      {% endif %}
+    </div>
+  </div>
     {% endif %}
 
-    {% for yer in award.yearendreport_set.all %}
-      <div class="row">
-        <div class="col col-1of3 empty"></div>
-        <div class="col col-2of3">
-          <a href="{% url 'sjfnw.grants.views.view_yer' report_id=yer.pk %}">Year end report</a> submitted {{ yer.submitted|date:"n/j/y" }}.
-        </div>
-      </div>
+    {% for report in award.granteereport_set.all %}
+  <div class="row">
+    <div class="col col-1of3 empty"></div>
+    <div class="col col-2of3">
+      <a href="{% url 'sjfnw.grants.views.view_grantee_report' report_id=report.pk %}">Grantee report</a> submitted {{ report.created|date:"n/j/y" }}.
+    </div>
+  </div>
     {% endfor %}
 
     {% now "Y-m-d" as todays_date %}
-    {% for single_yer_due in award.yers_due %}
-      <div class="row">
-        <div class="col col-1of3 empty"></div>
-        <div class="col col-2of3">
-          {% if forloop.first %}
-            <div class="due"><a href="/report/{{ award.pk }}{{ user_override|default:'' }}">Year end report</a>
-          {% else %}
-            <div>Year end report
-          {% endif %}
-          {% if todays_date > single_yer_due|date:"Y-m-d" %}
-            <span style="color:red">past</span>
-          {% endif %}
-            due {{ single_yer_due|date:"n/j/y" }}
-          </div>
-        </div>
-      {% endfor %}
-      </div>
+    {% for single_report_due in award.reports_due %}
+  <div class="row">
+    <div class="col col-1of3 empty"></div>
+    <div class="col col-2of3">
+      {% if forloop.first %}
+        <a href="{% url 'sjfnw.grants.views.grantee_report' gpg_id=award.pk %}{{ user_override|default:'' }}">Grantee report</a>
+      {% else %}
+        Grantee report
+      {% endif %}
+      <b>
+      {% if todays_date > single_report_due|date:"Y-m-d" %}
+        <span style="color:red">past</span>
+      {% endif %}
+        due {{ single_report_due|date:"n/j/y" }}</b>
     </div>
+      {% endfor %}
+  </div>
   {% endfor %}
-
 {% empty %}
   None found
 {% endfor %}

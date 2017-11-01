@@ -1,12 +1,14 @@
 # encoding: utf-8
 
-import json, logging, re, string
+import logging, re, string
 
 from django.conf import settings
 from django.http import HttpResponse, Http404
 from django.utils import timezone
 
 from google.appengine.ext import blobstore
+
+from sjfnw.grants import constants as gc
 
 logger = logging.getLogger('sjfnw')
 
@@ -39,7 +41,8 @@ def get_blobkey_from_body(body):
 def find_blobinfo(file_field, hide_errors=False):
   """Given contents of a file field, return BlobInfo. """
 
-  key = file_field.name.split('/', 1)[0]
+  value = file_field.name if hasattr(file_field, 'name') else file_field
+  key = value.split('/', 1)[0]
   if key:
     blobinfo = blobstore.BlobInfo.get(key)
     if blobinfo:
@@ -90,7 +93,7 @@ def group_multiwidget_values(data, name):
     Returns: json string of list of values
   """
   if name in data:
-    logger.warn('{} is already present in dict'.format(field_name))
+    logger.warn('%s is already present in dict', name)
     return
 
   collection = []
@@ -152,3 +155,9 @@ def format_draft_contents(contents):
   contents['timeline'] = group_multiwidget_values(contents, 'timeline')
   for name in ['collaboration_references', 'racial_justice_references']:
     contents[name] = group_multiwidget_values(contents, name)
+
+def has_allowed_file_ext(value):
+  return value and value.lower().split('.')[-1] in gc.ALLOWED_FILE_TYPES
+
+def has_allowed_photo_file_ext(value):
+  return value and value.lower().split('.')[-1] in gc.PHOTO_FILE_TYPES

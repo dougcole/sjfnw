@@ -41,7 +41,7 @@ formUtils.statusTexts = { // for ajax error messages
  * 3) Initializes file upload handling (see fileUploads.init)
  *
  * @param {string} urlPrefix - beginning of path (i.e. 'apply'). no slashes
- * @param {number} draftId - pk of draft object (draft app or draft yer)
+ * @param {number} draftId - pk of draft object (draft app or draft report)
  * @param {number} submitId - pk of object used in post (cycle or award)
  * @param {string.alphanum} userId - randomly generated user id for mult edit warning
  * @param {string} [staffUser] - querystring for user override (empty string if n/a)
@@ -213,7 +213,7 @@ autoSave.save = function (submit, force) {
   $.ajax({
     url: autoSave.saveUrl + force,
     type: 'POST',
-    data: $('form').serialize() + '&user_id=' + autoSave.userId,
+    data: $('input,textarea').serialize() + '&user_id=' + autoSave.userId,
     success: function (data, textStatus, jqXHR) {
       if (jqXHR.status === 200) {
         if (submit) {

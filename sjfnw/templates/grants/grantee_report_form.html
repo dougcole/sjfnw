@@ -1,0 +1,50 @@
+{% extends 'grants/base.html' %}
+{% block title %}Grantee Report | {{ block.super }}{% endblock %}
+
+{% block script %}
+<script type="text/javascript" src="/static/js/forms.js"></script>
+<script type="text/javascript">
+  // TODO remove this
+  window._sjfDebug = true;
+  $(document).ready(function() {
+    formUtils.init('report', {{ draft.pk }}, {{ giving_project_grant.pk }}, '', '{{ user_override|default:"" }}');
+    wordLimiter.init();
+  });
+</script>
+{% endblock script %}
+
+{% block content %}
+<div class="text-center">
+  <h2>Grantee Report<br>
+    {{ giving_project_grant }} from {{ giving_project_grant.projectapp.giving_project }}
+  </h2>
+  {% if user_override %}<h2>Filling out on behalf of {{ org }}</h2>{% endif %}
+  {% include 'grants/includes/last_saved.html' with interval=60 %}
+</div>
+{% if form.errors %}
+<div class="error-header">Please resolve the errors below and try submitting again.</div>
+{% endif %}
+<div id="autosave_contents">
+  <ol class="narratives">
+    {# hidden iframe for file submissions #}
+    <iframe class="upload" id="id_upload_frame" name="upload_frame"></iframe>
+    {% for field in form %}
+    <li>
+      {% if field.name in form.file_fields %}
+        {% include 'grants/includes/file_upload.html' with field_id=field.name %}
+      {% else %}
+        {{ field.label }}{{ field.errors }}{{ field }}
+      {% endif %}
+    </li>
+    {% endfor %}
+  </ol>
+  {# Bit of a hack - this just generates a POST request that reloads the page #}
+  <form method="POST" action="/report/1">
+    <input class="hidden" id="hidden_submit_app" type="submit" value="Submit"/>
+  </form>
+</div>
+<div class="text-center">
+  <button class="submit" onclick="autoSave.save(true);">Submit application</button>
+  {% include 'grants/includes/last_saved.html' with interval=60 %}
+</div>
+{% endblock content %}

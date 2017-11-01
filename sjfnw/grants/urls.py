@@ -31,19 +31,21 @@ apply_urls += patterns('sjfnw.grants.views',
 
 root_urls = patterns('sjfnw.grants.views',
   (r'^(?P<draft_type>.*)/(?P<draft_id>\d+)/add-file/?$', 'add_file'),
-  (r'^(?P<draft_type>.*)/(?P<draft_id>\d+)/remove/(?P<file_field>.*)/?$', 'remove_file')
+  (r'^apply/(?P<draft_id>\d+)/remove/(?P<file_field>.*)/?$', 'remove_file'),
+  (r'^report/(?P<draft_id>\d+)/remove/(?P<file_field>.*)/?$', 'remove_report_file')
 )
 
 report_urls = patterns('sjfnw.grants.views',
-  # year-end report
-  (r'^(?P<award_id>\d+)/?$', 'year_end_report'),
-  (r'^(?P<award_id>\d+)/autosave/?$', 'autosave_yer'),
-  (r'^view/(?P<report_id>\d+)/?$', 'view_yer'),
-  (r'^rollover/?$', 'rollover_yer'),
+  # grantee report
+  (r'^(?P<gpg_id>\d+)/?$', 'grantee_report'),
+  (r'^(?P<gpg_id>\d+)/autosave/?$', 'autosave_grantee_report'),
+  (r'^view/(?P<report_id>\d+)/?$', 'view_grantee_report'),
+  # TODO: re-implement report rollover
+  # (r'^rollover/?$', 'rollover_yer'),
 )
 
 report_urls += patterns('',
-  (r'^submitted/?', TemplateView.as_view(template_name='grants/yer_submitted.html')),
+  (r'^submitted/?', TemplateView.as_view(template_name='grants/report_submitted.html')),
 )
 
 apply_urls += patterns('',
@@ -71,5 +73,8 @@ apply_urls += patterns('',
 grants_urls = patterns('sjfnw.grants.views',
   # reading
   (r'^view/(?P<app_id>\d+)/?$', 'view_application'),
+  (r'^view-report/(?P<report_id>\d+)/?$', 'view_grantee_report'),
+  (r'^report-draft/(?P<draft_id>\d+)/file/(?P<key>.*)?$', 'view_report_draft_file'),
   (r'^(?P<obj_type>.*)-file/(?P<obj_id>\d+)-(?P<field_name>.*)', 'view_file'),
+  (r'^view-report-file/(?P<answer_id>.*)', 'view_file_direct'),
 )

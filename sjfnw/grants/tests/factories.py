@@ -15,12 +15,17 @@ fake = Faker()
 
 """
   Factories to create instances of models for automated and manual testing
-
-  Models with foreign keys will pick from existing objects unless a value
-  is passed in - except for Organization, which creates its own User
+  See http://factoryboy.readthedocs.io/
 """
 
-FILES = os.listdir('sjfnw/grants/tests/media/')
+# pylint: disable=old-style-class
+
+FILES_WITH_KEYS = [
+  'fakeblobkey/{}'.format(name) for name in os.listdir('sjfnw/grants/tests/media/')
+]
+FILES = [
+  name for name in os.listdir('sjfnw/grants/tests/media/')
+]
 
 class OrgUser(UserFactory):
   last_name = '(Organization)'
@@ -64,7 +69,8 @@ class OrganizationWithProfile(factory.django.DjangoModelFactory):
 
 class GrantCycle(factory.django.DjangoModelFactory):
   """ Special options:
-    questions: list of name/version dicts (default: STANDARD_NARRATIVES)
+    narrative_questions: list of name/version dicts (default: STANDARD_NARRATIVES)
+    report_questions: list of name/version dicts (default: STANDARD_REPORT_QUESTIONS)
     status: 'open', 'closed', 'upcoming' (default: 'open')
     two_year_grants: whether to include two_year_grant question (default: False)
   """
@@ -76,13 +82,19 @@ class GrantCycle(factory.django.DjangoModelFactory):
     status = 'open'
     two_year_grants = False
 
-  open = factory.LazyAttribute(lambda o: fake.date_time_between(map_status[o.status][0], map_status[o.status][1]))
+  title = factory.LazyAttribute(
+    lambda o: '{} {} {}'.format(random.choice(CYCLE_NAMES), 'Grant Cycle', o.close.year)
+  )
+  open = factory.LazyAttribute(
+    lambda o: fake.date_time_between(map_status[o.status][0], map_status[o.status][1])
+  )
   close = factory.LazyAttribute(lambda o: get_close(o))
-  info_page = factory.LazyAttribute(lambda: 'http://socialjusticefund.org/grant-app/economic-justice-grant-2017')
-  title = factory.LazyAttribute(lambda o: '{} {} {}'.format(random.choice(CYCLE_NAMES), 'Grant Cycle', o.close.year))
+  info_page = factory.LazyAttribute(
+    lambda o: 'http://socialjusticefund.org/grant-app/economic-justice-grant-2017'
+  )
 
   @factory.post_generation
-  def questions(self, create, questions, **kwargs):
+  def narrative_questions(self, create, questions, **kwargs):
     if not create:
       return
 
@@ -90,10 +102,27 @@ class GrantCycle(factory.django.DjangoModelFactory):
     if 'add' in kwargs:
       questions += kwargs['add']
 
-    for i, q in enumerate(questions):
-      nq = models.NarrativeQuestion.objects.get(**q)
-      cn = CycleNarrative(narrative_question=nq, grant_cycle=self, order=i)
-      cn.save()
+    for i, question in enumerate(questions):
+      narrative_question = models.NarrativeQuestion.objects.get(**question)
+      cycle_narrative = CycleNarrative(
+          narrative_question=narrative_question, grant_cycle=self, order=i + 1)
+      cycle_narrative.save()
+
+  @factory.post_generation
+  def report_questions(self, create, questions, **kwargs):
+    if not create:
+      return
+
+    questions = questions or gc.STANDARD_REPORT_QUESTIONS
+    if 'add' in kwargs:
+      questions += kwargs['add']
+
+    for i, question in enumerate(questions):
+      report_question = models.ReportQuestion.objects.get(
+        name=question['name'], version=question['version'])
+      cycle_report_question = models.CycleReportQuestion(
+          report_question=report_question, grant_cycle=self, order=i + 1)
+      cycle_report_question.save()
 
 
 class GrantApplication(factory.django.DjangoModelFactory):
@@ -145,7 +174,7 @@ class GrantApplication(factory.django.DjangoModelFactory):
   project_budget_file = factory.Iterator(FILES)
 
   @factory.post_generation
-  def add_answers(self, create, *args, **kwargs):
+  def add_answers(self, create, *args, **kwargs): #pylint: disable=unused-argument
     if not create:
       return
 
@@ -183,11 +212,11 @@ class CycleNarrative(factory.django.DjangoModelFactory):
 
 
 def generate_narrative_answer(question_name, for_draft=False):
-  ls = None
+  values_list = None
   if question_name == 'timeline':
-    ls = ['A', 'b', 'c', 'D', 'e', 'f', 'G', 'h', 'i']
+    values_list = ['A', 'b', 'c', 'D', 'e', 'f', 'G', 'h', 'i']
   elif question_name.endswith('_references'):
-    ls =  [{
+    values_list = [{
       'name': fake.name(),
       'org': fake.company(),
       'phone': fake.phone_number(),
@@ -199,10 +228,11 @@ def generate_narrative_answer(question_name, for_draft=False):
       'email': fake.email()
     }]
     if for_draft:
-      ls = utils.flatten_references(ls)
-  if ls and for_draft:
-    return utils.multiwidget_list_to_dict(ls, question_name)
-  return ls or fake.paragraph()
+      values_list = utils.flatten_references(values_list)
+  if values_list and for_draft:
+    return utils.multiwidget_list_to_dict(values_list, question_name)
+  return values_list or fake.paragraph()
+
 
 class DraftGrantApplication(factory.django.DjangoModelFactory):
 
@@ -221,18 +251,18 @@ class DraftGrantApplication(factory.django.DjangoModelFactory):
 
   @factory.lazy_attribute
   def contents(self):
-    app = GrantApplication.build()
+    app = GrantApplication.build() # pylint: disable=no-member
     fields_to_exclude = app.file_fields() + [
       'organization', 'grant_cycle', 'giving_projects', 'narratives', 'budget',
       'submission_time', 'pre_screening_status',
       'scoring_bonus_poc', 'scoring_bonus_geo'
     ]
     contents = model_to_dict(app, exclude=fields_to_exclude)
-    qs = self.grant_cycle.narrative_questions.all()
-    for q in qs:
-      result = generate_narrative_answer(q.name, for_draft=True)
+    qs = self.grant_cycle.narrative_questions.all() # pylint: disable=no-member
+    for question in qs:
+      result = generate_narrative_answer(question.name, for_draft=True)
       if isinstance(result, (unicode, str)):
-        contents[q.name] = result
+        contents[question.name] = result
       else:
         contents.update(result)
 
@@ -257,48 +287,39 @@ class GivingProjectGrant(factory.django.DjangoModelFactory):
 
   amount = factory.LazyFunction(lambda: random.randrange(5000, 20000))
 
-  first_yer_due = factory.LazyFunction(lambda: fake.date_time_this_year(after_now=True).date())
+  first_report_due = factory.LazyFunction(lambda: fake.date_time_this_year(after_now=True).date())
 
 
-class YearEndReport(factory.django.DjangoModelFactory):
+def generate_report_answer(question):
+  if question.input_type == gc.QuestionTypes.TEXT:
+    return fake.paragraph()
+  elif question.input_type == gc.QuestionTypes.SHORT_TEXT:
+    return fake.text()
+  elif question.input_type == gc.QuestionTypes.NUMBER:
+    return random.randrange(2, 100)
+  elif question.input_type == gc.QuestionTypes.PHOTO:
+    return 'fakeblobkey{}/{}'.format(random.randrange(2, 100), fake.file_name(category='image'))
+  elif question.input_type == gc.QuestionTypes.FILE:
+    return 'fakeblobkey{}/{}'.format(random.randrange(2, 100), fake.file_name(category='office'))
+  else:
+    raise Exception('Unknown report question type {}'.format(question.input_type))
 
-  class Meta:
-    model = 'grants.YearEndReport'
-
-  award = factory.SubFactory(GivingProjectGrant)
-
-  contact_person = factory.LazyFunction(lambda: '{}, {}'.format(fake.name(), fake.job()))
-  email = factory.Faker('email')
-  phone = factory.Faker('phone_number')
-  website = factory.Faker('url')
-
-  summarize_last_year = factory.Faker('paragraph')
-  goal_progress = factory.Faker('paragraph')
-  quantitative_measures = factory.Faker('paragraph')
-  evaluation = factory.Faker('paragraph')
-  achieved = factory.Faker('paragraph')
-  collaboration = factory.Faker('paragraph')
-  new_funding = factory.Faker('paragraph')
-  major_changes = factory.Faker('paragraph')
-
-  total_size = factory.LazyFunction(lambda: random.randrange(2, 300))
-  donations_count = factory.LazyFunction(lambda: random.randrange(20, 3000))
-  donations_count_prev = factory.LazyFunction(lambda: random.randrange(20, 3000))
-
-  other_comments = factory.Faker('paragraph')
-
-  photo1 = factory.Iterator(FILES)
-  photo2 = factory.Iterator(FILES)
-  photo_release = factory.Iterator(FILES)
-
-class YERDraft(factory.django.DjangoModelFactory):
+class GranteeReport(factory.django.DjangoModelFactory):
 
   class Meta:
-    model = 'grants.YERDraft'
+    model = 'grants.GranteeReport'
 
-  award = factory.SubFactory(GivingProjectGrant)
-  contents = '{}'
+  giving_project_grant = factory.SubFactory(GivingProjectGrant)
 
-  photo1 = factory.Iterator(FILES)
-  photo2 = factory.Iterator(FILES)
-  photo_release = factory.Iterator(FILES)
+  @factory.post_generation
+  def add_answers(self, create, *args, **kwargs): #pylint: disable=unused-argument
+    if not create:
+      return
+
+    cycle_report_questions = models.CycleReportQuestion.objects.filter(
+      grant_cycle=self.giving_project_grant.projectapp.application.grant_cycle
+    )
+    for cycle_q in cycle_report_questions:
+      text = generate_report_answer(cycle_q.report_question)
+      answer = models.ReportAnswer(cycle_report_question=cycle_q, grantee_report=self, text=text)
+      answer.save()

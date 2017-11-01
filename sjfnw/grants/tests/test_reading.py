@@ -7,8 +7,7 @@ from django.utils import timezone
 from sjfnw.grants import constants as gc, views
 from sjfnw.grants.tests import factories
 from sjfnw.grants.tests.base import BaseGrantTestCase
-from sjfnw.grants.models import (GivingProjectGrant, GrantCycle, ProjectApp,
-    YearEndReport)
+from sjfnw.grants.models import GivingProjectGrant, ProjectApp, GranteeReport
 
 logger = logging.getLogger('sjfnw')
 
@@ -17,9 +16,9 @@ class GrantReading(BaseGrantTestCase):
 
   def setUp(self):
     super(GrantReading, self).setUp()
-    award = factories.GivingProjectGrant(first_yer_due=timezone.now())
-    yer = factories.YearEndReport(award=award)
-    self.yer_id = yer.pk
+    award = factories.GivingProjectGrant(first_report_due=timezone.now())
+    report = factories.GranteeReport(giving_project_grant=award)
+    self.report_id = report.pk
 
   def _get_url(self, app_id):
     return reverse(views.view_application, kwargs={'app_id': app_id})
@@ -27,26 +26,26 @@ class GrantReading(BaseGrantTestCase):
   def test_author(self):
     self.login_as_org()
     app = factories.GrantApplication(organization=self.org)
-    yer = factories.YearEndReport(award__projectapp__application=app)
+    report = factories.GranteeReport(giving_project_grant__projectapp__application=app)
 
     res = self.client.get(self._get_url(app.pk))
 
     self.assertEqual(res.status_code, 200)
     self.assertTemplateUsed(res, 'grants/reading.html')
     self.assertEqual(3, res.context['perm'])
-    self.assertContains(res, 'year end report')
+    self.assertContains(res, 'grantee report')
 
   def test_other_org(self):
     self.login_as_org()
     app = factories.GrantApplication()
-    yer = factories.YearEndReport(award__projectapp__application=app)
+    report = factories.GranteeReport(giving_project_grant__projectapp__application=app)
 
     res = self.client.get(self._get_url(app.pk))
 
     self.assertEqual(res.status_code, 200)
     self.assertTemplateUsed(res, 'grants/reading.html')
     self.assertEqual(0, res.context['perm'])
-    self.assertNotContains(res, 'year end report')
+    self.assertNotContains(res, 'grantee report')
 
   def test_staff(self):
     self.login_as_admin()
@@ -67,7 +66,7 @@ class GrantReading(BaseGrantTestCase):
     self.assertEqual(res.status_code, 200)
     self.assertTemplateUsed(res, 'grants/reading.html')
     self.assertEqual(1, res.context['perm'])
-    self.assertNotContains(res, 'year end report')
+    self.assertNotContains(res, 'grantee report')
 
   @skip('TODO fund factories')
   def test_invalid_member_not_visible(self):
@@ -78,14 +77,14 @@ class GrantReading(BaseGrantTestCase):
     self.assertEqual(res.status_code, 200)
     self.assertTemplateUsed(res, 'grants/reading.html')
     self.assertEqual(0, res.context['perm'])
-    self.assertNotContains(res, 'year end report')
+    self.assertNotContains(res, 'grantee report')
 
   @skip('TODO fund factories')
   def test_valid_member_visible(self):
     self.login_as_member('first')
-    yer = YearEndReport.objects.get(pk=self.yer_id)
-    yer.visible = True
-    yer.save()
+    report = GranteeReport.objects.get(pk=self.report_id)
+    report.visible = True
+    report.save()
 
     res = self.client.get(self.reading_url, follow=True)
 
@@ -93,26 +92,26 @@ class GrantReading(BaseGrantTestCase):
     self.assertTemplateUsed(res, 'grants/reading.html')
     self.assertEqual(1, res.context['perm'])
 
-  @skip('TODO set up YER')
+  @skip('TODO set up report')
   def test_invalid_member_visible(self):
     self.login_as_member('blank')
-    yer = YearEndReport.objects.get(pk=self.yer_id)
-    yer.visible = True
-    yer.save()
+    report = GranteeReport.objects.get(pk=self.report_id)
+    report.visible = True
+    report.save()
 
     res = self.client.get(self.reading_url, follow=True)
 
     self.assertEqual(res.status_code, 200)
     self.assertTemplateUsed(res, 'grants/reading.html')
     self.assertEqual(0, res.context['perm'])
-    self.assertNotContains(res, 'year end report')
+    self.assertNotContains(res, 'grantee report')
 
   def test_two_year_grant_question(self):
     self.login_as_org()
 
     app = factories.GrantApplication(
       organization=self.org,
-      grant_cycle__questions__add=[gc.TWO_YEAR_GRANT_QUESTION])
+      grant_cycle__narrative_questions__add=[gc.TWO_YEAR_GRANT_QUESTION])
 
     res = self.client.get(self._get_url(app.pk))
 

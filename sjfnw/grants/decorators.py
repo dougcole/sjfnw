@@ -30,7 +30,7 @@ def registered_org():
         logger.info('Staff override - %s logging in as %s', request.user.username, username)
       try:
         organization = Organization.objects.get(user__username=username)
-        logger.info(organization)
+        logger.info(u'Organization: %s', organization.name)
         return view_func(request, organization, *args, **kwargs)
       except Organization.DoesNotExist:
         logger.info('No organization found matching username %s', username)

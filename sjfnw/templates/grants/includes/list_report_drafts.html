@@ -1,0 +1,21 @@
+{% for draft in report_drafts %}
+{% with award=draft.giving_project_grant %}
+<div class="row">
+  <div class="col col-3of8 main">
+    Grantee report - award from {{ award.projectapp.giving_project }}
+  </div>
+  <div class="col col-1of8">
+    <b><a href="/report/{{ award.pk }}{{ user_override|default:'' }}">Edit draft</a></b>
+  </div>
+  <div class="col col-1of8">Updated {{ draft.modified|date:"n/j" }}</div>
+  {% if award.next_report_due %}
+    <div class="col col-1of4">
+      {{ draft.is_overdue|yesno:'Past due,Due' }} {{ award.next_report_due|date:"n/j/y" }}
+    </div>
+  {% endif %}
+  <div class="col col-1of8">
+    <button class="text-button" title="discard draft" onclick="confirmation('{{ draft.pk }}', '{{ draft.grant_cycle }}')">Discard</button>
+  </div>
+</div>
+{% endwith %}
+{% endfor %}

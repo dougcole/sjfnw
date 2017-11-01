@@ -1,36 +1,19 @@
-{# Requires variable: field_id #}
 {% load dict_key %}
 
 {% with form|key:field_id as formfield %}
 
-{# File upload for grant application #}
-<div class="row">
-  <div class="col col-1of2"{% if not number %} style="padding-left:20px;"{% endif %}>
-    {% if number %}{{ number }}.{% endif %}
-    {% if formfield.help_text %}
-    <span class="has-more-info" id="{{ field_id }}">{{ formfield.label }}</span>
-    <div class="more-info" id="{{ field_id }}-info" style="display:none;">
-      {{ formfield.help_text }}
-    </div>
-    {% else %}
-    {{ formfield.label }}
-    {% endif %}
-    {% if formfield.errors %}{{ formfield.errors }}{% endif %}
-  </div>
-
-  <div class="col col-1of6">
-    <form id="{{ field_id }}_form" class="files_form" action="" target="upload_frame"
-          method="POST" enctype="multipart/form-data" accept-charset="UTF-8">
-      <span class="file_wrapper">
-        <span class="default-file-input">{{ formfield }}</span>
-        <span class="upload_button">Choose file</span>
-      </span>
-      <input id="{{ field_id }}_submit" type="submit" value="Submit files" style="display:none;"/>
-    </form>
-  </div>
-  <div class="col col-1of3">
-    <span id="{{ field_id }}_uploaded">{{ file_urls|key:field_id }}</span>
-  </div>
-</div>
-
+{{ formfield.label}} {% if formfield.errors %}{{ formfield.errors }}{% endif %}
+<form id="{{ field_id }}_form" class="files_form" action="" target="upload_frame"
+                                                            method="POST" enctype="multipart/form-data" accept-charset="UTF-8">
+  <span class="file_wrapper">
+    <span class="default-file-input">{{ formfield }}</span>
+    <span class="upload_button">Choose file</span>
+  </span>
+  <input id="{{ field_id }}_submit" type="submit" value="Submit files" style="display:none;"/>
+</form>
+<span id="{{ field_id }}_uploaded">
+  {% if field_id in files %}
+  <a href="{{ files|key:field_id|key:'url' }}">{{ files|key:field_id|key:'filename' }}</a>
+  {% endif %}
+</span>
 {% endwith %}

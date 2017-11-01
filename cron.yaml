@@ -1,6 +1,6 @@
 cron:
-- description: year-end report due date reminders
-  url: /mail/yer
+- description: grantee report due date reminders
+  url: /mail/reports-due
   schedule: every day 17:03
 
 - description: acct approval reminder for admins

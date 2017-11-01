@@ -8,11 +8,17 @@ from django.utils.safestring import mark_safe
 
 from sjfnw.fund.models import GivingProject
 from sjfnw.grants import constants as gc
-from sjfnw.grants.models import (Organization, GrantCycle, GrantApplication,
-    DraftGrantApplication)
+from sjfnw.grants.models import (
+  DraftGrantApplication, Organization, GrantCycle, GrantApplication, CycleReportQuestion,
+  validate_file_extension, validate_photo_file_extension
+)
 
 logger = logging.getLogger('sjfnw')
 
+
+class CharFileInput(forms.widgets.FileInput):
+  def value_from_datadict(self, data, files, name):
+    return data.get(name, None)
 
 class LoginForm(forms.Form):
   email = forms.EmailField(max_length=255)
@@ -137,22 +143,6 @@ class AdminRolloverForm(forms.Form):
     # create field
     self.fields['cycle'] = forms.ChoiceField(
         choices=[('', '--- Grant cycles ---')] + [(c.id, unicode(c)) for c in cycles])
-
-
-class RolloverYERForm(forms.Form):
-  """ Used to copy a year-end report for use with another gp grant
-  Fields (created on init):
-    report - submitted YearEndReport
-    award - GPGrant to copy it to
-  """
-
-  def __init__(self, reports, awards, *args, **kwargs):
-    super(RolloverYERForm, self).__init__(*args, **kwargs)
-    self.fields['report'] = forms.ChoiceField(
-        choices=[('', '--- Year-end reports ---')] +
-                [(r.id, unicode(r) + ' ({:%-m/%-d/%y})'.format(r.submitted)) for r in reports])
-    self.fields['award'] = forms.ChoiceField(
-        label='Grant', choices=[('', '--- Grants ---')] + [(a.id, unicode(a)) for a in awards])
 
 
 class BaseReportForm(forms.Form):
@@ -280,8 +270,8 @@ class GPGrantReportForm(BaseAppRelatedReportForm):
   report_support_type = forms.BooleanField(required=False, label='Support type')
   report_agreement_dates = forms.BooleanField(required=False,
       label='Date agreement mailed/returned')
-  report_year_end_report_due = forms.BooleanField(required=False,
-      label='Date year end report due')
+  report_grantee_report_due = forms.BooleanField(required=False,
+      label='Date first grantee report is due')
 
 
 class SponsoredAwardReportForm(BaseReportForm):
@@ -331,3 +321,35 @@ class OrgMergeForm(forms.Form):
     super(OrgMergeForm, self).__init__(*args, **kwargs)
 
     self.fields['primary'].choices = [(org_a.pk, ''), (org_b.pk, '')]
+
+class GranteeReport(forms.Form):
+
+  def __init__(self, cycle_questions, *args, **kwargs):
+    super(GranteeReport, self).__init__(*args, **kwargs)
+    self.file_fields = []
+
+    for cq in cycle_questions:
+      q = cq.report_question
+      field_kwargs = {
+        'label': q.text,
+        'required': cq.required
+      }
+      if q.input_type == gc.QuestionTypes.TEXT:
+        widget = forms.widgets.Textarea(attrs={
+          'class': 'wordlimited',
+          'data-limit': q.word_limit
+        })
+      elif q.input_type == gc.QuestionTypes.NUMBER:
+        widget = forms.widgets.NumberInput()
+      elif q.input_type == gc.QuestionTypes.FILE or q.input_type == gc.QuestionTypes.PHOTO:
+        self.file_fields.append(q.name)
+        widget = CharFileInput()
+        field_kwargs['validators'] = [
+          validate_file_extension if q.input_type == gc.QuestionTypes.FILE else validate_photo_file_extension
+        ]
+      else:
+        widget = forms.widgets.TextInput()
+      field_kwargs['widget'] = widget
+      self.fields[q.name] = forms.CharField(**field_kwargs)
+    if 'initial' in kwargs:
+      self.initial = kwargs['initial']

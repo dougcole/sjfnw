@@ -5,13 +5,14 @@ from django import forms
 from django.forms import ValidationError, ModelForm
 from django.db.models import PositiveIntegerField
 from django.utils import timezone
-from django.utils.safestring import mark_safe
 from django.utils.text import capfirst
 
 from sjfnw.forms import IntegerCommaField, PhoneNumberField
 from sjfnw.grants import constants as gc, utils
-from sjfnw.grants.models import (Organization, GrantApplication, DraftGrantApplication,
-    YearEndReport, NarrativeQuestion, CycleNarrative)
+from sjfnw.grants.models import (
+  Organization, GrantApplication, DraftGrantApplication, NarrativeQuestion,
+  CycleNarrative
+)
 
 logger = logging.getLogger('sjfnw')
 
@@ -419,58 +420,6 @@ class ContactPersonWidget(forms.widgets.MultiWidget):
       return ''
     else:
       return val
-
-
-def set_yer_custom_fields(field, **kwargs):
-  kwargs['required'] = not field.blank
-  if field.verbose_name:
-    kwargs['label'] = capfirst(field.verbose_name)
-  if field.name == 'phone':
-    return PhoneNumberField(**kwargs)
-  elif isinstance(field, PositiveIntegerField):
-    return IntegerCommaField(**kwargs)
-  else:
-    return field.formfield(**kwargs)
-
-
-class YearEndReportForm(ModelForm):
-  # add individual stay in touch components
-  listserve = forms.CharField(required=False)
-  sit_website = forms.CharField(required=False, label='Website')
-  newsletter = forms.CharField(required=False)
-  facebook = forms.CharField(required=False)
-  twitter = forms.CharField(required=False)
-  other = forms.CharField(required=False)
-
-  formfield_callback = set_yer_custom_fields
-
-  class Meta:
-    model = YearEndReport
-    exclude = ['submitted', 'visible']
-    widgets = {
-      'award': forms.HiddenInput(),
-      'stay_informed': forms.HiddenInput(),
-      'total_size': forms.TextInput(attrs={'class': 'input-s'}),
-      'donations_count_prev': forms.TextInput(attrs={'class': 'input-s'}),
-      'donations_count': forms.TextInput(attrs={'class': 'input-s'}),
-      'total_size': forms.TextInput(attrs={'class': 'input-s'}),
-      'contact_person': ContactPersonWidget
-    }
-
-  def clean(self):
-    stay_informed = {}
-    # declared_fields = the fields listed above (rather than fields inferred from model)
-    for field_name in self.declared_fields:
-      val = self.cleaned_data.get(field_name, None)
-      if val:
-        stay_informed[field_name] = val
-    if stay_informed:
-      self.cleaned_data['stay_informed'] = json.dumps(stay_informed)
-    else:
-      self._errors['stay_informed'] = mark_safe(
-        '<ul class="errorlist"><li>Please fill out at least one of the options below.</li></ul>'
-      )
-    return super(YearEndReportForm, self).clean()
 
 # ADMIN
 

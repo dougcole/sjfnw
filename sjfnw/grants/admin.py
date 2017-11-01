@@ -9,9 +9,7 @@ from django.utils.safestring import mark_safe
 
 from sjfnw import utils
 from sjfnw.admin import BaseModelAdmin, BaseShowInline, YearFilter
-from sjfnw.grants import models
-from sjfnw.grants.modelforms import (DraftAdminForm, LogAdminForm,
-    CycleNarrativeFormset, NarrativeQuestionForm)
+from sjfnw.grants import models, modelforms
 
 logger = logging.getLogger('sjfnw')
 
@@ -32,6 +30,10 @@ LOG_IN_AS_ORG = utils.create_link(
 
 class GPGYearFilter(YearFilter):
   filter_model = models.GivingProjectGrant
+  field = 'created'
+
+class ReportYearFilter(YearFilter):
+  filter_model = models.GranteeReport
   field = 'created'
 
 class GrantApplicationYearFilter(YearFilter):
@@ -71,8 +73,12 @@ class CycleTypeFilter(admin.SimpleListFilter):
       return queryset
     elif self.model == models.GrantCycle:
       return queryset.filter(title__startswith=self.value())
-    else:
-      return queryset.filter(projectapp__application__grant_cycle__title__startswith=self.value())
+    elif self.model == models.GivingProjectGrant:
+      return queryset.filter(
+        projectapp__application__grant_cycle__title__startswith=self.value())
+    elif self.model == models.GranteeReport:
+      return queryset.filter(
+        giving_project_grant__projectapp__application__grant_cycle__title__startswith=self.value())
 
 class CycleOpenFilter(admin.SimpleListFilter):
   title = 'Cycle status'
@@ -91,7 +97,7 @@ class CycleOpenFilter(admin.SimpleListFilter):
     for lookup, title in self.lookup_choices:
       yield {
         'selected': self.value() == lookup,
-        'query_string': cl.get_query_string({ self.parameter_name: lookup, }, []),
+        'query_string': cl.get_query_string({self.parameter_name: lookup}, []),
         'display': title,
       }
 
@@ -123,7 +129,7 @@ class IsArchivedFilter(admin.SimpleListFilter):
     for lookup, title in self.lookup_choices:
       yield {
         'selected': self.value() == lookup,
-        'query_string': cl.get_query_string({ self.parameter_name: lookup, }, []),
+        'query_string': cl.get_query_string({self.parameter_name: lookup,}, []),
         'display': title,
       }
 
@@ -248,11 +254,18 @@ class AppCycleI(BaseShowInline):
   change_link_text = "View/edit"
 
 
+class CycleReportQuestionI(admin.TabularInline):
+  model = models.CycleReportQuestion
+  fields = ('order', 'report_question', 'required')
+  extra = 0
+  collapsed = True
+
 class CycleNarrativeI(admin.TabularInline):
   model = models.CycleNarrative
   fields = ('order', 'narrative_question')
   extra = 0
-  formset = CycleNarrativeFormset
+  formset = modelforms.CycleNarrativeFormset
+  collapsed = True
 
   def formfield_for_manytomany(self, db_field, request, **kwargs):
     kwargs['queryset'] = models.CycleNarrative.objects.filter(archived__isnull=True)
@@ -308,8 +321,8 @@ class ProjectAppI(admin.TabularInline):
   """ Display giving projects assigned to this app """
   model = models.ProjectApp
   extra = 1
-  fields = ['giving_project', 'screening_status', 'granted', 'year_end_report']
-  readonly_fields = ['granted', 'year_end_report']
+  fields = ['giving_project', 'screening_status', 'granted', 'grantee_report']
+  readonly_fields = ['granted', 'grantee_report']
   verbose_name = 'Giving project'
   verbose_name_plural = 'Giving projects'
 
@@ -328,29 +341,20 @@ class ProjectAppI(admin.TabularInline):
         return mark_safe(link.format(obj.pk))
     return ''
 
-  def year_end_report(self, obj):
+  def grantee_report(self, obj):
     if obj.pk:
-      reports = (models.YearEndReport.objects.select_related('award')
-                                            .filter(award__projectapp_id=obj.pk))
-      yer_link = ""
+      reports = (models.GranteeReport.objects
+          .select_related('giving_project_grant')
+          .filter(giving_project_grant__projectapp_id=obj.pk))
+      report_link = ""
       for i, report in enumerate(reports):
         if i > 0:
-          yer_link += " | "
-        yer_link += utils.create_link('/admin/grants/yearendreport/{}/'.format(report.pk),
+          report_link += " | "
+        report_link += utils.create_link('/admin/grants/granteereport/{}/'.format(report.pk),
                                       'Year {}'.format(i + 1), new_tab=True)
-      return mark_safe(yer_link)
+      return mark_safe(report_link)
     else:
       return ''
-
-
-class YERInline(BaseShowInline):
-  model = models.YearEndReport
-  fields = ['submitted', 'contact_person', 'email', 'phone', 'view']
-  readonly_fields = ['submitted', 'contact_person', 'email', 'phone', 'view']
-
-  def view(self, obj):
-    return utils.create_link('/report/view/{}'.format(obj.pk), 'View')
-  view.allow_tags = True
 
 # -----------------------------------------------------------------------------
 #  MODELADMIN
@@ -359,19 +363,82 @@ class YERInline(BaseShowInline):
 class GrantCycleA(BaseModelAdmin):
   list_display = ['title', 'open', 'close']
   list_filter = (CycleOpenFilter, CycleTypeFilter)
-  fields = [
-    ('title', 'open', 'close', 'private'),
-    ('info_page', 'amount_note'),
-    ('email_signature', 'conflicts')
-  ]
-  inlines = [CycleNarrativeI, AppCycleI]
+  fieldsets = (
+    ('', {
+      'fields': (
+        ('title', 'private'),
+        ('open', 'close'),
+        ('info_page', 'amount_note'),
+        ('email_signature', 'conflicts'),
+      )
+    }),
+    # Hack - 'collapse' class makes django admin's collapse.js load
+    # which supports custom 'collapsed' option for inlines
+    ('', {'classes': ('collapse',), 'fields': ()})
+  )
+  inlines = [CycleNarrativeI, CycleReportQuestionI, AppCycleI]
 
+class GranteeReportA(BaseModelAdmin):
+  list_display = (
+    'giving_project_grant',
+    'organization',
+    'created',
+    'giving_project',
+    'grant_cycle',
+    'view_link'
+  )
+  list_filter = (ReportYearFilter, CycleTypeFilter)
+  search_fields = (
+    'giving_project_grant__projectapp__application__organization__name',
+    'giving_project_grant__projectapp__giving_project',
+  )
+  fields = ('giving_project_grant', 'created', 'view_link')
+  readonly_fields = ('giving_project_grant', 'created', 'view_link')
+
+  def get_queryset(self, request):
+    qs = super(GranteeReportA, self).get_queryset(request)
+    return qs.select_related(
+      'giving_project_grant__projectapp__application__grant_cycle',
+      'giving_project_grant__projectapp__application__organization',
+      'giving_project_grant__projectapp__giving_project'
+    )
+
+  def has_add_permission(self, request):
+    return False
+
+  def organization(self, obj):
+    return obj.giving_project_grant.projectapp.application.organization
+
+  def giving_project(self, obj):
+    return obj.giving_project_grant.projectapp.giving_project
+
+  def grant_cycle(self, obj):
+    return obj.giving_project_grant.projectapp.application.grant_cycle
+
+  def view_link(self, obj):
+    if obj.pk:
+      url = reverse('sjfnw.grants.views.view_grantee_report', kwargs={'report_id': obj.pk})
+      return utils.create_link(url, 'View report', new_tab=True)
+  view_link.allow_tags = True
+  view_link.short_description = 'View'
+
+class ReportQuestionA(BaseModelAdmin):
+  list_display = ('name', 'version', 'input_type', 'word_limit', 'archived_display')
+  list_filter = (IsArchivedFilter, 'name', 'version')
+  search_fields = ('name', 'version')
+  fields = ('name', 'version', 'input_type', 'text', 'word_limit', 'archived')
+
+  # TODO replace/remove in django 1.9
+  # https://docs.djangoproject.com/en/1.9/releases/1.9/#django-contrib-admin
+  def archived_display(self, obj):
+    return obj.archived or ''
+  archived_display.short_description = 'Archived'
 
 class NarrativeQuestionA(BaseModelAdmin):
   list_display = ('question', 'version', 'word_limit_display', 'archived_display')
   list_filter = (IsArchivedFilter, 'name', 'version')
   search_fields = ('name', 'version')
-  form = NarrativeQuestionForm
+  form = modelforms.NarrativeQuestionForm
   fields = ('name', 'version', 'text', 'word_limit', 'archived')
 
   # TODO replace/remove in django 1.9
@@ -541,7 +608,7 @@ class DraftGrantApplicationA(BaseModelAdmin):
             ('extended_deadline'),
             ('edit')]
   readonly_fields = ['modified', 'edit']
-  form = DraftAdminForm
+  form = modelforms.DraftAdminForm
   search_fields = ['organization__name']
 
   def get_readonly_fields(self, request, obj=None):
@@ -561,38 +628,43 @@ class DraftGrantApplicationA(BaseModelAdmin):
 
 
 class GivingProjectGrantA(BaseModelAdmin):
-  list_display = ['organization_name', 'grant_cycle', 'giving_project',
-                  'short_created', 'total_grant', 'fully_paid', 'check_mailed']
-  search_fields = ['projectapp__application__organization__name',
-                   'projectapp__giving_project__title']
+  list_display = (
+    'organization_name', 'grant_cycle', 'giving_project',
+    'short_created', 'total_grant', 'fully_paid', 'check_mailed'
+  )
+  search_fields = (
+    'projectapp__application__organization__name',
+    'projectapp__giving_project__title'
+  )
   list_filter = [CycleTypeFilter, GPGYearFilter, MultiYearGrantFilter]
   list_select_related = True
 
   list_help_text = (
     '<p>To enter a new grant, Find the corresponding <a href="/admin/grants/grantapplication/">grant application</a> and use the "Enter an award" link.  This page is for viewing and updating awards.</p>'
-    '<p><a href="yer-status">Year-end reports status</a>: View YER due dates and completion status for all grants.</p>'
   )
 
   fieldsets = (
     ('', {
+      'classes': ('wide',),
       'fields': (
-        ('projectapp', 'created', 'total_grant'),
-        ('amount', 'check_number', 'check_mailed'),
+        ('projectapp', 'created'),
+        ('total_grant',),
+        ('amount',), 
+        ('check_number', 'check_mailed'),
         ('agreement_mailed', 'agreement_returned'),
         'approved'
       )
     }),
-    ('', {
+    ('Grantee report', {
       'classes': ('wide',),
-      'fields': ('first_yer_due',)
+      'fields': (('first_report_due', 'second_report_due'),),
     }),
     ('Multi-Year Grant', {
+      'classes': ('wide',),
       'fields': (('second_amount', 'second_check_number', 'second_check_mailed'),)
     })
   )
   readonly_fields = ['created', 'total_grant']
-
-  inlines = (YERInline,)
 
   # overrides - change view only
 
@@ -631,6 +703,7 @@ class GivingProjectGrantA(BaseModelAdmin):
       if amt:
         return '${:,}'.format(amt)
     return '-'
+  total_grant.short_description = 'Total grant amount (Updates on save)'
 
   # custom methods - list only
 
@@ -669,53 +742,15 @@ class SponsoredProgramGrantA(BaseModelAdmin):
       return self.readonly_fields + ('organization',)
     return self.readonly_fields
 
-class YearEndReportA(BaseModelAdmin):
-  list_display = ['org', 'award', 'cycle', 'submitted', 'visible', 'view_link']
-  list_filter = ['award__projectapp__application__grant_cycle']
-  list_select_related = True
-  ordering = ['-submitted']
-
-  fieldsets = [
-    ('', {
-      'fields': ('award_link', 'submitted', 'view_link')
-    }),
-    ('', {
-      'fields': ('visible',)
-    }),
-    ('Edit year end report', {
-      'classes': ('collapse',),
-      'fields': ('email', 'phone', 'website', 'summarize_last_year', 'goal_progress',
-        'quantitative_measures', 'evaluation', 'achieved', 'collaboration', 'new_funding',
-        'major_changes', 'total_size', 'donations_count', 'donations_count_prev')
-    })
-  ]
-  readonly_fields = ['award', 'award_link', 'submitted', 'view_link']
-
-  def view_link(self, obj):
-    if obj.pk:
-      url = reverse('sjfnw.grants.views.view_yer', kwargs={'report_id': obj.pk})
-      return utils.create_link(url, 'View report', new_tab=True)
-  view_link.allow_tags = True
-  view_link.short_description = 'View'
-
-  def award_link(self, obj):
-    if obj.pk:
-      url = reverse('admin:grants_givingprojectgrant_change', args=(obj.pk,))
-      return utils.create_link(url, obj.award.full_description(), new_tab=True)
-  award_link.allow_tags = True
-  award_link.short_description = 'Award'
-
-  def org(self, obj):
-    return obj.award.projectapp.application.organization.name
-  org.admin_order_field = 'award__projectapp__application__organization'
-
-  def cycle(self, obj):
-    return obj.award.projectapp.application.grant_cycle
-  cycle.admin_order_field = 'award__projectapp__application__grant_cycle'
-
-
-class YERDraftA(BaseModelAdmin):
-  list_display = ('award', 'organization', 'giving_project', 'grant_cycle', 'modified', 'due')
+class GranteeReportDraftA(BaseModelAdmin):
+  list_display = (
+    'giving_project_grant',
+    'organization',
+    'giving_project',
+    'grant_cycle',
+    'modified',
+    'due'
+  )
 
   fields = (('organization',),
             ('modified', 'due'),
@@ -723,32 +758,31 @@ class YERDraftA(BaseModelAdmin):
   readonly_fields = ('organization', 'modified', 'due', 'giving_project', 'grant_cycle')
 
   def get_queryset(self, request):
-    qs = super(YERDraftA, self).get_queryset(request)
+    qs = super(GranteeReportDraftA, self).get_queryset(request)
     return qs.select_related(
-      'award__projectapp__application__grant_cycle',
-      'award__projectapp__application__organization',
-      'award__projectapp__giving_project'
+      'giving_project_grant__projectapp__application__grant_cycle',
+      'giving_project_grant__projectapp__application__organization',
+      'giving_project_grant__projectapp__giving_project'
     )
 
   def has_add_permission(self, request):
     return False
 
   def organization(self, obj):
-    return obj.award.projectapp.application.organization
-  organization.admin_order_field = 'award__projectapp__application__organization'
+    return obj.giving_project_grant.projectapp.application.organization
 
   def giving_project(self, obj):
-    return obj.award.projectapp.giving_project
+    return obj.giving_project_grant.projectapp.giving_project
 
   def grant_cycle(self, obj):
-    return obj.award.projectapp.application.grant_cycle
+    return obj.giving_project_grant.projectapp.application.grant_cycle
 
   def due(self, obj):
-    return obj.award.next_yer_due()
+    return obj.giving_project_grant.next_report_due()
 
 
 class LogA(BaseModelAdmin):
-  form = LogAdminForm
+  form = modelforms.LogAdminForm
   fields = (('organization', 'date'),
             'staff',
             'application',
@@ -813,6 +847,7 @@ admin.site.register(models.GrantApplication, GrantApplicationA)
 admin.site.register(models.DraftGrantApplication, DraftGrantApplicationA)
 admin.site.register(models.GivingProjectGrant, GivingProjectGrantA)
 admin.site.register(models.SponsoredProgramGrant, SponsoredProgramGrantA)
-admin.site.register(models.YearEndReport, YearEndReportA)
-admin.site.register(models.YERDraft, YERDraftA)
 admin.site.register(models.GrantApplicationLog, LogA)
+admin.site.register(models.ReportQuestion, ReportQuestionA)
+admin.site.register(models.GranteeReportDraft, GranteeReportDraftA)
+admin.site.register(models.GranteeReport, GranteeReportA)

@@ -1,0 +1,41 @@
+<p>
+  Grant Program: {{ gp.title }}<br>
+  Amount: ${{ award.total_amount }}<br>
+  Proposal ID Number: {{ app.pk }}
+</p>
+
+<p>
+  {{ app.organization }},
+</p>
+
+<p>
+  Congratulations on community organizing and movement building for social change.  We at Social Justice Fund NW are proud to support you and are continually inspired by the important work you do.
+</p>
+
+<p>
+  This is a reminder that <b>{{ due_date }} is the deadline to send in your Grantee Report</b>
+  for the {{ gp.title }} grant your organization received in {{ award.check_mailed|date:"Y" }}.
+</p>
+
+<div align="center">
+  <p>
+    <b><a href="{{ base_url }}{% url 'sjfnw.grants.views.grantee_report' gpg_id=award.pk %}"> Click here to fill out your Grantee Report</a></b>
+  </p>
+</div>
+
+{% load static %}
+
+<p>
+  Please submit your Grantee Report no later than {{ due_date }}. These materials help Social Justice Fund share your stories and successes, evaluate our grantmaking strategy, and also contribute to our annual report.
+</p>
+
+<p>
+  As always, please contact us if you have any questions. We look forward to learning more about the work your organization has been doing.
+</p>
+
+Thank you,
+{% if app.grant_cycle.email_signature %}
+  {{ app.grant_cycle.email_signature }}
+{% else %}
+- Social Justice Fund
+{% endif %}

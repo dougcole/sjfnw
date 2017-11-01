@@ -7,7 +7,7 @@ from django.contrib.auth import authenticate, login
 from django.contrib.auth.decorators import login_required
 from django.core.urlresolvers import reverse
 from django.forms.models import model_to_dict
-from django.http import HttpResponse, Http404, HttpResponseBadRequest
+from django.http import JsonResponse, HttpResponse, Http404
 from django.shortcuts import render, render_to_response, get_object_or_404, redirect
 from django.utils import timezone
 from django.views.decorators.http import require_http_methods
@@ -20,12 +20,8 @@ from sjfnw import constants as c, utils
 from sjfnw.decorators import login_required_ajax
 from sjfnw.fund.models import Member
 from sjfnw.grants import constants as gc
-from sjfnw.grants import models
+from sjfnw.grants import models, forms, modelforms
 from sjfnw.grants.decorators import registered_org
-from sjfnw.grants.forms import (AdminRolloverForm, LoginAsOrgForm, LoginForm,
-   AppReportForm, SponsoredAwardReportForm, GPGrantReportForm, OrgReportForm,
-   RegisterForm, RolloverForm, RolloverYERForm, OrgMergeForm)
-from sjfnw.grants.modelforms import get_form_for_cycle, YearEndReportForm
 from sjfnw.grants.utils import (local_date_str, find_blobinfo,
     get_user_override, format_draft_contents)
 
@@ -39,7 +35,7 @@ LOGIN_URL = '/apply/login/'
 
 def org_login(request):
   if request.method == 'POST':
-    form = LoginForm(request.POST)
+    form = forms.LoginForm(request.POST)
     if form.is_valid():
       email = request.POST['email'].lower()
       password = request.POST['password']
@@ -54,8 +50,8 @@ def org_login(request):
       else:
         messages.error(request, 'Your password didn\'t match the one on file. Please try again.')
   else:
-    form = LoginForm()
-  register = RegisterForm()
+    form = forms.LoginForm()
+  register = forms.RegisterForm()
   return render(request, 'grants/org_login_register.html', {
       'form': form, 'register': register
   })
@@ -63,10 +59,10 @@ def org_login(request):
 def org_register(request):
 
   if request.method == 'GET':
-    register = RegisterForm()
+    register = forms.RegisterForm()
 
   elif request.method == 'POST':
-    register = RegisterForm(request.POST)
+    register = forms.RegisterForm(request.POST)
 
     if register.is_valid():
       username_email = request.POST['email'].lower()
@@ -98,7 +94,7 @@ def org_register(request):
               'Please <a href=""/apply/support#contact">contact a site admin</a> for assistance.')
           logger.error('Password not working at registration, account:  ' + username_email)
 
-  form = LoginForm()
+  form = forms.LoginForm()
 
   return render(request, 'grants/org_login_register.html', {
     'form': form, 'register': register
@@ -178,11 +174,11 @@ def org_home(request, org):
   awards = (models.GivingProjectGrant.objects
       .filter(projectapp__application__in=submitted)
       .select_related('projectapp')
-      .prefetch_related('yearendreport_set', 'yerdraft_set'))
-  ydrafts = []
+      .prefetch_related('granteereport_set', 'granteereportdraft_set'))
+  report_drafts = []
   for award in awards:
     submitted_by_id[award.projectapp.application_id].awards.append(award)
-    ydrafts += award.yerdraft_set.all()
+    report_drafts += award.granteereportdraft_set.all()
 
   drafts = org.draftgrantapplication_set.select_related('grant_cycle')
 
@@ -208,7 +204,7 @@ def org_home(request, org):
     'organization': org,
     'submitted': submitted,
     'drafts': drafts,
-    'ydrafts': ydrafts,
+    'report_drafts': report_drafts,
     'cycles': cycles,
     'closed': closed,
     'open': current,
@@ -217,7 +213,7 @@ def org_home(request, org):
   })
 
 # -----------------------------------------------------------------------------
-#  Grant application & Year-end report
+#  Grant applications
 # -----------------------------------------------------------------------------
 
 def _autofill_draft(draft):
@@ -231,7 +227,6 @@ def _autofill_draft(draft):
     logger.debug('Autofilled draft %s, %s', draft.organization, draft.grant_cycle)
     return True
   return False
-
 
 @login_required_ajax(login_url=LOGIN_URL)
 @registered_org()
@@ -298,7 +293,7 @@ def grant_application(request, organization, cycle_id):
     draft_data['organization'] = organization.pk
     draft_data['grant_cycle'] = cycle.pk
 
-    form = get_form_for_cycle(cycle)(cycle, draft_data, files_data)
+    form = modelforms.get_form_for_cycle(cycle)(cycle, draft_data, files_data)
 
     if form.is_valid():
       logger.info('Application form valid')
@@ -307,7 +302,9 @@ def grant_application(request, organization, cycle_id):
 
       for cn in models.CycleNarrative.objects.filter(grant_cycle=cycle).select_related('narrative_question'):
         text = form.cleaned_data.get(cn.narrative_question.name)
-        answer = models.NarrativeAnswer(cycle_narrative=cn, grant_application=application, text=text)
+        answer = models.NarrativeAnswer(
+          cycle_narrative=cn, grant_application=application, text=text
+        )
         answer.save()
 
       to_email = organization.get_email()
@@ -351,10 +348,10 @@ def grant_application(request, organization, cycle_id):
 
     draft_contents = json.loads(draft.contents)
     format_draft_contents(draft_contents)
-    form = get_form_for_cycle(cycle)(cycle, initial=draft_contents)
+    form = modelforms.get_form_for_cycle(cycle)(cycle, initial=draft_contents)
 
   # get draft files
-  file_urls = get_file_urls(request, draft)
+  file_urls = get_files_info(request, draft)
   link_template = (u'<a href="{0}" target="_blank" title="{1}">{1}</a> '
                    '[<a onclick="fileUploads.removeFile(\'{2}\');">remove</a>]')
   for field, url in file_urls.iteritems():
@@ -375,104 +372,147 @@ def grant_application(request, organization, cycle_id):
     'flag': draft.recently_edited() and draft.modified_by
   })
 
-def autosave_yer(request, award_id):
-  """ Autosave a YERDraft """
+# -----------------------------------------------------------------------------
+# Grantee reports
+# -----------------------------------------------------------------------------
+
+def autosave_grantee_report(request, gpg_id):
+  """ Autosave a GranteeReportDraft """
 
   if not request.user.is_authenticated():
     return HttpResponse(LOGIN_URL, status=401)
 
-  draft = get_object_or_404(models.YERDraft, award_id=award_id)
+  draft = get_object_or_404(models.GranteeReportDraft, giving_project_grant_id=gpg_id)
 
   if request.method == 'POST':
     draft.contents = json.dumps(request.POST)
-    logger.info(draft.contents)
+    logger.info('Saving grantee report. Contents: %s', draft.contents)
+    # Note: draft.files is updated in add_file
     draft.modified = timezone.now()
     draft.save()
     return HttpResponse('success')
 
 @login_required(login_url=LOGIN_URL)
 @registered_org()
-def year_end_report(request, organization, award_id):
-
-  # get award, make sure org matches
-  award = get_object_or_404(models.GivingProjectGrant, pk=award_id)
-  app = award.projectapp.application
+def grantee_report(request, organization, gpg_id):
+  giving_project_grant = get_object_or_404(
+    models.GivingProjectGrant.objects.select_related(
+      'projectapp__giving_project',
+      'projectapp__application',
+    ),
+    pk=gpg_id
+  )
+  app = giving_project_grant.projectapp.application
 
   if app.organization_id != organization.pk:
-    logger.warning('Trying to edit someone else\'s YER')
+    logger.warning('Trying to edit someone else\'s GranteeReportDraft')
     return redirect(org_home)
 
-  total_yers = models.YearEndReport.objects.filter(award=award).count()
-  # check if already submitted
-  if total_yers >= award.grant_length():
-    logger.warning('Required YER(s) already submitted for this award')
-    return redirect(org_home)
-
+  next_report_due = giving_project_grant.next_report_due()
+  if next_report_due is None:
+    return render(request, 'grants/report_error.html', {
+      'title': 'Grantee Reports submitted',
+      'message': 'All grantee reports for this award have already been submitted.'
+    })
   # get or create draft
-  draft, created = models.YERDraft.objects.get_or_create(award=award)
+  draft, created = models.GranteeReportDraft.objects.get_or_create(
+      giving_project_grant=giving_project_grant)
+
+  cycle_questions = (models.CycleReportQuestion.objects
+    .select_related('report_question')
+    .filter(grant_cycle_id=app.grant_cycle_id)
+    .order_by('order'))
+
   if request.method == 'POST':
     draft_data = json.loads(draft.contents)
-    files_data = model_to_dict(draft, fields=['photo1', 'photo2', 'photo3',
-                                              'photo4', 'photo_release'])
-    draft_data['award'] = award.pk
-    form = YearEndReportForm(draft_data, files_data)
+    draft_data.update(json.loads(draft.files))
+    form = forms.GranteeReport(cycle_questions, draft_data)
     if form.is_valid():
-      yer = form.save()
-      draft.delete()
+      report_number = draft_data.get('report_number', 1)
+      if report_number <= giving_project_grant.granteereport_set.count():
+        url = None
+        try:
+          report_id = giving_project_grant.granteereport_set.all().values('id')[report_number -1]['id']
+          url = reverse(view_grantee_report, kwargs={'report_id': report_id})
+        except Exception as err:
+          logger.warn('Detected resubmission of report but could not find existing one: %s', err)
 
-      utils.send_email(
-        subject='Year end report submitted',
-        template='grants/email_yer_submitted.html',
-        sender=c.GRANT_EMAIL,
-        to=[yer.email]
-      )
-      logger.info('YER submission confirmation email sent to %s', yer.email)
+        message = 'That report appears to have already been submitted.'
+        if url:
+          message += 'View it {}.'.format(utils.create_link(url, 'here', new_tab=True))
+
+        return render(request, 'grants/report_error.html', {
+          'title': 'Grantee Report already submitted',
+          'message': message
+        })
+
+      report = models.GranteeReport(giving_project_grant=giving_project_grant)
+      report.save()
+      for cq in cycle_questions:
+        answer = models.ReportAnswer(
+          grantee_report=report,
+          cycle_report_question=cq,
+          text = draft_data.get(cq.report_question.name, '')
+        )
+        answer.save()
       return redirect('/report/submitted')
-
-    else:
-      logger.info('Invalid YER:')
-      logger.info(form.errors.items())
 
   else: # GET
     if created:
-      initial_data = {'website': app.website, 'sit_website': app.website,
-                      'contact_person': app.contact_person + ', ' + app.contact_person_title,
-                      'phone': app.telephone_number, 'email': app.email_address}
-      logger.info('Created new YER draft')
+      form = forms.GranteeReport(cycle_questions)
     else:
       initial_data = json.loads(draft.contents)
-      # manually convert multi-widget TODO improve this
-      initial_data['contact_person'] = (initial_data.get('contact_person_0', '') +
-          ', ' + initial_data.get('contact_person_1', ''))
+      logger.info('Loading GranteeReportDraft. Initial_data: %s', initial_data)
+      form = forms.GranteeReport(cycle_questions, initial=initial_data)
 
-    form = YearEndReportForm(initial=initial_data)
-
-  file_urls = get_file_urls(request, draft)
-  for field, url in file_urls.iteritems():
-    if url:
-      name = getattr(draft, field).name.split('/')[-1]
-      file_urls[field] = ('<a href="' + url + '" target="_blank" title="' +
-          name + '">' + name + '</a> [<a onclick="fileUploads.removeFile(\'' +
-          field + '\');">remove</a>]')
-    else:
-      file_urls[field] = '<i>no file uploaded</i>'
-
-  due = award.first_yer_due.replace(year=award.first_yer_due.year + total_yers)
-  yer_period = '{:%b %d, %Y} - {:%b %d, %Y}'.format(due.replace(year=due.year - 1), due)
-
-  return render(request, 'grants/yer_form.html', {
+  return render(request, 'grants/grantee_report_form.html', {
     'form': form,
     'org': organization,
     'draft': draft,
-    'award': award,
-    'file_urls': file_urls,
-    'user_override': get_user_override(request),
-    'yer_period': yer_period
+    'giving_project_grant': giving_project_grant,
+    'files': get_files_info(request, draft),
+  })
+
+# TODO permissions
+@login_required(login_url=LOGIN_URL)
+def view_grantee_report(request, report_id):
+  report = get_object_or_404(
+    models.GranteeReport.objects.select_related('giving_project_grant__projectapp__application'),
+    pk=report_id
+  )
+  perm = _view_permission(request.user, report.giving_project_grant.projectapp.application)
+  if perm < 1 or (perm < 2 and not report.visible):
+    raise Http404
+
+  answers = (models.ReportAnswer.objects
+    .select_related('cycle_report_question__report_question')
+    .filter(grantee_report=report))
+
+  return render(request, 'grants/view_grantee_report.html', {
+    'report': report,
+    'answers': answers,
   })
 
 # -----------------------------------------------------------------------------
 #  File handling
 # -----------------------------------------------------------------------------
+
+def _add_file_to_draft(draft, key, blob_file):
+  if isinstance(draft, models.GranteeReportDraft):
+    existing_files = json.loads(draft.files)
+    existing_files[key] = '{}/{}'.format(
+      unicode(blob_file.blobstore_info.key()),
+      blob_file.blobstore_info.filename
+    )
+    draft.files = json.dumps(existing_files)
+  else:
+    if hasattr(draft, key):
+      setattr(draft, key, blob_file)
+    else:
+      logger.error('Tried to add an unknown file field %s', key)
+      return
+  draft.modified = timezone.now()
+  draft.save()
 
 def add_file(request, draft_type, draft_id):
   """ Upload a file to a draft
@@ -480,11 +520,11 @@ def add_file(request, draft_type, draft_id):
 
   if draft_type == 'apply':
     draft = get_object_or_404(models.DraftGrantApplication, pk=draft_id)
-    logger.debug(u'%s adding a file', draft.organization)
+    logger.debug(u'%s adding a file to draft for cycle %s', draft.organization, draft.grant_cycle_id)
 
   elif draft_type == 'report':
-    draft = get_object_or_404(models.YERDraft, pk=draft_id)
-    logger.debug('Adding a file to YER draft %s', draft_id)
+    draft = get_object_or_404(models.GranteeReportDraft, pk=draft_id)
+    logger.debug(u'Adding a file to grantee report draft %s', draft_id)
 
   else:
     logger.error('Invalid draft_type %s for add_file', draft_type)
@@ -493,45 +533,31 @@ def add_file(request, draft_type, draft_id):
   # don't remove this without fixing storage to not access body blob_file = False
   logger.debug([request.body])
 
-  blob_file = False
+  file_key = None
+  blob_file = None
   for key in request.FILES:
     blob_file = request.FILES[key]
     if blob_file:
-      if hasattr(draft, key):
-        setattr(draft, key, blob_file)
-        field_name = key
-        break
-      else:
-        logger.error('Tried to add an unknown file field ' + str(key))
-  draft.modified = timezone.now()
-  draft.save()
+      file_key = key
+      _add_file_to_draft(draft, file_key, blob_file)
+      break
 
-  if not (blob_file and field_name):
+  if not (blob_file and file_key):
     return HttpResponse('ERROR') # TODO use status code
 
-  file_urls = get_file_urls(request, draft)
-  content = (field_name + u'~~<a href="' + file_urls[field_name] +
-             u'" target="_blank" title="' + unicode(blob_file) + u'">' +
-             unicode(blob_file) + u'</a> [<a onclick="fileUploads.removeFile(\'' +
-             field_name + u'\');">remove</a>]')
-  logger.info(u'add_file returning: ' + content)
-  return HttpResponse(content)
+  return JsonResponse({
+    'field': file_key,
+    'filename': unicode(blob_file),
+    'url': get_files_info(request, draft)[file_key]['url'],
+  })
 
-def remove_file(request, draft_type, draft_id, file_field):
+def remove_file(request, draft_id, file_field):
   """ Remove file from draft by setting that field to empty string
 
       Note: does not delete file from Blobstore, since it could be used
         in other drafts/apps
   """
-  if draft_type == 'report':
-    draft_model = models.YERDraft
-  elif draft_type == 'apply':
-    draft_model = models.DraftGrantApplication
-  else:
-    logger.error('Unknown draft type %s', draft_type)
-    return HttpResponseBadRequest('Unknown draft type')
-
-  draft = get_object_or_404(draft_model, pk=draft_id)
+  draft = get_object_or_404(models.DraftGrantApplication, pk=draft_id)
 
   if hasattr(draft, file_field):
     setattr(draft, file_field, '')
@@ -540,6 +566,20 @@ def remove_file(request, draft_type, draft_id, file_field):
   else:
     logger.error('Tried to remove non-existent field: ' + file_field)
   return HttpResponse('success')
+
+def remove_report_file(request, draft_id, file_field):
+  """ Remove file from draft by setting that field to empty string
+
+      Note: does not delete file from Blobstore, since it could be used
+        in other drafts/apps
+  """
+  draft = get_object_or_404(models.GranteeReportDraft, pk=draft_id)
+  existing_files = json.loads(draft.files)
+  draft.files[file_field] = ''
+  draft.modified = timezone.now()
+  draft.save()
+  return HttpResponse('success')
+
 
 def get_upload_url(request):
   """ Get a blobstore url for uploading a file """
@@ -562,7 +602,7 @@ def _is_valid_rollover_target(source, target_cycle):
 def copy_app(request, organization):
 
   if request.method == 'POST':
-    form = RolloverForm(organization, request.POST)
+    form = forms.RolloverForm(organization, request.POST)
     if form.is_valid():
       cycle_id = form.cleaned_data.get('cycle')
       draft_id = form.cleaned_data.get('draft')
@@ -614,7 +654,7 @@ def copy_app(request, organization):
       logger.info('Invalid form: %s', form.errors)
 
   else: # GET
-    form = RolloverForm(organization)
+    form = forms.RolloverForm(organization)
 
   cycle_count = str(form['cycle']).count('<option value') - 1
   apps_count = (str(form['application']).count('<option value') +
@@ -638,93 +678,6 @@ def discard_draft(request, organization, draft_id):
     saved.delete()
     logger.info('Draft %s  discarded', draft_id)
     return HttpResponse('success')
-
-
-@login_required(login_url=LOGIN_URL)
-@registered_org()
-def rollover_yer(request, organization):
-
-  error_msg = ''
-
-  # get reports and grants related to current org
-  reports = models.YearEndReport.objects.select_related().filter(
-      award__projectapp__application__organization_id=organization.pk)
-  if reports:
-    drafts = models.YERDraft.objects.select_related().filter(
-        award__projectapp__application__organization_id=organization.pk)
-
-    award_reports = {}
-    for report in reports:
-      if report.award_id in award_reports:
-        award_reports[report.award_id] += 1
-      else:
-        award_reports[report.award_id] = 1
-    for draft in drafts:
-      if draft.award_id in award_reports:
-        award_reports[draft.award_id] += 1
-      else:
-        award_reports[draft.award_id] = 1
-
-    raw_awards = (models.GivingProjectGrant.objects
-        .select_related('projectapp__application__organization')
-        .filter(projectapp__application__organization_id=organization.pk))
-    awards = []
-    for award in raw_awards:
-      if (award.pk not in award_reports) or (award_reports[award.pk] < award.grant_length()):
-        awards.append(award)
-
-    if not awards:
-      if raw_awards:
-        error_msg = ('You have a submitted or draft year-end report for all '
-                     'of your grants. <a href="/apply">Go back</a>')
-      else:
-        error_msg = 'You don\'t have any other grants that require a year-end report.'
-  else:
-    error_msg = 'You don\'t have any submitted reports to copy.'
-
-  if error_msg != '': # show error page whether it's get or post
-    return render(request, 'grants/yer_rollover.html', {'error_msg': error_msg})
-
-  if request.method == 'POST':
-    form = RolloverYERForm(reports, awards, request.POST)
-    if form.is_valid():
-      report_id = form.cleaned_data.get('report')
-      award_id = form.cleaned_data.get('award')
-
-      award = get_object_or_404(models.GivingProjectGrant, pk=award_id)
-      report = get_object_or_404(models.YearEndReport, pk=report_id)
-
-      # make sure combo doesn't already exist
-      if hasattr(award, 'yearendreport') or models.YERDraft.objects.filter(award_id=award_id):
-        logger.error('Valid YER rollover but award has draft/YER already')
-        error_msg = 'Sorry, that grant already has a draft or submitted year-end report.'
-        return render(request, 'grants/yer_rollover.html', {'error_msg': error_msg})
-
-      contents = model_to_dict(report, exclude=[
-        'modified', 'submitted', 'photo1', 'photo2', 'photo3', 'photo4', 'photo_release'])
-      contact = contents['contact_person'].split(', ', 1)
-      # manually convert db value to multiwidget values #TODO
-      contents['contact_person_0'] = contact[0]
-      contents['contact_person_1'] = contact[1]
-      logger.debug(contents)
-      new_draft = models.YERDraft(award=award, contents=json.dumps(contents))
-      new_draft.photo1 = report.photo1
-      new_draft.photo2 = report.photo2
-      new_draft.photo3 = report.photo3
-      new_draft.photo4 = report.photo4
-      new_draft.photo_release = report.photo_release
-      new_draft.save()
-      return redirect(reverse('sjfnw.grants.views.year_end_report',
-                              kwargs={'award_id': award_id}))
-    else: # INVALID FORM
-      logger.error('Invalid YER rollover. %s', form.errors)
-      return render(request, 'grants/yer_rollover.html', {
-        'error_msg': 'Invalid selection. Retry or contact an admin for assistance.'
-      })
-
-  else: # GET
-    form = RolloverYERForm(reports, awards)
-    return render(request, 'grants/yer_rollover.html', {'form': form})
 
 # -----------------------------------------------------------------------------
 #  View apps/files
@@ -770,17 +723,17 @@ def view_application(request, app_id):
     perm = _view_permission(request.user, app)
   logger.info('perm is ' + str(perm))
 
-  form = get_form_for_cycle(app.grant_cycle)(app.grant_cycle)
+  form = modelforms.get_form_for_cycle(app.grant_cycle)(app.grant_cycle)
 
   form_only = request.GET.get('form')
   if form_only:
     return render(request, 'grants/reading.html',
                   {'app': app, 'form': form, 'perm': perm})
-  file_urls = get_file_urls(request, app)
-  print_urls = get_file_urls(request, app, printing=True)
+  file_urls = get_files_info(request, app)
+  print_urls = get_files_info(request, app, printing=True)
   awards = {}
   for papp in app.projectapp_set.all():
-    if hasattr(papp, 'givingprojectgrant'):# and hasattr(papp.givingprojectgrant, 'yearendreport'):
+    if hasattr(papp, 'givingprojectgrant'):
       awards[papp.giving_project] = papp.givingprojectgrant
 
   return render(request, 'grants/reading_sidebar.html', {
@@ -797,59 +750,65 @@ def view_blob(request, blobkey):
     raise Http404
 
 
-def serve_app_file(application, field_name):
-  """ Returns response containing file from the Blobstore
-
-    Arguments:
-      application: GrantApplication or DraftGrantApplication
-      field_name: name of the file field
-  """
-
-  file_field = getattr(application, field_name)
-  if not file_field:
-    logger.warning('Draft/app does not have a %s', field_name)
+def serve_flex_file(value):
+  if not value:
     raise Http404
 
-  blobinfo = find_blobinfo(file_field)
+  blobinfo = find_blobinfo(value)
+
+  return HttpResponse(blobstore.BlobReader(blobinfo).read(),
+                       content_type=blobinfo.content_type)
+
+MODEL_TYPES = {
+  'app': models.GrantApplication,
+  'report': models.GranteeReport,
+  'adraft': models.DraftGrantApplication,
+  'rdraft': models.GranteeReportDraft
+}
+
+def view_file_direct(request, answer_id):
+  answer = get_object_or_404(models.ReportAnswer, pk=answer_id)
+
+  blobinfo = find_blobinfo(answer.text)
 
   return HttpResponse(blobstore.BlobReader(blobinfo).read(),
                        content_type=blobinfo.content_type)
 
 def view_file(request, obj_type, obj_id, field_name):
-  model_types = {
-    'app': models.GrantApplication,
-    'report': models.YearEndReport,
-    'adraft': models.DraftGrantApplication,
-    'rdraft': models.YERDraft
-  }
-  if obj_type not in model_types:
+  if obj_type not in MODEL_TYPES:
     logger.warning('Unknown obj type %s', obj_type)
     raise Http404
 
-  obj = get_object_or_404(model_types[obj_type], pk=obj_id)
-  return serve_app_file(obj, field_name)
+  obj = get_object_or_404(MODEL_TYPES[obj_type], pk=obj_id)
 
-def view_yer(request, report_id):
-
-  report = get_object_or_404(models.YearEndReport.objects.select_related(), pk=report_id)
-
-  award = report.award
-  projectapp = award.projectapp
-  if not request.user.is_authenticated():
-    perm = 0
+  if obj_type.startswith('a'):
+    value = getattr(obj, field_name)
+  elif obj_type == 'rdraft':
+    value = json.loads(obj.files)[field_name]
   else:
-    perm = _view_permission(request.user, projectapp.application)
+    answer = (obj.reportanswer_set
+      .select_related('cycle_report_question__report_question')
+      .filter(cycle_report_question__report_question__name=field_name))
+    if len(answer) == 0:
+      raise Http404
+    value = answer[0].text
 
-  if not report.visible and perm < 2:
-    return render(request, 'grants/blocked.html', {})
+  if not value:
+    logger.warning('Draft/app does not have a %s', field_name)
+    raise Http404
 
-  form = YearEndReportForm(instance=report)
+  blobinfo = find_blobinfo(value)
 
-  file_urls = get_file_urls(request, report, printing=False)
+  return HttpResponse(blobstore.BlobReader(blobinfo).read(),
+                       content_type=blobinfo.content_type)
 
-  return render(request, 'grants/yer_display.html', {
-    'report': report, 'form': form, 'award': award, 'projectapp': projectapp,
-    'file_urls': file_urls, 'perm': perm})
+
+def view_report_draft_file(request, draft_id, key):
+  draft = get_object_or_404(models.GranteeReportDraft, pk=draft_id)
+  if not key in draft.files:
+    raise Http404
+  return serve_flex_file(draft.files[key])
+
 
 # -----------------------------------------------------------------------------
 #  Admin tools
@@ -880,7 +839,7 @@ def admin_rollover(request, app_id):
   org = application.organization
 
   if request.method == 'POST':
-    form = AdminRolloverForm(org, request.POST)
+    form = forms.AdminRolloverForm(org, request.POST)
     if form.is_valid():
       cycle = get_object_or_404(models.GrantCycle, pk=int(form.cleaned_data['cycle']))
       application.pk = None # this + save makes new copy
@@ -893,7 +852,7 @@ def admin_rollover(request, app_id):
       logger.info(u'Successful rollover of %s to %s', application, cycle)
       return redirect('/admin/grants/grantapplication/' + str(application.pk) + '/')
   else:
-    form = AdminRolloverForm(org)
+    form = forms.AdminRolloverForm(org)
 
   cycle_count = str(form['cycle']).count('<option value')
 
@@ -901,40 +860,14 @@ def admin_rollover(request, app_id):
     'form': form, 'application': application, 'count': cycle_count
   })
 
-def show_yer_statuses(request):
-  awards = (models.GivingProjectGrant.objects
-    .filter(agreement_mailed__isnull=False)
-    .select_related('projectapp__application__organization', 'projectapp__giving_project')
-    .order_by('agreement_mailed'))
-  yers = models.YearEndReport.objects.values_list('award_id', flat=True)
-  # count submitted yers by award id
-  yers_by_award = {}
-  for award_id in yers:
-    award_id = str(award_id)
-    if award_id in yers_by_award:
-      yers_by_award[award_id] = yers_by_award[award_id] + 1
-    else:
-      yers_by_award[award_id] = 1
-  # set count on award object and add computed properties
-  for award in awards:
-    if str(award.pk) in yers_by_award:
-      award.yer_count = yers_by_award[str(award.pk)]
-    else:
-      award.yer_count = 0
-    award.complete = award.yer_count >= award.grant_length()
-    next_due = award.next_yer_due()
-    award.past_due = next_due and next_due < timezone.now().date()
-
-  return render(request, 'admin/grants/yer_status.html', {'awards': awards})
-
 def login_as_org(request):
 
   if request.method == 'POST':
-    form = LoginAsOrgForm(request.POST)
+    form = forms.LoginAsOrgForm(request.POST)
     if form.is_valid():
       org = form.cleaned_data['organization']
       return redirect('/apply/?user=' + org)
-  form = LoginAsOrgForm()
+  form = forms.LoginAsOrgForm()
   return render(request, 'admin/grants/impersonate.html', {'form': form})
 
 def _merge_conflict(a, b):
@@ -958,9 +891,6 @@ def merge_orgs(request, id_a, id_b):
         .prefetch_related('grantapplication_set', 'draftgrantapplication_set')
         .get(pk=id_b))
 
-  error = ''
-  cycles = {}
-
   if _merge_conflict(org_a, org_b):
     messages.error(request,
       'Orgs have a draft or submitted application for the same grant cycle.'
@@ -968,7 +898,7 @@ def merge_orgs(request, id_a, id_b):
     return redirect(reverse('admin:grants_organization_changelist'))
 
   if request.method == 'POST':
-    form = OrgMergeForm(org_a, org_b, request.POST)
+    form = forms.OrgMergeForm(org_a, org_b, request.POST)
 
     if form.is_valid():
 
@@ -1012,7 +942,7 @@ def merge_orgs(request, id_a, id_b):
       return redirect(reverse('admin:grants_organization_change', args=(primary.pk,)))
 
   else: # GET
-    form = OrgMergeForm(org_a, org_b)
+    form = forms.OrgMergeForm(org_a, org_b)
 
   return render(request, 'admin/grants/merge_orgs.html', {
     'orgs': [org_a, org_b],
@@ -1030,10 +960,10 @@ def grants_report(request):
     Uses report-type-specific methods to handle POSTs
   """
 
-  app_form = AppReportForm()
-  org_form = OrgReportForm()
-  gp_grant_form = GPGrantReportForm()
-  sponsored_form = SponsoredAwardReportForm()
+  app_form = forms.AppReportForm()
+  org_form = forms.OrgReportForm()
+  gp_grant_form = forms.GPGrantReportForm()
+  sponsored_form = forms.SponsoredAwardReportForm()
 
   context = {
     'app_form': app_form,
@@ -1046,28 +976,28 @@ def grants_report(request):
     # Determine type of report
     if 'run-application' in request.POST:
       logger.info('App report')
-      form = AppReportForm(request.POST)
+      form = forms.AppReportForm(request.POST)
       context['app_form'] = form
       context['active_form'] = '#application-form'
       results_func = get_app_results
 
     elif 'run-organization' in request.POST:
       logger.info('Org report')
-      form = OrgReportForm(request.POST)
+      form = forms.OrgReportForm(request.POST)
       context['org_form'] = form
       context['active_form'] = '#organization-form'
       results_func = get_org_results
 
     elif 'run-giving-project-grant' in request.POST:
       logger.info('Giving project grant report')
-      form = GPGrantReportForm(request.POST)
+      form = forms.GPGrantReportForm(request.POST)
       context['award_form'] = form
       context['active_form'] = '#giving-project-grant-form'
       results_func = get_gpg_results
 
     elif 'run-sponsored-award' in request.POST:
       logger.info('Sponsored award report')
-      form = SponsoredAwardReportForm(request.POST)
+      form = forms.SponsoredAwardReportForm(request.POST)
       context['award_form'] = form
       context['active_form'] = '#sponsored-award-form'
       results_func = get_sponsored_award_results
@@ -1421,8 +1351,8 @@ def get_gpg_results(options):
   if options.get('report_agreement_dates'):
     fields.append('agreement_mailed')
     fields.append('agreement_returned')
-  if options.get('report_year_end_report_due'):
-    fields.append('year_end_report_due')
+  if options.get('report_grantee_report_due'):
+    fields.append('grantee_report_due')
   if options.get('report_support_type'):
     fields.append('support_type')
 
@@ -1444,8 +1374,8 @@ def get_gpg_results(options):
         row.append(award.projectapp.application.support_type)
       elif field == 'giving_project':
         row.append(award.projectapp.giving_project.title)
-      elif field == 'year_end_report_due':
-        row.append(award.next_yer_due())
+      elif field == 'grantee_report_due':
+        row.append(award.next_report_due())
       elif field == 'first_year_amount':
         row.append(award.amount)
       elif field == 'second_year_amount':
@@ -1514,69 +1444,57 @@ def get_sponsored_award_results(options):
 #  Helpers
 # -----------------------------------------------------------------------------
 
-def get_file_urls(request, app, printing=False):
-  """ Get html links to view files in a given app or year-end report, draft or final
+def get_files_info(request, app, printing=False):
+  files = {}
 
-    Takes into account whether it can be viewed in google doc viewer
-
-    Args:
-      request: HttpRequest
-      app: one of GrantApplication, DraftGrantApplication, YearEndReport, YERDraft
-      printing: if True, will not use doc viewer for excel files to avoid known printing bug
-
-    Returns:
-      file_urls: a dict of urls for viewing each file
-        key is name of django model field e.g. budget, budget1, funding_sources
-        value is string of html for linking to the uploaded file
-      returns an empty dict if the given object is not valid
-  """
-  app_urls = {
-    'funding_sources': '',
-    'demographics': '',
-    'fiscal_letter': '',
-    'budget1': '',
-    'budget2': '',
-    'budget3': '',
-    'project_budget_file': ''
-  }
-  report_urls = {
-    'photo1': '',
-    'photo2': '',
-    'photo3': '',
-    'photo4': '',
-    'photo_release': ''
-  }
-  base_url = request.build_absolute_uri('/')
-
-  # determine type of app and set base url and starting dict accordingly
   if isinstance(app, models.GrantApplication):
-    base_url += 'grants/app-file/'
-    file_urls = app_urls
-    file_urls['budget'] = ''
+    obj_type = 'app'
   elif isinstance(app, models.DraftGrantApplication):
-    file_urls = app_urls
-    base_url += 'grants/adraft-file/'
-  elif isinstance(app, models.YearEndReport):
-    file_urls = report_urls
-    base_url += 'grants/report-file/'
-  elif isinstance(app, models.YERDraft):
-    file_urls = report_urls
-    base_url += 'grants/rdraft-file/'
+    obj_type = 'adraft'
+  elif isinstance(app, models.GranteeReport):
+    obj_type = 'report'
+  elif isinstance(app, models.GranteeReportDraft):
+    obj_type = 'rdraft'
   else:
-    logger.error('get_file_urls received invalid object')
-    return {}
+    logger.error('get_file_info received invalid object')
+    return files
 
-  # check file fields, compile links
-  for field in file_urls:
-    value = getattr(app, field)
-    if value:
-      ext = value.name.lower().split('.')[-1]
-      file_urls[field] += base_url + str(app.pk) + u'-' + field
-      if not settings.DEBUG and ext in gc.VIEWER_FILE_TYPES:
-        if printing:
-          if not (ext == 'xls' or ext == 'xlsx'):
-            file_urls[field] = 'https://docs.google.com/viewer?url=' + file_urls[field]
-        else:
-          file_urls[field] = ('https://docs.google.com/viewer?url=' +
-                              file_urls[field] + '&embedded=true')
-  return file_urls
+  def _get_file_info(key, value):
+    if not value:
+      return {'url': '', 'filename': ''}
+
+    if hasattr(value, 'name'): # FileField
+      value = value.name
+
+    filename = value.split('/')[-1]
+    ext = filename.lower().split('.')[-1]
+    url = request.build_absolute_uri(reverse(view_file, kwargs={
+      'obj_type': obj_type,
+      'obj_id': app.pk,
+      'field_name': key
+    }))
+    if not settings.DEBUG and ext in gc.VIEWER_FILE_TYPES:
+      if not printing:
+        url = 'https://docs.google.com/viewer?url=' + url + '&embedded=true'
+      elif not (ext == 'xls' or ext == 'xlsx'):
+        url = 'https://docs.google.com/viewer?url=' + url
+
+    return {'url': url, 'filename': filename}
+
+  if obj_type.startswith('a'):
+    for field in models.GrantApplication.file_fields():
+      if hasattr(app, field):
+        files[field] = _get_file_info(field, getattr(app, field))
+  elif obj_type == 'rdraft':
+    for key, value in json.loads(app.files).iteritems():
+      files[key] = _get_file_info(key, value)
+  else: # GranteeReport
+    file_answers = (app.reportanswer_set
+      .select_related('cycle_report_question__report_question')
+      .filter(cycle_report_question__report_question__input_type='file'))
+    for answer in file_answers:
+      key = answer.cycle_report_question.report_question.name
+      files[key] = _get_file_info(key, answer.text)
+
+  logger.info('file urls: %s', files)
+  return files

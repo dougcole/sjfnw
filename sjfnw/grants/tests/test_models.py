@@ -3,17 +3,17 @@ import logging
 from datetime import timedelta
 from unittest import skip
 
+from django.db.utils import IntegrityError
 from django.forms.models import model_to_dict
 from django.test import TestCase
 from django.test.utils import override_settings
 from django.utils import timezone
 
-from sjfnw.grants import constants as gc
+from sjfnw.grants import constants as gc, models
+from sjfnw.grants.modelforms import get_form_for_cycle
 from sjfnw.grants.tests import factories
 from sjfnw.grants.tests.base import BaseGrantTestCase
 from sjfnw.grants.tests.test_apply import BaseGrantFilesTestCase
-from sjfnw.grants import models
-from sjfnw.grants.modelforms import get_form_for_cycle
 
 logger = logging.getLogger('sjfnw')
 
@@ -62,7 +62,7 @@ class DraftManager(BaseGrantFilesTestCase):
 
     form = get_form_for_cycle(draft.grant_cycle)(draft.grant_cycle, draft_data, files_data)
     if not form.is_valid():
-      print(form.errors)
+      logger.error(form.errors)
       raise Exception('Expected form to be valid')
 
 
@@ -104,61 +104,97 @@ class OrganizationGetStaffEntered(TestCase):
     )
     self.assertEqual(org.get_staff_entered_contact_info(), 'Ray, Mx, 555-999-4242, who@what.z')
 
-class YearEndReportModel(BaseGrantTestCase):
+@skip('TODO update')
+class GranteeReport(BaseGrantTestCase):
 
   projectapp_id = 1
 
-  def test_yers_due_two_year(self):
-    first_yer_due = timezone.now().date() + timedelta(days=9)
+  def test_reports_due_two_year(self):
+    first_report_due = timezone.now().date() + timedelta(days=9)
 
     award = models.GivingProjectGrant(
       projectapp_id=self.projectapp_id,
       amount=5000,
       second_amount=400,
-      first_yer_due=first_yer_due
+      first_report_due=first_report_due
     )
     award.save()
 
-    yersdue = award.yers_due()
+    reportsdue = award.reports_due()
 
     self.assertEqual(award.grant_length(), 2)
-    self.assert_length(yersdue, 2)
-    self.assertEqual(yersdue[0], first_yer_due)
-    self.assertEqual(yersdue[1], first_yer_due.replace(year=first_yer_due.year + 1))
+    self.assert_length(reportsdue, 2)
+    self.assertEqual(reportsdue[0], first_report_due)
+    self.assertEqual(reportsdue[1], first_report_due.replace(year=first_report_due.year + 1))
 
-  def test_yers_due_one(self):
-    first_yer_due = timezone.now().date() + timedelta(days=9)
+  def test_reports_due_one(self):
+    first_report_due = timezone.now().date() + timedelta(days=9)
 
     award = models.GivingProjectGrant(
       projectapp_id=self.projectapp_id,
       amount=5000,
       second_amount=0,
-      first_yer_due=first_yer_due
+      first_report_due=first_report_due
     )
     award.save()
 
-    yersdue = award.yers_due()
+    reportsdue = award.reports_due()
 
     self.assertEqual(award.grant_length(), 1)
-    self.assert_length(yersdue, 1)
-    self.assertEqual(yersdue[0], first_yer_due)
+    self.assert_length(reportsdue, 1)
+    self.assertEqual(reportsdue[0], first_report_due)
 
-  def test_yers_due_completed(self):
-    first_yer_due = timezone.now().date() + timedelta(days=9)
+  def test_reports_due_completed(self):
+    first_report_due = timezone.now().date() + timedelta(days=9)
 
     award = models.GivingProjectGrant(
       projectapp_id=self.projectapp_id,
       amount=5000,
       second_amount=0,
-      first_yer_due=first_yer_due
+      first_report_due=first_report_due
     )
     award.save()
-    yer = models.YearEndReport(
-      award=award, total_size=83, donations_count_prev=6, donations_count=9,
+    report = models.GranteeReport(
+      giving_project_grant=award, total_size=83, donations_count_prev=6, donations_count=9,
       other_comments='Critical feedback'
     )
-    yer.save()
-    yersdue = award.yers_due()
+    report.save()
+    reportsdue = award.reports_due()
 
     self.assertEqual(award.grant_length(), 1)
-    self.assert_length(yersdue, 0)
+    self.assert_length(reportsdue, 0)
+
+class ReportQuestion(BaseGrantTestCase):
+
+  def test_defaults(self):
+    question = models.ReportQuestion(name='any name', version='v3', text='Answer this')
+    self.assertEqual(question.input_type, gc.QuestionTypes.TEXT)
+    self.assertEqual(question.word_limit, 750)
+    self.assertIsNone(question.archived)
+    self.assertEqual(question.display_name(), u'Any Name')
+    self.assertEqual(unicode(question), u'Any Name (v3)')
+
+class ReportAnswer(TestCase):
+
+  def test_required_fields(self):
+    try:
+      answer = models.ReportAnswer()
+      answer.save()
+    except IntegrityError as err:
+      self.assertEqual(err.message,
+        'NOT NULL constraint failed: grants_reportanswer.cycle_report_question_id')
+    else:
+      logger.warn(model_to_dict(answer))
+      raise Exception('Expected ReportAnswer to error without any args')
+
+  def test_valid(self):
+    award = factories.GivingProjectGrant()
+    report = factories.GranteeReport(giving_project_grant=award)
+    cycle_report_question = models.CycleReportQuestion.objects.filter(
+      grant_cycle=award.projectapp.application.grant_cycle).first()
+    answer = models.ReportAnswer(
+      cycle_report_question=cycle_report_question,
+      grantee_report=report,
+      text='Here is my answer'
+    )
+    self.assertEqual(answer.get_question_text(), cycle_report_question.report_question.text)

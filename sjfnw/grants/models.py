@@ -692,7 +692,7 @@ class GrantApplicationLog(models.Model):
   notes = models.TextField()
 
   class Meta:
-    ordering = ['-date']
+    ordering = ('-date',)
 
   def __unicode__(self):
     return 'Log entry from {:%m/%d/%y}'.format(self.date)
@@ -723,7 +723,7 @@ class GivingProjectGrant(models.Model):
     verbose_name='Second grantee report due date (if applicable)')
 
   class Meta:
-    ordering = ['-created']
+    ordering = ('-created',)
 
   def __unicode__(self):
     """ Basic description of grant: amount and duration """
@@ -748,26 +748,29 @@ class GivingProjectGrant(models.Model):
       return None
 
   # TODO delete
-  def yers_due(self):
-    completed = self.yearendreport_set.count()
-    yers_due = []
+  def reports_due(self):
+    completed = self.granteereport_set.count()
+    reports_due = []
     if completed == 0:
-      yers_due.append(self.first_report_due)
+      reports_due.append(self.first_report_due)
     if self.second_report_due and completed < 2:
-      yers_due.append(self.second_report_due)
-    return yers_due
+      reports_due.append(self.second_report_due)
+    return reports_due
 
-  def next_yer_due(self):
+  def next_report_due(self):
     """ Get
-      Returns datetime.date or None if all YER have been submitted for this grant
+      Returns datetime.date or None if all report have been submitted for this grant
     """
-    completed = self.yearendreport_set.count()
+    completed = self.granteereport_set.count()
     if completed == 0:
       return self.first_report_due
     elif completed == 1 and self.second_report_due:
       return self.second_report_due
     else:
       return None
+
+  def reports_required(self):
+    return 2 if self.second_report_due else 1
 
   def total_amount(self):
     """ Total amount granted, or 0 if no amount has been entered """
@@ -800,7 +803,7 @@ class SponsoredProgramGrant(models.Model):
   description = models.TextField(blank=True)
 
   class Meta:
-    ordering = ['organization']
+    ordering = ('organization',)
 
   def __unicode__(self):
     desc = 'Sponsored program grant - {}'.format(self.organization)
@@ -816,9 +819,17 @@ class GranteeReport(models.Model):
   giving_project_grant = models.ForeignKey(GivingProjectGrant)
   created = models.DateTimeField(default=timezone.now)
 
-  report_number = models.IntegerField(default=1)
   cycle_report_questions = models.ManyToManyField('CycleReportQuestion',
       through='ReportAnswer')
+
+  visible = models.BooleanField(default=False, help_text=(
+    'Check this to make the report visible to members of the GP that made the '
+    'grant. (When unchecked, report is only visible to staff and the org that '
+    'submitted it.)')
+  )
+
+  class Meta:
+    ordering = ('-created',)
 
   def __unicode__(self):
     return 'Grantee report: {}'.format(self.giving_project_grant)
@@ -836,11 +847,12 @@ class GranteeReportDraft(models.Model):
   modified = models.DateTimeField(default=timezone.now)
   contents = models.TextField(default='{}')
   files = models.TextField(default='{}')
-  report_number = models.IntegerField(default=1)
 
-  def get_due_date(self):
-    award = self.giving_project_grant
-    return award.first_report_due if self.report_number == 1 else award.second_report_due
+  class Meta:
+    ordering = ('-created',)
+
+  def __unicode__(self):
+    return 'GranteeReportDraft {}'.format(self.pk)
 
 
 class ReportQuestion(models.Model):

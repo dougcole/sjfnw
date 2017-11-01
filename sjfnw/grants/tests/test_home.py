@@ -49,7 +49,7 @@ class OrgHomeAwards(BaseGrantTestCase):
     factories.GivingProjectGrant(
       projectapp__application__organization=self.org,
       agreement_mailed=today - timedelta(days=1),
-      first_yer_due=today + timedelta(weeks=52)
+      first_report_due=today + timedelta(weeks=52)
     )
 
     response = self.client.get(self.url)

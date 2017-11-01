@@ -2,7 +2,7 @@ import os, sys
 
 WSGI_APPLICATION = 'sjfnw.wsgi.application'
 
-ALLOWED_HOSTS = ['.appspot.com']
+ALLOWED_HOSTS = ['.appspot.com', 'localhost', '127.0.0.1']
 
 SECRET_KEY = '*r-$b*8hglm+959&7x043hlm6-&6-3d3vfc4((7yd0dbrakhvi'
 
@@ -34,9 +34,6 @@ if os.getenv('SERVER_SOFTWARE', '').startswith('Google App Engine'):
       'PASSWORD': os.getenv('CLOUDSQL_PASSWORD')
     }
   }
-  if os.getenv('CURRENT_VERSION_ID', '').startswith('staging'):
-    STAGING = True
-    DATABASES['default']['HOST'] += '-clone-2'
 
 # test
 elif 'test' in sys.argv:

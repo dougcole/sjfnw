@@ -1,0 +1,23 @@
+{% extends 'grants/base.html' %}
+
+{% block title %}Grantee Report - {{ block.super }}{% endblock title %}
+
+{% block content %}
+<div class="text-center">
+  <h2>
+    Grantee Report<br>
+    {{ report.get_organization }}<br>
+    {{ report.giving_project_grant }}
+  </h2>
+  <p>Submitted {{report.created|date:"F j, Y"}}</p>
+</div>
+
+<ol>
+  {% for answer in answers %}
+  <li>
+    <p><b>{{ answer.cycle_report_question.report_question.text|safe }}</b></p>
+    <p>{{ answer.get_display|linebreaks }}</p>
+  </li>
+  {% endfor %}
+</ol>
+{% endblock content %}

@@ -299,7 +299,7 @@ class MergeOrgs(BaseGrantTestCase):
     app.save()
     papp = ProjectApp(application_id=app.pk, giving_project_id=3)
     papp.save()
-    gpg = GivingProjectGrant(projectapp_id=papp.pk, amount=199, first_yer_due='2017-01-03')
+    gpg = GivingProjectGrant(projectapp_id=papp.pk, amount=199, first_report_due='2017-01-03')
     gpg.save()
 
     url = reverse('sjfnw.grants.views.merge_orgs', kwargs={'id_a': sec, 'id_b': primary})

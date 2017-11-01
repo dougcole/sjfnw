@@ -37,8 +37,8 @@ SCREENING = (
   (80, 'Grant denied'),
   (90, 'Grant issued'),
   (100, 'Grant paid'),
-  (110, 'Year-end report overdue'),
-  (120, 'Year-end report received'),
+  (110, 'Grantee report overdue'),
+  (120, 'Grantee report received'),
   (130, 'Closed')
 )
 
@@ -102,24 +102,24 @@ class QuestionTypes:
     ]
 
 STANDARD_REPORT_QUESTIONS = [
-  {'name': 'contact_info', 'version': 'legacy'},
-  {'name': 'summarize_last_year', 'version': 'legacy'},
-  {'name': 'goal_progress', 'version': 'legacy'},
-  {'name': 'quantitative_measures', 'version': 'legacy'},
-  {'name': 'evaluation', 'version': 'legacy'},
-  {'name': 'achievements', 'version': 'legacy'},
-  {'name': 'collaboration', 'version': 'legacy'},
-  {'name': 'new_funding', 'version': 'legacy'},
-  {'name': 'organizational_changes', 'version': 'legacy'},
-  {'name': 'total_size', 'version': 'legacy'},
-  {'name': 'donations_count', 'version': 'legacy'},
-  {'name': 'donations_count_prev', 'version': 'legacy'},
-  {'name': 'stay_informed', 'version': 'legacy'},
-  {'name': 'other_comments', 'version': 'legacy'},
-  {'name': 'photo1', 'version': 'legacy'},
-  {'name': 'photo2', 'version': 'legacy'},
-  {'name': 'photo3', 'version': 'legacy', 'required': False},
-  {'name': 'photo4', 'version': 'legacy', 'required': False},
+  {'name': 'contact_info', 'version': 'standard'},
+  {'name': 'summarize_last_year', 'version': 'standard'},
+  {'name': 'goal_progress', 'version': 'standard'},
+  {'name': 'quantitative_measures', 'version': 'standard'},
+  {'name': 'evaluation', 'version': 'standard'},
+  {'name': 'achievements', 'version': 'standard'},
+  {'name': 'collaboration', 'version': 'standard'},
+  {'name': 'new_funding', 'version': 'standard'},
+  {'name': 'organizational_changes', 'version': 'standard'},
+  {'name': 'total_size', 'version': 'standard'},
+  {'name': 'donations_count', 'version': 'standard'},
+  {'name': 'donations_count_prev', 'version': 'standard'},
+  {'name': 'stay_informed', 'version': 'standard'},
+  {'name': 'other_comments', 'version': 'standard'},
+  {'name': 'photo1', 'version': 'standard'},
+  {'name': 'photo2', 'version': 'standard'},
+  {'name': 'photo3', 'version': 'standard', 'required': False},
+  {'name': 'photo4', 'version': 'standard', 'required': False},
 ]
 
 RAPID_REPORT_QUESTIONS = [

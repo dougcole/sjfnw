@@ -138,18 +138,10 @@ class DraftRemoveFile(BaseGrantTestCase):
     self.login_as_org()
     self.draft = factories.DraftGrantApplication()
 
-  def test_unknown_draft_type(self):
-
-    url = reverse(views.remove_file, kwargs={
-      'draft_type': 'madeup', 'draft_id': self.draft.pk, 'file_field': 'budget1'
-    })
-    res = self.client.get(url)
-    self.assertEqual(res.status_code, 400)
-
   def test_obj_not_found(self):
 
     url = reverse(views.remove_file, kwargs={
-      'draft_type': 'apply', 'draft_id': '1880', 'file_field': 'budget1'
+      'draft_id': '1880', 'file_field': 'budget1'
     })
     res = self.client.get(url, follow=True)
     self.assertEqual(res.status_code, 404)
@@ -157,7 +149,7 @@ class DraftRemoveFile(BaseGrantTestCase):
   def test_unknown_field(self):
 
     url = reverse(views.remove_file, kwargs={
-      'draft_type': 'apply', 'draft_id': self.draft.pk, 'file_field': 'madeup'
+      'draft_id': self.draft.pk, 'file_field': 'madeup'
     })
 
     modified = self.draft.modified
@@ -173,7 +165,7 @@ class DraftRemoveFile(BaseGrantTestCase):
     self.assertTrue(len(self.draft.budget1.name) > 1)
 
     url = reverse(views.remove_file, kwargs={
-      'draft_type': 'apply', 'draft_id': self.draft.pk, 'file_field': 'budget1'
+      'draft_id': self.draft.pk, 'file_field': 'budget1'
     })
 
     res = self.client.get(url, follow=True)
@@ -183,18 +175,3 @@ class DraftRemoveFile(BaseGrantTestCase):
     self.draft.refresh_from_db()
     self.assertFalse(self.draft.budget1)
     self.assertEqual(self.draft.budget1.name, '')
-
-  def test_remove_draft_yer_file(self):
-    draft = factories.YERDraft(award__projectapp__application__organization=self.org)
-    self.assertTrue(draft.photo_release)
-
-    url = reverse(views.remove_file, kwargs={
-      'draft_type': 'report', 'draft_id': draft.pk, 'file_field': 'photo_release'
-    })
-    res = self.client.get(url, follow=True)
-
-    self.assertEqual(res.status_code, 200)
-
-    draft.refresh_from_db()
-    self.assertFalse(draft.photo_release)
-    self.assertEqual(draft.photo_release.name, '')

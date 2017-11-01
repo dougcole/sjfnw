@@ -1,7 +1,7 @@
 from datetime import timedelta
 import logging
 
-from django.db.models import Q
+from django.db.models import Count, Q
 from django.http import HttpResponse
 from django.utils import timezone
 
@@ -98,39 +98,46 @@ def draft_app_warning(request):
   return HttpResponse('')
 
 
-def yer_reminder_email(request):
-  """ Remind orgs of upcoming year end reports that are due
+def report_reminder_email(request):
+  """ Remind orgs of upcoming grantee reports that are due
       NOTE: Must run exactly once a day. ONLY SUPPORTS UP TO 2-YEAR GRANTS
       Sends reminder emails at 1 month and 1 week """
 
   today = timezone.now().date()
+  seven_days = timedelta(days=7)
+  thirty_days = timedelta(days=30)
+  award_dates = [today + seven_days, today + thirty_days]
 
-  # get awards due in 7 or 30 days
-  year_ago = today.replace(year=today.year - 1)
-  reminder_deltas = [timedelta(days=7), timedelta(days=30)]
-  award_dates = []
-  for delta in reminder_deltas:
-    award_dates.append(today + delta)
-    award_dates.append((today + delta).replace(year=today.year - 1))
-
-  awards = GivingProjectGrant.objects.filter(first_yer_due__in=award_dates)
+  awards = (GivingProjectGrant.objects
+    .filter(
+      Q(first_report_due__in=award_dates) | Q(second_report_due__in=award_dates)
+    )
+    .annotate(report_count=Count('granteereport'))
+  )
 
   for award in awards:
-    if award.yearendreport_set.count() < award.grant_length():
+    due = False
+    if award.report_count == 0:
+      due = award.first_report_due
+    elif award.report_count == 1 and award.second_report_due:
+      due = award.second_report_due
+
+    if due:
       app = award.projectapp.application
 
       to = app.organization.get_email() or app.email_address
       utils.send_email(
-        subject='Year end report',
+        subject='Grantee report',
         sender=c.GRANT_EMAIL,
         to=[to],
-        template='grants/email_yer_due.html',
+        template='grants/email_report_due.html',
         context={
           'award': award,
           'app': app,
           'gp': award.projectapp.giving_project,
-          'base_url': c.APP_BASE_URL
+          'base_url': c.APP_BASE_URL,
+          'due_date': due
         }
       )
-      logger.info('YER reminder email sent to %s for award %d', to, award.pk)
+      logger.info('Grantee report reminder email sent to %s for award %d', to, award.pk)
   return HttpResponse('success')

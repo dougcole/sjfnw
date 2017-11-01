@@ -43,7 +43,6 @@ else:
     (r'^admin/grants/grantapplication/(?P<app_id>\d+)/rollover',
       'sjfnw.grants.views.admin_rollover'),
     (r'^admin/grants/organization/login', 'sjfnw.grants.views.login_as_org'),
-    (r'^admin/grants/givingprojectgrant/yer-status', 'sjfnw.grants.views.show_yer_statuses'),
 
     (r'^admin/grants/organizations/merge/(?P<id_a>\d+)/(?P<id_b>\d+)',
       'sjfnw.grants.views.merge_orgs'),
@@ -56,7 +55,7 @@ else:
     (r'^mail/new-accounts', 'sjfnw.fund.cron.new_accounts'),
     (r'^mail/gifts', 'sjfnw.fund.cron.gift_notify'),
     (r'^mail/drafts/?', 'sjfnw.grants.cron.draft_app_warning'),
-    (r'^mail/yer/?', 'sjfnw.grants.cron.yer_reminder_email'),
+    (r'^mail/reports-due/?', 'sjfnw.grants.cron.report_reminder_email'),
     (r'^mail/create-cycles', 'sjfnw.grants.cron.auto_create_cycles'),
 
     # dev

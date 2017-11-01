@@ -34,8 +34,8 @@
   <h4>Saved drafts</h4>
 
   {% include 'grants/includes/list_drafts.html' %}
-  {% include 'grants/includes/list_yer_drafts.html' %}
-  {% if not drafts and not ydrafts %}
+  {% include 'grants/includes/list_report_drafts.html' %}
+  {% if not drafts and not report_drafts %}
     <p>No saved drafts found</p>
   {% endif %}
 
@@ -46,7 +46,6 @@
   <h4>Tools</h4>
   <ul>
     <li><a href="/apply/copy{{ user_override|default:'' }}">Copy/rollover an application</a></li>
-    <li><a href="{% url 'sjfnw.grants.views.rollover_yer' %}{{ user_override|default:'' }}">Copy/rollover a year-end report</a></li>
   </ul>
 </div>
 
