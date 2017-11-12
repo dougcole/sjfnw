@@ -43,6 +43,8 @@ else:
     (r'^admin/grants/grantapplication/(?P<app_id>\d+)/rollover',
       'sjfnw.grants.views.admin_rollover'),
     (r'^admin/grants/organization/login', 'sjfnw.grants.views.login_as_org'),
+    (r'^admin/grants/grantee-report-statuses',
+       'sjfnw.grants.views.grantee_report_statuses'),
 
     (r'^admin/grants/organizations/merge/(?P<id_a>\d+)/(?P<id_b>\d+)',
       'sjfnw.grants.views.merge_orgs'),

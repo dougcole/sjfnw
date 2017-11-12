@@ -949,6 +949,25 @@ def merge_orgs(request, id_a, id_b):
     'form': form
   })
 
+def grantee_report_statuses(request):
+  awards = (models.GivingProjectGrant.objects
+    .filter(agreement_mailed__isnull=False)
+    .select_related('projectapp__application__organization', 'projectapp__giving_project')
+    .order_by('agreement_mailed'))
+  # count submitted yers by award id
+  # set count on award object and add computed properties
+  for award in awards:
+    award.next_due = award.next_report_due()
+    total_reports = award.reports_required()
+    if award.next_due is None:
+      completed = total_reports
+    else:
+      completed = 0 if award.next_due == award.first_report_due else 1
+      award.past_due = award.next_due < timezone.now().date()
+    award.reports_completed = '{}/{}'.format(completed, total_reports)
+
+  return render(request, 'admin/grants/grantee_report_statuses.html', {'awards': awards})
+
 # -----------------------------------------------------------------------------
 #  Reporting
 # -----------------------------------------------------------------------------
