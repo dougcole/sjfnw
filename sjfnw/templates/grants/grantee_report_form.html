@@ -4,8 +4,6 @@
 {% block script %}
 <script type="text/javascript" src="/static/js/forms.js"></script>
 <script type="text/javascript">
-  // TODO remove this
-  window._sjfDebug = true;
   $(document).ready(function() {
     formUtils.init('report', {{ draft.pk }}, {{ giving_project_grant.pk }}, '', '{{ user_override|default:"" }}');
     wordLimiter.init();
@@ -38,8 +36,8 @@
     </li>
     {% endfor %}
   </ol>
-  {# Bit of a hack - this just generates a POST request that reloads the page #}
-  <form method="POST" action="/report/1">
+  {# Bit of a hack - this just generates a non-ajax POST request #}
+  <form method="POST" action="/report/{{ giving_project_grant.pk }}/{{ user_override|default:''}}">
     <input class="hidden" id="hidden_submit_app" type="submit" value="Submit"/>
   </form>
 </div>

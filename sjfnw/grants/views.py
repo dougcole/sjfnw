@@ -472,9 +472,9 @@ def grantee_report(request, organization, gpg_id):
     'draft': draft,
     'giving_project_grant': giving_project_grant,
     'files': get_files_info(request, draft),
+    'user_override': get_user_override(request)
   })
 
-# TODO permissions
 @login_required(login_url=LOGIN_URL)
 def view_grantee_report(request, report_id):
   report = get_object_or_404(
