@@ -386,7 +386,6 @@ def autosave_grantee_report(request, gpg_id):
 
   if request.method == 'POST':
     draft.contents = json.dumps(request.POST)
-    logger.info('Saving grantee report. Contents: %s', draft.contents)
     # Note: draft.files is updated in add_file
     draft.modified = timezone.now()
     draft.save()
@@ -429,31 +428,13 @@ def grantee_report(request, organization, gpg_id):
     draft_data.update(json.loads(draft.files))
     form = forms.GranteeReport(cycle_questions, draft_data)
     if form.is_valid():
-      report_number = draft_data.get('report_number', 1)
-      if report_number <= giving_project_grant.granteereport_set.count():
-        url = None
-        try:
-          report_id = giving_project_grant.granteereport_set.all().values('id')[report_number -1]['id']
-          url = reverse(view_grantee_report, kwargs={'report_id': report_id})
-        except Exception as err:
-          logger.warn('Detected resubmission of report but could not find existing one: %s', err)
-
-        message = 'That report appears to have already been submitted.'
-        if url:
-          message += 'View it {}.'.format(utils.create_link(url, 'here', new_tab=True))
-
-        return render(request, 'grants/report_error.html', {
-          'title': 'Grantee Report already submitted',
-          'message': message
-        })
-
       report = models.GranteeReport(giving_project_grant=giving_project_grant)
       report.save()
       for cq in cycle_questions:
         answer = models.ReportAnswer(
           grantee_report=report,
           cycle_report_question=cq,
-          text = draft_data.get(cq.report_question.name, '')
+          text=draft_data.get(cq.report_question.name, '')
         )
         answer.save()
       return redirect('/report/submitted')
@@ -463,7 +444,6 @@ def grantee_report(request, organization, gpg_id):
       form = forms.GranteeReport(cycle_questions)
     else:
       initial_data = json.loads(draft.contents)
-      logger.info('Loading GranteeReportDraft. Initial_data: %s', initial_data)
       form = forms.GranteeReport(cycle_questions, initial=initial_data)
 
   return render(request, 'grants/grantee_report_form.html', {
