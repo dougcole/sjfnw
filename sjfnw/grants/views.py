@@ -437,6 +437,7 @@ def grantee_report(request, organization, gpg_id):
           text=draft_data.get(cq.report_question.name, '')
         )
         answer.save()
+      draft.delete()
       return redirect('/report/submitted')
 
   else: # GET
@@ -658,6 +659,21 @@ def discard_draft(request, organization, draft_id):
       return HttpResponse(status=400, content='User does not have permission to delete this draft')
     saved.delete()
     logger.info('Draft %s  discarded', draft_id)
+    return HttpResponse('success')
+
+@require_http_methods(['DELETE'])
+@registered_org()
+def discard_report_draft(request, organization, draft_id):
+  try:
+    saved = models.GranteeReportDraft.objects.get(pk=draft_id)
+  except models.GranteeReportDraft.DoesNotExist:
+    return HttpResponse(status=404)
+  else:
+    if saved.giving_project_grant.projectapp.application.organization != organization:
+      logger.warning(u'Failed attempt to discard draft %s by %s', draft_id, organization)
+      return HttpResponse(status=400, content='User does not have permission to delete this draft')
+    saved.delete()
+    logger.info('Grantee report draft %s  discarded', draft_id)
     return HttpResponse('success')
 
 # -----------------------------------------------------------------------------

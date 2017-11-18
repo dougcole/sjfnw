@@ -37,6 +37,7 @@ root_urls = patterns('sjfnw.grants.views',
 
 report_urls = patterns('sjfnw.grants.views',
   # grantee report
+  (r'^draft/(?P<draft_id>\d+)/?$', 'discard_report_draft'),
   (r'^(?P<gpg_id>\d+)/?$', 'grantee_report'),
   (r'^(?P<gpg_id>\d+)/autosave/?$', 'autosave_grantee_report'),
   (r'^view/(?P<report_id>\d+)/?$', 'view_grantee_report'),

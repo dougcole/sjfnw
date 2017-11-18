@@ -5,11 +5,11 @@
 {% block script %}
 <script type="text/javascript">
   // confirmation window before discarding a draft
-  function confirmation(draft_pk) {
+  function confirmation(urlPrefix, id) {
     var conf = confirm("Discard this draft? It cannot be recovered.")
     if (conf) {
       $.ajax({
-        url: '/apply/draft/' + draft_pk + '{{ user_override|default:'' }}',
+        url: '/' + urlPrefix + '/draft/' + id + '{{ user_override|default:'' }}',
         type: 'DELETE',
         error: function(jqXHR, textStatus) {
           logError({ jqXHR: jqXHR, textStatus: textStatus });
