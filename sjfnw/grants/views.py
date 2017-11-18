@@ -405,7 +405,8 @@ def grantee_report(request, organization, gpg_id):
   app = giving_project_grant.projectapp.application
 
   if app.organization_id != organization.pk:
-    logger.warning('Trying to edit someone else\'s GranteeReportDraft')
+    logger.warning('Trying to edit someone else\'s GranteeReportDraft (org: %s, app org: %s)',
+        organization.pk, app.organization_id)
     return redirect(org_home)
 
   next_report_due = giving_project_grant.next_report_due()
