@@ -392,8 +392,8 @@ class GranteeReportA(BaseModelAdmin):
     'giving_project_grant__projectapp__application__organization__name',
     'giving_project_grant__projectapp__giving_project',
   )
-  fields = ('giving_project_grant', 'created', 'view_link')
-  readonly_fields = ('giving_project_grant', 'created', 'view_link')
+  fields = ('grant_display', 'created', 'view_link')
+  readonly_fields = ('grant_display', 'created', 'view_link')
 
   def get_queryset(self, request):
     qs = super(GranteeReportA, self).get_queryset(request)
@@ -414,6 +414,14 @@ class GranteeReportA(BaseModelAdmin):
 
   def grant_cycle(self, obj):
     return obj.giving_project_grant.projectapp.application.grant_cycle
+
+  def grant_display(self, obj):
+    return utils.create_link(
+      reverse('admin:grants_givingprojectgrant_change', args=(obj.giving_project_grant_id,)),
+      unicode(obj.giving_project_grant)
+    )
+  grant_display.allow_tags = True
+  grant_display.short_description = 'Giving project grant'
 
   def view_link(self, obj):
     if obj.pk:
@@ -752,10 +760,11 @@ class GranteeReportDraftA(BaseModelAdmin):
     'due'
   )
 
-  fields = (('organization',),
+  fields = (('organization', 'grant'),
             ('modified', 'due'),
             ('giving_project', 'grant_cycle'))
-  readonly_fields = ('organization', 'modified', 'due', 'giving_project', 'grant_cycle')
+  readonly_fields = ('organization', 'modified', 'due', 'giving_project',
+    'grant', 'grant_cycle')
 
   def get_queryset(self, request):
     qs = super(GranteeReportDraftA, self).get_queryset(request)
@@ -776,6 +785,13 @@ class GranteeReportDraftA(BaseModelAdmin):
 
   def grant_cycle(self, obj):
     return obj.giving_project_grant.projectapp.application.grant_cycle
+
+  def grant(self, obj):
+    return utils.create_link(
+      reverse('admin:grants_givingprojectgrant_change', args=(obj.giving_project_grant_id,)),
+      'View'
+    )
+  grant.allow_tags = True
 
   def due(self, obj):
     return obj.giving_project_grant.next_report_due()
