@@ -52,20 +52,19 @@ class CycleTypeFilter(admin.SimpleListFilter):
     super(CycleTypeFilter, self).__init__(req, params, model, model_admin)
 
   def lookups(self, request, model_admin):
-    titles = (models.GrantCycle.objects
-        .exclude(title__startswith='Seed')
-        .exclude(title__startswith='Rapid Response')
-        .values_list('title', flat=True)
-        .distinct()
-        .order_by('title'))
-    cycle_types = ['Seed', 'Rapid Response']
-    for title in titles:
-      pos = title.find(' Grant Cycle')
-      if pos > 1:
-        title = title[:pos]
-      if title not in cycle_types:
-        cycle_types.append(title)
-
+    cycle_types = [
+      'Criminal Justice',
+      'Economic Justice',
+      'Environmental Justice',
+      'Gender Justice',
+      'General',
+      'Immigration',
+      'Momentum',
+      'Montana',
+      'Rapid Response',
+      'Rural Justice',
+      'Seed',
+    ]
     return [(t, t) for t in cycle_types]
 
   def queryset(self, request, queryset):
@@ -73,6 +72,9 @@ class CycleTypeFilter(admin.SimpleListFilter):
       return queryset
     elif self.model == models.GrantCycle:
       return queryset.filter(title__startswith=self.value())
+    elif self.model == models.GrantApplication:
+      return queryset.filter(
+        grant_cycle__title__startswith=self.value())
     elif self.model == models.GivingProjectGrant:
       return queryset.filter(
         projectapp__application__grant_cycle__title__startswith=self.value())
@@ -525,7 +527,7 @@ class OrganizationA(BaseModelAdmin):
 
 class GrantApplicationA(BaseModelAdmin):
   list_display = ['organization', 'grant_cycle', 'submission_time', 'read']
-  list_filter = (GrantApplicationYearFilter, 'pre_screening_status')
+  list_filter = (GrantApplicationYearFilter, 'pre_screening_status', CycleTypeFilter)
   list_action_link = utils.create_link('/admin/grants/search', 'Run a report', new_tab=True)
   search_fields = ['organization__name', 'grant_cycle__title']
   ordering = ('-submission_time',)
