@@ -724,8 +724,9 @@ def view_application(request, app_id):
 
   form_only = request.GET.get('form')
   if form_only:
-    return render(request, 'grants/reading.html',
-                  {'app': app, 'form': form, 'perm': perm})
+    return render(request, 'grants/reading.html', {
+      'app': app, 'form': form, 'perm': perm, 'answers': answers
+    })
   file_urls = get_files_info(request, app, url_only=True)
   print_urls = get_files_info(request, app, printing=True, url_only=True)
   awards = {}
