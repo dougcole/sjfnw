@@ -86,7 +86,8 @@ admin.site.unregister(Group)
 admin.site.unregister(User)
 
 class UserA(UserAdmin):
-  list_display = ('username', 'is_superuser')
+  list_display = ('username', 'is_active', 'is_superuser', 'last_login')
+  list_filter = ('is_active', 'is_superuser')
   search_fields = ('username',)
   fieldsets = (
       (None, {
