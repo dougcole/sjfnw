@@ -21,7 +21,7 @@ May be installed already, check with `git --version`. Install/update using packa
 Install mysql and a python-mysql adapter.
 
 Linux: `apt-get install mysql-server python-mysqldb`  
-OSX: `brew install mysql@5.6`, `pip install mysql-python`
+OSX: `brew install mysql@5.6`, `pip install mysql-python` (you will then need to `brew link mysql@5.6--force` or find some other way to add it to your path if you use multiple versions of mysql
 
 If prompted for a password, enter the password from [`sjfnw/settings.py`](https://github.com/aisapatino/sjfnw/blob/master/sjfnw/settings.py#L43).
 
