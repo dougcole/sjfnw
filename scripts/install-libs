@@ -11,3 +11,4 @@ echo "Installing libs..."
 cd "$(dirname "$0")/.."
 
 pip install -r requirements.txt -t libs
+pip install -r requirements-dev.txt -t libs
